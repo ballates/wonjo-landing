@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wonjo — Envoyez vos colis avec des voyageurs de confiance</title>
+<meta name="description" content="Wonjo connecte les expéditeurs en Europe avec des voyageurs se rendant en Afrique. Envois économiques, voyageurs rémunérés, paiement sécurisé.">
+<style>
+  :root {
+    --teal: #4A8896;
+    --brown: #7D4E2E;
+    --green: #1D9E75;
+    --amber: #F5A623;
+    --bg: #F8F7FF;
+    --text: #1A1A2E;
+    --muted: #5b5b70;
+    --brand-gradient: linear-gradient(135deg, #4A8896 0%, #4A8896 45%, #7D4E2E 100%);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { width: 100%; max-width: 960px; margin: 0 auto; padding: 0 20px; }
+  h2 { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; text-align: center; margin-bottom: 8px; }
+  .section { padding: 56px 0; }
+  .section-sub { text-align: center; color: var(--muted); margin-bottom: 32px; }
+
+  /* HERO */
+  .hero {
+    background: var(--brand-gradient);
+    color: #fff;
+    text-align: center;
+    padding: 64px 20px 72px;
+  }
+  .badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.4);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 999px;
+    margin-bottom: 20px;
+  }
+  .logo {
+    font-size: 3.2rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 16px;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  }
+  .tagline { font-size: 1.35rem; font-weight: 700; max-width: 520px; margin: 0 auto 14px; }
+  .subtitle { font-size: 1rem; opacity: 0.92; max-width: 540px; margin: 0 auto 32px; }
+  .cta {
+    display: inline-block;
+    background: #fff;
+    color: var(--teal);
+    font-size: 1.05rem;
+    font-weight: 800;
+    text-decoration: none;
+    padding: 15px 34px;
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .cta:active { transform: translateY(1px); }
+
+  /* CORRIDORS */
+  .corridors-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .corridor {
+    background: #fff;
+    border: 1px solid rgba(74,136,150,0.14);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    box-shadow: 0 4px 16px rgba(26,26,46,0.04);
+  }
+  .corridor .plane { color: var(--teal); flex-shrink: 0; }
+  .corridor .from { color: var(--text); }
+  .corridor .to { color: var(--brown); }
+
+  /* STEPS */
+  .steps { display: grid; grid-template-columns: 1fr; gap: 18px; }
+  .step {
+    background: #fff;
+    border-radius: 16px;
+    padding: 22px;
+    box-shadow: 0 4px 16px rgba(26,26,46,0.04);
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .step-num {
+    flex-shrink: 0;
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    background: var(--brand-gradient);
+    color: #fff;
+    font-weight: 800;
+    font-size: 1.15rem;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .step h3 { font-size: 1.05rem; margin-bottom: 3px; }
+  .step p { color: var(--muted); font-size: 0.95rem; }
+
+  /* TRUST */
+  .trust { background: #fff; }
+  .trust-grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
+  .trust-item { display: flex; gap: 14px; align-items: flex-start; }
+  .trust-icon {
+    flex-shrink: 0;
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: rgba(29,158,117,0.12);
+    color: var(--green);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .trust-item h3 { font-size: 1.05rem; margin-bottom: 2px; }
+  .trust-item p { color: var(--muted); font-size: 0.95rem; }
+
+  /* FORM */
+  .beta { background: var(--brand-gradient); color: #fff; }
+  .beta h2 { color: #fff; }
+  .form-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 28px 22px;
+    max-width: 420px;
+    margin: 24px auto 0;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.18);
+  }
+  .form-card label { display: block; font-weight: 700; font-size: 0.9rem; color: var(--text); margin-bottom: 6px; }
+  .form-card input {
+    width: 100%;
+    padding: 13px 14px;
+    border: 1px solid #d8d8e4;
+    border-radius: 12px;
+    font-size: 1rem;
+    margin-bottom: 16px;
+    font-family: inherit;
+    color: var(--text);
+  }
+  .form-card input:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(74,136,150,0.15); }
+  .form-card button {
+    width: 100%;
+    background: var(--teal);
+    color: #fff;
+    font-size: 1.05rem;
+    font-weight: 800;
+    border: none;
+    border-radius: 12px;
+    padding: 15px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s ease;
+  }
+  .form-card button:hover { background: #3d7280; }
+  .form-note { text-align: center; color: var(--muted); font-size: 0.85rem; margin-top: 14px; }
+
+  /* FOOTER */
+  footer {
+    background: #2a1d14;
+    color: #cdbfb4;
+    text-align: center;
+    padding: 36px 20px;
+    font-size: 0.9rem;
+  }
+  footer a { color: #e6dbd0; text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+  .footer-links { margin: 12px 0; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .footer-links span { opacity: 0.4; }
+
+  @media (min-width: 640px) {
+    .logo { font-size: 4rem; }
+    .tagline { font-size: 1.6rem; }
+    .corridors-grid { grid-template-columns: 1fr 1fr; }
+    .steps { grid-template-columns: repeat(3, 1fr); }
+    .trust-grid { grid-template-columns: repeat(3, 1fr); }
+    .trust-item { flex-direction: column; text-align: center; align-items: center; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- HERO -->
+  <header class="hero">
+    <span class="badge">Bêta</span>
+    <div class="logo">Wonjo</div>
+    <p class="tagline">Envoyez vos colis avec des voyageurs de confiance</p>
+    <p class="subtitle">Wonjo connecte les expéditeurs en Europe avec des voyageurs se rendant en Afrique. Économisez sur vos envois, voyageurs gagnez de l'argent.</p>
+    <a href="#beta" class="cta">Rejoindre la bêta</a>
+  </header>
+
+  <!-- CORRIDORS -->
+  <section class="section">
+    <div class="wrap">
+      <h2>Nos corridors</h2>
+      <p class="section-sub">Europe vers Afrique, en toute simplicité</p>
+      <div class="corridors-grid">
+        <div class="corridor">
+          <span class="from">France</span>
+          <svg class="plane" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>
+          <span class="to">Sénégal</span>
+        </div>
+        <div class="corridor">
+          <span class="from">France</span>
+          <svg class="plane" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>
+          <span class="to">Cameroun</span>
+        </div>
+        <div class="corridor">
+          <span class="from">France</span>
+          <svg class="plane" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>
+          <span class="to">Côte d'Ivoire</span>
+        </div>
+        <div class="corridor">
+          <span class="from">France</span>
+          <svg class="plane" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>
+          <span class="to">Congo</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMMENT ÇA MARCHE -->
+  <section class="section" style="background:#fff;">
+    <div class="wrap">
+      <h2>Comment ça marche</h2>
+      <p class="section-sub">Trois étapes simples</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div><h3>Publiez</h3><p>Publiez votre trajet ou votre colis en quelques secondes.</p></div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div><h3>Accordez-vous</h3><p>Mettez-vous d'accord sur le prix avec l'autre partie.</p></div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div><h3>Remettez</h3><p>Remise en main propre, paiement sécurisé à la livraison.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONFIANCE -->
+  <section class="section trust">
+    <div class="wrap">
+      <h2>La confiance avant tout</h2>
+      <p class="section-sub">Chaque envoi est protégé</p>
+      <div class="trust-grid">
+        <div class="trust-item">
+          <div class="trust-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div><h3>Paiement sécurisé</h3><p>Vos fonds sont gardés en escrow et libérés après livraison confirmée.</p></div>
+        </div>
+        <div class="trust-item">
+          <div class="trust-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          </div>
+          <div><h3>Identité vérifiée</h3><p>KYC obligatoire pour chaque utilisateur — porteurs et expéditeurs.</p></div>
+        </div>
+        <div class="trust-item">
+          <div class="trust-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <div><h3>Support disponible</h3><p>Une équipe à votre écoute en cas de litige ou de question.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FORMULAIRE BÊTA -->
+  <section class="section beta" id="beta">
+    <div class="wrap">
+      <h2>Rejoignez la bêta en avant-première</h2>
+      <form class="form-card" action="https://formspree.io/f/xyzabcde" method="POST">
+        <label for="prenom">Prénom</label>
+        <input type="text" id="prenom" name="prenom" placeholder="Votre prénom" required>
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" placeholder="vous@exemple.com" required>
+        <button type="submit">Je m'inscris</button>
+        <p class="form-note">Disponible sur iOS et Android prochainement</p>
+      </form>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div>© 2026 Wonjo — Lampasai SAS</div>
+    <div style="margin-top:6px;"><a href="mailto:contact@wonjo.app">contact@wonjo.app</a></div>
+    <div class="footer-links">
+      <a href="/mentions-legales.html">Mentions légales</a><span>|</span>
+      <a href="/cgu.html">CGU</a><span>|</span>
+      <a href="/confidentialite.html">Confidentialité</a>
+    </div>
+  </footer>
+
+</body>
+</html>
