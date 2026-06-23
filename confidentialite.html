@@ -7,30 +7,85 @@
 <link rel="apple-touch-icon" href="/assets/wonjo-logo.png">
 <title>Politique de confidentialité - Wonjo</title>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
   :root {
     --teal: #4A8896;
+    --teal-dark: #3a6b77;
     --brown: #7D4E2E;
     --green: #1D9E75;
-    --bg: #F8F7FF;
-    --text: #1A1A2E;
+    --bg: #fbfaff;
+    --surface: #ffffff;
+    --text: #14142b;
     --muted: #5b5b70;
+    --line: rgba(20,20,43,0.08);
     --brand-gradient: linear-gradient(135deg, #4A8896 0%, #4A8896 45%, #7D4E2E 100%);
+    --radius: 22px;
+    --shadow-sm: 0 4px 16px rgba(20,20,43,0.05);
+    --shadow-md: 0 14px 40px rgba(20,20,43,0.10);
+    --shadow-lg: 0 24px 60px rgba(20,20,43,0.16);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    color: var(--text); background: var(--bg); line-height: 1.55;
+    font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text); background: var(--bg); line-height: 1.6;
+    background-image: radial-gradient(900px 500px at 85% -10%, rgba(74,136,150,0.10), transparent 60%),
+                      radial-gradient(800px 460px at 0% 8%, rgba(125,78,46,0.07), transparent 55%);
+    background-attachment: fixed;
     min-height: 100vh; display: flex; flex-direction: column;
     -webkit-font-smoothing: antialiased;
   }
-  .hero { background: var(--brand-gradient); color: #fff; text-align: center; padding: 40px 20px; }
-  .hero a { color: #fff; text-decoration: none; }
-  .logo { display: inline-flex; align-items: center; gap: 10px; font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em; }
-  .logo img { height: 48px; width: auto; }
-  main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 64px 20px; }
-  main h1 { font-size: 1.6rem; font-weight: 800; margin-bottom: 12px; }
-  main p { color: var(--muted); max-width: 460px; }
+  h1, h2, h3, .logo, .flogo { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; }
+
+  /* TOP BAR + BOUTON RETOUR */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(251,250,255,0.82);
+    backdrop-filter: saturate(180%) blur(14px);
+    -webkit-backdrop-filter: saturate(180%) blur(14px);
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar-inner { max-width: 920px; margin: 0 auto; padding: 0 24px; height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-weight: 700; font-size: 0.95rem; text-decoration: none; color: var(--teal);
+    background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
+    padding: 9px 18px 9px 14px; box-shadow: var(--shadow-sm);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, color 0.15s ease;
+  }
+  .back-btn:hover { transform: translateX(-3px); background: var(--teal); color: #fff; box-shadow: 0 10px 24px rgba(74,136,150,0.32); }
+  .topbar .logo { font-size: 1.3rem; color: var(--text); }
+  .topbar .logo span { color: var(--teal); }
+  .topbar .logo img { height: 30px; }
+
+  /* HERO */
+  .legal-hero { background: var(--brand-gradient); color: #fff; text-align: center; padding: 54px 24px 60px; }
+  .legal-hero .eyebrow { display: inline-block; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.85; margin-bottom: 14px; }
+  .legal-hero h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.12; }
+  .legal-hero .meta { margin-top: 14px; font-size: 0.95rem; opacity: 0.9; }
+
+  .logo { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -0.02em; text-decoration: none; }
+  .logo img { width: auto; display: block; }
+
+  /* CARTE LÉGALE CENTRÉE */
+  main.legal { flex: 1; width: 100%; max-width: 860px; margin: -36px auto 0; padding: 0 24px 80px; }
+  .legal-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-lg); padding: clamp(26px, 5vw, 56px); }
+  /* le titre + la version sont déjà affichés dans le hero : on masque les doublons en tête de contenu */
+  .legal-card > h1:first-child,
+  .legal-card > h1:first-child + h3,
+  .legal-card > h1:first-child + h3 + hr { display: none; }
+  .legal-card h2 {
+    font-size: 1.3rem; font-weight: 800; letter-spacing: -0.02em; color: var(--teal);
+    margin: 40px 0 14px; line-height: 1.25;
+  }
+  .legal-card h2:first-of-type { margin-top: 4px; }
+  .legal-card h3 { font-size: 1.02rem; font-weight: 700; margin: 24px 0 8px; color: var(--text); }
+  .legal-card p { color: #34344a; margin-bottom: 14px; }
+  .legal-card ul { margin: 0 0 18px 1.25rem; }
+  .legal-card li { margin-bottom: 8px; color: #34344a; }
+  .legal-card strong { font-weight: 700; }
+  .legal-card hr { border: none; border-top: 1px solid var(--line); margin: 30px 0; }
+  .legal-card a { color: var(--teal); font-weight: 600; }
 
   /* FOOTER */
   footer { background: #2a1d14; color: #cdbfb4; padding: 44px 20px 28px; font-size: 0.9rem; }
@@ -66,10 +121,219 @@
 </style>
 </head>
 <body>
-  <header class="hero"><a href="/"><div class="logo"><img src="/assets/wonjo-logo.png" alt="Logo Wonjo">Wonjo</div></a></header>
-  <main>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="/" class="back-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        Retour à l'accueil
+      </a>
+      <a href="/" class="logo"><img src="/assets/wonjo-logo.png" alt="Logo Wonjo">Wonjo</a>
+    </div>
+  </header>
+  <section class="legal-hero">
+    <span class="eyebrow">Informations légales</span>
     <h1>Politique de confidentialité</h1>
-    <p>Page en cours de rédaction.</p>
+    <p class="meta">Wonjo v1.0.0 · Mis à jour le 1er juin 2026</p>
+  </section>
+  <main class="legal">
+    <div class="legal-card">
+<h1>Politique de Confidentialité Wonjo</h1>
+<h3>Wonjo v1.0.0 - 1er juin 2026</h3>
+<hr>
+<h2>Article 1 - Responsable du traitement</h2>
+<p>La présente Politique de Confidentialité est établie par la société Wonjo (ci-après « Wonjo »), responsable du traitement de vos données personnelles au sens du Règlement Général sur la Protection des Données (RGPD, Règlement UE 2016/679).</p>
+<p>Wonjo est une plateforme numérique de mise en relation entre des particuliers souhaitant envoyer des colis et des particuliers effectuant des voyages avec de la capacité de transport disponible.</p>
+<ul>
+<li>Dénomination sociale : Wonjo</li>
+<li>Forme juridique : [À compléter]</li>
+<li>Siège social : [À compléter]</li>
+<li>Numéro SIRET : [À compléter]</li>
+<li>Adresse e-mail de contact : dpo@wonjo.app</li>
+</ul>
+<hr>
+<h2>Article 2 - Données collectées et finalités</h2>
+<p>Dans le cadre de l&#x27;utilisation de la plateforme Wonjo, nous collectons les catégories de données suivantes :</p>
+<p>Données d&#x27;identification et de compte</p>
+<ul>
+<li>Nom, prénom, adresse e-mail, numéro de téléphone.</li>
+<li>Photo de profil (optionnelle).</li>
+<li>Rôle choisi sur la plateforme (Voyageur ou Expéditeur).</li>
+<li>Ces données sont collectées lors de l&#x27;inscription et sont nécessaires à la création et à la gestion de votre compte.</li>
+</ul>
+<p>Données de vérification d&#x27;identité (KYC)</p>
+<ul>
+<li>Statut de vérification (vérifié, en attente, refusé) et identifiant de session KYC.</li>
+<li>Wonjo ne conserve pas vos documents d&#x27;identité originaux. Ils sont traités exclusivement par notre prestataire KYC agréé (Didit) et ne nous sont jamais transmis.</li>
+<li>La vérification d&#x27;identité est collectée pour garantir la confiance entre les utilisateurs et prévenir la fraude.</li>
+</ul>
+<p>Données de transaction</p>
+<ul>
+<li>Contenu déclaré des colis, valeur déclarée, poids.</li>
+<li>Photos de constat prises lors de la remise et de la livraison.</li>
+<li>Journal des étapes de transport (statuts, horodatages, acceptations).</li>
+<li>Ces données sont collectées pour permettre l&#x27;exécution des transactions et constituer des preuves en cas de litige.</li>
+</ul>
+<p>Données de paiement</p>
+<ul>
+<li>Wonjo ne stocke aucune donnée bancaire. Les données de paiement sont traitées exclusivement par notre prestataire de paiement agréé.</li>
+<li>Seuls le montant de la transaction et son statut (en attente, séquestré, libéré, remboursé) sont enregistrés sur la plateforme.</li>
+</ul>
+<p>Données de réputation</p>
+<ul>
+<li>Notes attribuées après chaque transaction, commentaires, nombre de transactions réalisées, badges obtenus.</li>
+<li>Ces données sont collectées pour alimenter le système de confiance entre les utilisateurs.</li>
+</ul>
+<p>Données de navigation et techniques</p>
+<ul>
+<li>Adresse IP, informations sur l&#x27;appareil utilisé, données de connexion.</li>
+<li>Ces données sont collectées à des fins de sécurité, de prévention de la fraude et d&#x27;amélioration du service.</li>
+</ul>
+<hr>
+<h2>Article 3 - Base légale du traitement</h2>
+<p>Le traitement de vos données personnelles par Wonjo repose sur les bases légales suivantes au sens du RGPD :</p>
+<p>Exécution du contrat</p>
+<ul>
+<li>La majorité des traitements sont nécessaires à l&#x27;exécution du contrat qui vous lie à Wonjo via l&#x27;acceptation des Conditions Générales d&#x27;Utilisation. Cela inclut la création de votre compte, la mise en relation avec d&#x27;autres utilisateurs, le suivi des transactions et la gestion des litiges.</li>
+</ul>
+<p>Obligation légale</p>
+<ul>
+<li>Certains traitements sont nécessaires au respect d&#x27;obligations légales applicables à Wonjo, notamment en matière de lutte contre le blanchiment d&#x27;argent, de prévention de la fraude, et de conservation des données de transaction.</li>
+</ul>
+<p>Intérêt légitime</p>
+<ul>
+<li>Wonjo traite certaines données sur la base de son intérêt légitime à assurer la sécurité de la plateforme, prévenir les abus, améliorer ses services et maintenir la confiance entre les utilisateurs. Ces traitements ne prévalent pas sur vos droits et libertés fondamentaux.</li>
+</ul>
+<p>Consentement</p>
+<ul>
+<li>Lorsque le traitement repose sur votre consentement (par exemple pour certaines communications marketing futures), vous pouvez retirer ce consentement à tout moment sans que cela n&#x27;affecte la licéité des traitements effectués avant ce retrait.</li>
+</ul>
+<hr>
+<h2>Article 4 - Durée de conservation</h2>
+<p>Wonjo conserve vos données personnelles pendant les durées suivantes :</p>
+<p>Données de compte</p>
+<ul>
+<li>Vos données sont conservées pendant toute la durée d&#x27;activité de votre compte sur la plateforme.</li>
+<li>En cas de suppression de votre compte, vos données sont conservées pendant une durée de 5 ans à compter de la clôture, conformément aux obligations légales applicables en matière de conservation des données de transaction.</li>
+</ul>
+<p>Données de transaction</p>
+<ul>
+<li>Les données relatives aux transactions (contenu déclaré, valeur, photos de constat, journal des étapes) sont conservées pendant 5 ans à compter de la date de la transaction. Ces données constituent des preuves contractuelles et ne peuvent pas être supprimées avant l&#x27;expiration de ce délai, même sur demande de l&#x27;utilisateur.</li>
+</ul>
+<p>Données de vérification d&#x27;identité</p>
+<ul>
+<li>Le statut de vérification KYC est conservé pendant toute la durée d&#x27;activité de votre compte, puis pendant 5 ans après sa clôture. Les documents d&#x27;identité originaux ne sont jamais conservés par Wonjo.</li>
+</ul>
+<p>Données de navigation et techniques</p>
+<ul>
+<li>Les données de connexion et d&#x27;utilisation sont conservées pendant une durée maximale de 13 mois conformément aux recommandations de la CNIL.</li>
+</ul>
+<p>Données inactives</p>
+<ul>
+<li>Tout compte n&#x27;ayant fait l&#x27;objet d&#x27;aucune connexion pendant une période de 3 ans pourra faire l&#x27;objet d&#x27;une procédure de suppression après notification préalable à l&#x27;adresse e-mail associée au compte.</li>
+</ul>
+<hr>
+<h2>Article 5 - Sous-traitants et transferts hors UE</h2>
+<p>Dans le cadre de ses activités, Wonjo fait appel à des prestataires tiers (sous-traitants) qui traitent des données personnelles pour son compte. Wonjo s&#x27;assure que ces prestataires présentent des garanties suffisantes en matière de protection des données.</p>
+<p>Prestataires principaux</p>
+<p>Supabase (infrastructure et base de données)</p>
+<ul>
+<li>Rôle : hébergement de la plateforme, stockage des données, authentification des utilisateurs.</li>
+<li>Localisation : Union Européenne (région eu-west).</li>
+<li>Garanties : conforme au RGPD, accord de traitement des données (DPA) disponible.</li>
+</ul>
+<p>Didit (vérification d&#x27;identité KYC)</p>
+<ul>
+<li>Rôle : vérification des documents d&#x27;identité et des selfies des utilisateurs.</li>
+<li>Localisation : Union Européenne.</li>
+<li>Garanties : prestataire KYC agréé, conforme au RGPD. Les documents d&#x27;identité originaux sont traités et conservés par Didit et ne sont jamais transmis à Wonjo.</li>
+</ul>
+<p>Prestataire de paiement (à nommer lors du déploiement de l&#x27;escrow)</p>
+<ul>
+<li>Rôle : séquestre et traitement des paiements entre utilisateurs.</li>
+<li>Localisation : Union Européenne.</li>
+<li>Garanties : prestataire de paiement agréé par l&#x27;Autorité de Contrôle Prudentiel et de Résolution (ACPR).</li>
+</ul>
+<p>Transferts hors Union Européenne</p>
+<ul>
+<li>Wonjo s&#x27;efforce de limiter les transferts de données hors de l&#x27;Union Européenne. Lorsque de tels transferts sont nécessaires, ils sont encadrés par des garanties appropriées conformément au RGPD, notamment les clauses contractuelles types approuvées par la Commission Européenne.</li>
+<li>La liste complète des sous-traitants et les garanties associées peuvent être communiquées sur demande adressée à dpo@wonjo.app.</li>
+</ul>
+<hr>
+<h2>Article 6 - Droits des utilisateurs</h2>
+<p>Conformément au RGPD, vous disposez des droits suivants sur vos données personnelles :</p>
+<p>Droit d&#x27;accès</p>
+<ul>
+<li>Vous pouvez obtenir une copie de l&#x27;ensemble des données personnelles que Wonjo détient à votre sujet, ainsi que des informations sur la façon dont elles sont traitées.</li>
+</ul>
+<p>Droit de rectification</p>
+<ul>
+<li>Vous pouvez demander la correction de données inexactes ou incomplètes vous concernant.</li>
+</ul>
+<p>Droit à l&#x27;effacement</p>
+<ul>
+<li>Vous pouvez demander la suppression de vos données personnelles dans les conditions prévues par le RGPD. Ce droit ne s&#x27;applique pas aux données dont la conservation est imposée par une obligation légale, notamment les données de transaction conservées à titre de preuve.</li>
+</ul>
+<p>Droit à la limitation du traitement</p>
+<ul>
+<li>Vous pouvez demander la suspension temporaire du traitement de vos données, par exemple pendant la vérification d&#x27;une contestation de votre part.</li>
+</ul>
+<p>Droit à la portabilité</p>
+<ul>
+<li>Vous pouvez recevoir vos données dans un format structuré, couramment utilisé et lisible par machine, et les transmettre à un autre responsable de traitement.</li>
+</ul>
+<p>Droit d&#x27;opposition</p>
+<ul>
+<li>Vous pouvez vous opposer au traitement de vos données fondé sur l&#x27;intérêt légitime de Wonjo, pour des raisons tenant à votre situation particulière.</li>
+</ul>
+<p>Droit de retrait du consentement</p>
+<ul>
+<li>Lorsque le traitement est fondé sur votre consentement, vous pouvez le retirer à tout moment sans que cela n&#x27;affecte la licéité des traitements effectués avant ce retrait.</li>
+</ul>
+<p>Exercice de vos droits</p>
+<ul>
+<li>Pour exercer l&#x27;un de ces droits, adressez votre demande par e-mail à dpo@wonjo.app en précisant votre nom, prénom et l&#x27;adresse e-mail associée à votre compte. Wonjo s&#x27;engage à répondre dans un délai maximum de 30 jours à compter de la réception de votre demande.</li>
+<li>En cas de réponse insatisfaisante, vous disposez du droit d&#x27;introduire une réclamation auprès de la Commission Nationale de l&#x27;Informatique et des Libertés (CNIL) via le site www.cnil.fr.</li>
+</ul>
+<hr>
+<h2>Article 7 - Sécurité des données</h2>
+<p>Wonjo met en oeuvre les mesures techniques et organisationnelles appropriées pour protéger vos données personnelles contre tout accès non autorisé, perte, destruction ou divulgation accidentelle.</p>
+<p>Mesures techniques</p>
+<ul>
+<li>Chiffrement des données en transit (HTTPS/TLS) et au repos.</li>
+<li>Authentification sécurisée par e-mail et code OTP.</li>
+<li>Contrôle d&#x27;accès strict aux données via des politiques de sécurité au niveau des lignes (Row Level Security) - seuls les utilisateurs concernés par une transaction peuvent accéder aux données de cette transaction.</li>
+<li>Séquestre des fonds via un prestataire de paiement agréé - Wonjo ne détient jamais les fonds en son nom propre.</li>
+<li>Journalisation immuable des étapes clés des transactions (déclarations de contenu, acceptations, constats) - ces enregistrements ne peuvent pas être modifiés ou supprimés.</li>
+<li>Vérification d&#x27;identité des utilisateurs via un prestataire KYC agréé.</li>
+</ul>
+<p>Mesures organisationnelles</p>
+<ul>
+<li>Accès aux données limité aux seules personnes habilitées au sein de l&#x27;équipe Wonjo.</li>
+<li>Recours exclusif à des prestataires présentant des garanties suffisantes en matière de protection des données.</li>
+<li>Procédure de notification en cas de violation de données conformément aux obligations du RGPD.</li>
+</ul>
+<p>Limitation de responsabilité</p>
+<ul>
+<li>Malgré les mesures mises en place, aucun système de sécurité n&#x27;est infaillible. En cas de violation de données susceptible d&#x27;engendrer un risque élevé pour vos droits et libertés, Wonjo vous en informera dans les meilleurs délais conformément à ses obligations légales.</li>
+</ul>
+<hr>
+<h2>Article 8 - Contact et réclamations</h2>
+<p>Pour toute question relative à la présente Politique de Confidentialité ou au traitement de vos données personnelles par Wonjo, vous pouvez nous contacter :</p>
+<p>Par e-mail : dpo@wonjo.app</p>
+<p>Par courrier : Wonjo - [Adresse du siège social à compléter]</p>
+<p>Wonjo s&#x27;engage à répondre à toute demande dans un délai maximum de 30 jours à compter de sa réception.</p>
+<p>Réclamation auprès de la CNIL</p>
+<ul>
+<li>Si vous estimez que le traitement de vos données personnelles par Wonjo ne respecte pas la réglementation applicable, vous disposez du droit d&#x27;introduire une réclamation auprès de l&#x27;autorité de contrôle compétente.</li>
+<li>En France : Commission Nationale de l&#x27;Informatique et des Libertés (CNIL), 3 Place de Fontenoy, 75007 Paris - www.cnil.fr</li>
+<li>Si vous résidez dans un autre État membre de l&#x27;Union Européenne, vous pouvez également saisir l&#x27;autorité de contrôle de votre pays de résidence.</li>
+<li>Pour les utilisateurs résidant hors de l&#x27;Union Européenne, notamment sur le continent africain, la CNIL reste l&#x27;autorité compétente dans la mesure où Wonjo est soumise au droit français.</li>
+</ul>
+<p>Modifications de la présente politique</p>
+<ul>
+<li>Wonjo se réserve le droit de modifier la présente Politique de Confidentialité à tout moment pour l&#x27;adapter à des évolutions légales, réglementaires ou techniques. Toute modification substantielle sera notifiée aux utilisateurs via l&#x27;application ou par e-mail dans un délai raisonnable avant son entrée en vigueur. La version en vigueur est toujours accessible depuis les paramètres de l&#x27;application.</li>
+</ul>
+    </div>
   </main>
 
   <!-- FOOTER -->

@@ -109,14 +109,25 @@
     border-bottom: 1px solid transparent;
     transition: border-color 0.2s ease, background 0.2s ease;
   }
-  .nav.scrolled { border-color: var(--line); }
+  .nav.scrolled { border-color: var(--line); box-shadow: 0 6px 24px rgba(20,20,43,0.05); }
+  .scroll-progress {
+    position: absolute; bottom: -1px; left: 0; right: 0; height: 3px;
+    background: var(--brand-gradient); transform: scaleX(0); transform-origin: 0 50%;
+    transition: transform 0.1s linear; will-change: transform;
+  }
   .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 68px; }
   .nav-logo { display: flex; align-items: center; gap: 9px; font-size: 1.45rem; font-weight: 600; letter-spacing: -0.02em; text-decoration: none; color: var(--ink); }
   .nav-logo img { height: 36px; width: auto; display: block; }
   .nav-logo span { color: var(--teal); }
   .nav-links { display: none; gap: 30px; align-items: center; }
-  .nav-links a { text-decoration: none; color: var(--muted); font-weight: 600; font-size: 0.95rem; transition: color 0.15s ease; }
+  .nav-links a { position: relative; text-decoration: none; color: var(--muted); font-weight: 600; font-size: 0.95rem; transition: color 0.15s ease; }
+  .nav-links a::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: -6px; height: 2px; border-radius: 2px;
+    background: var(--teal); transform: scaleX(0); transform-origin: 0 50%; transition: transform 0.25s cubic-bezier(.42,0,.58,1);
+  }
   .nav-links a:hover { color: var(--ink); }
+  .nav-links a.active { color: var(--teal); }
+  .nav-links a.active::after { transform: scaleX(1); }
   .nav-cta {
     display: none;
     background: var(--teal);
@@ -205,18 +216,109 @@
   .stat b { display: block; font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; color: var(--teal); }
   .stat span { font-size: 0.82rem; color: var(--muted); }
 
-  /* CORRIDORS */
-  .corridors-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
-  .corridor {
-    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
-    padding: 20px; display: flex; align-items: center; justify-content: center; gap: 14px;
-    font-weight: 700; font-size: 1.05rem; white-space: nowrap; box-shadow: var(--shadow-sm);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  /* CORRIDORS — carrousel de cartes */
+  .corridors-note { text-align: center; color: var(--muted); font-size: 0.9rem; max-width: 560px; margin: 28px auto 0; }
+
+  .carousel { position: relative; margin-top: 8px; }
+  .carousel-track {
+    position: relative;
+    display: flex; gap: 22px;
+    overflow-x: auto; overflow-y: hidden;
+    scroll-snap-type: x mandatory; scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    padding: 14px 24px 26px;
+    margin: 0 -24px;
+    scrollbar-width: none;
   }
-  .corridor:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
-  .corridor .plane { color: var(--teal); flex-shrink: 0; }
-  .corridor .to { color: var(--brown); }
-  .corridors-note { text-align: center; color: var(--muted); font-size: 0.9rem; max-width: 560px; margin: 24px auto 0; }
+  .carousel-track::-webkit-scrollbar { display: none; }
+  .carousel-track > .wonjo-card {
+    scroll-snap-align: center;
+    flex: 0 0 auto;
+    width: min(360px, 84vw);
+    transition: transform 0.3s cubic-bezier(.42,0,.58,1), box-shadow 0.3s ease;
+  }
+  .carousel-track > .wonjo-card:hover { transform: translateY(-6px); box-shadow: 0 1px 2px rgba(31,41,55,0.04), 0 30px 56px -22px rgba(45,30,20,0.34); }
+
+  .carousel-dots { display: flex; justify-content: center; align-items: center; gap: 9px; margin-top: 10px; }
+  .carousel-dots button {
+    width: 9px; height: 9px; padding: 0; border: none; border-radius: 999px;
+    background: rgba(20,20,43,0.16); cursor: pointer;
+    transition: width 0.3s cubic-bezier(.42,0,.58,1), background 0.3s ease;
+  }
+  .carousel-dots button:hover { background: rgba(20,20,43,0.3); }
+  .carousel-dots button.active { width: 28px; background: var(--teal); }
+
+  .carousel-arrow {
+    display: none;
+    position: absolute; top: 44%; transform: translateY(-50%); z-index: 5;
+    width: 48px; height: 48px; border-radius: 50%;
+    background: var(--surface); border: 1px solid var(--line); color: var(--ink);
+    cursor: pointer; align-items: center; justify-content: center;
+    box-shadow: var(--shadow-md);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease, background 0.18s ease;
+  }
+  .carousel-arrow:hover { transform: translateY(-50%) scale(1.08); background: var(--teal); color: #fff; box-shadow: 0 14px 30px rgba(74,136,150,0.4); }
+  .carousel-arrow:disabled { opacity: 0; pointer-events: none; }
+  .carousel-arrow.prev { left: -8px; }
+  .carousel-arrow.next { right: -8px; }
+  @media (min-width: 920px) { .carousel-arrow { display: flex; } }
+
+  /* ============================================================
+     WONJO CARDS — design importé (claude_design), classes wc-
+     ============================================================ */
+  .wonjo-card {
+    width: 380px; max-width: 100%;
+    background: #fff;
+    border-radius: 26px;
+    box-shadow: 0 1px 2px rgba(31,41,55,0.04), 0 18px 40px -18px rgba(45,30,20,0.22);
+    overflow: hidden;
+    font-family: 'Plus Jakarta Sans', var(--wc-font, system-ui), sans-serif;
+    color: #1F2937;
+    text-align: left;
+  }
+  .wc-head {
+    background: linear-gradient(101deg, #4A8896 0%, #5E7E6E 42%, #8A6648 72%, #7D4E2E 100%);
+    padding: 18px 20px 14px; color: #fff;
+  }
+  .wc-route { display: flex; align-items: center; gap: 12px; }
+  .wc-city { font-size: 21px; font-weight: 800; letter-spacing: -0.4px; white-space: nowrap; }
+  .wc-line { flex: 1; height: 2px; background: rgba(255,255,255,0.45); border-radius: 2px; }
+  .wc-cube, .wc-chevron { flex-shrink: 0; }
+  .wc-cube { opacity: 0.95; }
+  .wc-chevron { opacity: 0.8; }
+  .wc-headmeta { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; gap: 8px; }
+  .wc-headmeta-side { display: flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.92); }
+  .wc-headmeta-side.right { justify-content: flex-end; }
+  .wc-kg-pill { background: rgba(40,30,25,0.34); color: #fff; font-size: 14px; font-weight: 700; padding: 5px 13px; border-radius: 999px; white-space: nowrap; }
+
+  .wc-body { padding: 18px 20px 20px; }
+  .wc-person { display: flex; align-items: center; gap: 14px; }
+  .wc-avatar { width: 58px; height: 58px; border-radius: 50%; flex-shrink: 0; background: linear-gradient(150deg, #5C9099, #4A8896); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+  .wc-person-main { flex: 1; min-width: 0; }
+  .wc-name-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .wc-name { font-size: 21px; font-weight: 800; letter-spacing: -0.5px; color: #16202E; }
+  .wc-badge { font-size: 13px; font-weight: 600; color: #C2872A; border: 1px solid #EAC98D; background: #FDF7EC; padding: 3px 12px; border-radius: 999px; white-space: nowrap; }
+  .wc-rating { display: flex; align-items: center; gap: 7px; margin-top: 6px; font-size: 17px; }
+  .wc-rating .wc-star { color: #E0A12A; }
+  .wc-rating .wc-score { font-weight: 700; color: #2C3540; }
+  .wc-rating .wc-sub { color: #8A93A0; font-weight: 500; }
+  .wc-price { text-align: right; flex-shrink: 0; }
+  .wc-price-amount { font-size: 30px; font-weight: 800; letter-spacing: -1px; color: #16202E; line-height: 1; }
+  .wc-price-unit { font-size: 15px; color: #8A93A0; font-weight: 500; margin-top: 2px; }
+
+  .wc-desc { margin-top: 18px; background: #F1F2F4; border-radius: 16px; padding: 15px 16px 16px; }
+  .wc-desc-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .wc-desc-label { font-size: 12.5px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: #6B7280; }
+  .wc-desc-plus { color: #4B5563; flex-shrink: 0; }
+  .wc-desc-text { margin-top: 10px; font-size: 17px; line-height: 1.4; color: #5A6472; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .wc-divider { height: 1px; background: #EBEDF0; margin: 18px 0; }
+  .wc-btn { width: 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 11px; padding: 17px 20px; border-radius: 15px; background: #fff; cursor: pointer; font-family: inherit; font-size: 18px; font-weight: 700; letter-spacing: -0.2px; transition: background .15s, transform .08s; }
+  .wc-btn:active { transform: scale(0.99); }
+  .wc-btn--terra { border: 1.5px solid #D8C3B0; color: #7D4E2E; }
+  .wc-btn--terra:hover { background: #FBF6F1; }
+  .wc-btn--teal { border: 1.5px solid #BFD2D5; color: #3C6F7C; }
+  .wc-btn--teal:hover { background: #F2F8F9; }
 
   /* TABS */
   .tabs { display: inline-flex; gap: 6px; padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; box-shadow: var(--shadow-sm); }
@@ -290,14 +392,16 @@
   /* TÉMOIGNAGES */
   .testi-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
   .testi-card {
+    position: relative;
     background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
     padding: 28px; display: flex; flex-direction: column; box-shadow: var(--shadow-sm);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
   .testi-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
-  .testi-stars { color: var(--amber); display: flex; gap: 5px; margin-bottom: 16px; }
+  .testi-stars { position: absolute; top: 32px; right: 28px; color: var(--amber); display: flex; align-items: center; gap: 5px; margin: 0; }
+  .testi-stars .testi-score { font-weight: 700; font-size: 0.95rem; color: var(--ink); }
   .testi-card p { font-size: 1rem; margin-bottom: 18px; flex-grow: 1; }
-  .testi-author { display: flex; align-items: center; gap: 12px; }
+  .testi-author { order: -1; display: flex; align-items: center; gap: 12px; margin-bottom: 18px; padding-right: 96px; }
   .testi-avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--brand-gradient); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.95rem; flex-shrink: 0; object-fit: cover; overflow: hidden; }
   .testi-name { font-weight: 700; font-size: 0.92rem; color: var(--teal); }
 
@@ -333,7 +437,7 @@
   .role-option input { accent-color: var(--teal); width: 18px; height: 18px; }
   .form-card button { width: 100%; background: var(--teal); color: #fff; font-size: 1.05rem; font-weight: 800; border: none; border-radius: 12px; padding: 16px; cursor: pointer; font-family: inherit; transition: transform 0.15s ease, box-shadow 0.15s ease; }
   .form-card button:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(74,136,150,0.4); }
-  .form-note { text-align: center; color: var(--muted); font-size: 0.85rem; margin-top: 16px; }
+  .form-note { text-align: center; color: var(--brown); font-weight: 600; font-size: 0.85rem; margin-top: 16px; }
   .form-success { background: var(--surface); border-radius: 22px; padding: 44px 28px; max-width: 460px; margin: 0 auto; text-align: center; box-shadow: var(--shadow-lg); }
   .form-success .check { width: 64px; height: 64px; border-radius: 50%; background: rgba(29,158,117,0.14); color: var(--green); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
   .form-success h3 { color: var(--ink); font-size: 1.3rem; margin-bottom: 8px; }
@@ -363,7 +467,6 @@
   }
 
   @media (min-width: 720px) {
-    .corridors-grid { grid-template-columns: repeat(2,1fr); }
     .steps { grid-template-columns: repeat(3,1fr); }
     .trust-grid { grid-template-columns: repeat(3,1fr); }
     .pricing-grid { grid-template-columns: repeat(3,1fr); }
@@ -382,6 +485,7 @@
 
   <!-- NAV -->
   <nav class="nav" id="nav">
+    <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
     <div class="wrap nav-inner">
       <a href="#top" class="nav-logo"><img src="/assets/wonjo-logo.png" alt="Logo Wonjo">Wonjo</a>
       <div class="nav-links">
@@ -479,13 +583,204 @@
   <section class="section" id="corridors">
     <div class="wrap">
       <h2 class="reveal">Des corridors qui rapprochent</h2>
-      <p class="section-sub reveal">De l'Europe vers l'Afrique, et d'un pays d'Europe à l'autre.</p>
-      <div class="corridors-grid">
-        <div class="corridor reveal"><span class="from">Paris</span><svg class="plane" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg><span class="to">Dakar</span></div>
-        <div class="corridor reveal"><span class="from">Lyon</span><svg class="plane" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg><span class="to">Abidjan</span></div>
-        <div class="corridor reveal"><span class="from">Bruxelles</span><svg class="plane" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg><span class="to">Douala</span></div>
-        <div class="corridor reveal"><span class="from">Paris</span><svg class="plane" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg><span class="to">Bruxelles</span></div>
+      <p class="section-sub reveal">Colis à acheminer ou trajets disponibles : un aperçu de ce qui circule sur Wonjo.</p>
+
+      <div class="carousel reveal" data-carousel>
+        <button class="carousel-arrow prev" type="button" aria-label="Cartes précédentes">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <div class="carousel-track" id="corridorTrack">
+
+          <!-- 1 — Demande de colis -->
+          <article class="wonjo-card">
+            <header class="wc-head">
+              <div class="wc-route">
+                <span class="wc-city">Lyon</span><span class="wc-line"></span>
+                <svg class="wc-cube" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.95)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg>
+                <span class="wc-line"></span>
+                <svg class="wc-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
+                <span class="wc-city">Abidjan</span>
+              </div>
+              <div class="wc-headmeta">
+                <span class="wc-headmeta-side"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg> Avant le 28 juin</span>
+                <span class="wc-kg-pill">5 kg</span>
+              </div>
+            </header>
+            <div class="wc-body">
+              <div class="wc-person">
+                <div class="wc-avatar">AM</div>
+                <div class="wc-person-main">
+                  <div class="wc-name-row"><span class="wc-name">Alice Martin</span><span class="wc-badge">Ambassadeur</span></div>
+                  <div class="wc-rating"><svg class="wc-star" width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><span class="wc-score">4.0</span><span class="wc-sub">· 8 colis confiés</span></div>
+                </div>
+              </div>
+              <div class="wc-desc">
+                <div class="wc-desc-head"><span class="wc-desc-label">Description du colis</span><svg class="wc-desc-plus" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
+                <p class="wc-desc-text">Téléphone et accessoires pour ma sœur à Abidjan…</p>
+              </div>
+              <div class="wc-divider"></div>
+              <button class="wc-btn wc-btn--terra" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg> Proposer un transport</button>
+            </div>
+          </article>
+
+          <!-- 2 — Trajet disponible -->
+          <article class="wonjo-card">
+            <header class="wc-head">
+              <div class="wc-route">
+                <span class="wc-city">Paris</span><span class="wc-line"></span>
+                <svg class="wc-cube" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.95)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg>
+                <span class="wc-line"></span>
+                <svg class="wc-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
+                <span class="wc-city">Dakar</span>
+              </div>
+              <div class="wc-headmeta">
+                <span class="wc-headmeta-side"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg> 27 juin</span>
+                <span class="wc-kg-pill">10 kg</span>
+              </div>
+            </header>
+            <div class="wc-body">
+              <div class="wc-person">
+                <div class="wc-avatar">DK</div>
+                <div class="wc-person-main">
+                  <div class="wc-name-row"><span class="wc-name">Diane Koné</span></div>
+                  <div class="wc-rating"><svg class="wc-star" width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><span class="wc-score">4.0</span><span class="wc-sub">· 4 livraisons</span></div>
+                </div>
+                <div class="wc-price"><div class="wc-price-amount">8€</div><div class="wc-price-unit">/kg</div></div>
+              </div>
+              <div class="wc-divider"></div>
+              <button class="wc-btn wc-btn--teal" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg> Envoyer un colis</button>
+            </div>
+          </article>
+
+          <!-- 3 — Demande de colis -->
+          <article class="wonjo-card">
+            <header class="wc-head">
+              <div class="wc-route">
+                <span class="wc-city">Bruxelles</span><span class="wc-line"></span>
+                <svg class="wc-cube" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.95)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg>
+                <span class="wc-line"></span>
+                <svg class="wc-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
+                <span class="wc-city">Douala</span>
+              </div>
+              <div class="wc-headmeta">
+                <span class="wc-headmeta-side"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg> Avant le 5 juillet</span>
+                <span class="wc-kg-pill">3 kg</span>
+              </div>
+            </header>
+            <div class="wc-body">
+              <div class="wc-person">
+                <div class="wc-avatar">SE</div>
+                <div class="wc-person-main">
+                  <div class="wc-name-row"><span class="wc-name">Samuel Etoa</span></div>
+                  <div class="wc-rating"><svg class="wc-star" width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><span class="wc-score">4.8</span><span class="wc-sub">· 12 colis confiés</span></div>
+                </div>
+              </div>
+              <div class="wc-desc">
+                <div class="wc-desc-head"><span class="wc-desc-label">Description du colis</span><svg class="wc-desc-plus" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
+                <p class="wc-desc-text">Documents et médicaments pour ma mère…</p>
+              </div>
+              <div class="wc-divider"></div>
+              <button class="wc-btn wc-btn--terra" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg> Proposer un transport</button>
+            </div>
+          </article>
+
+          <!-- 4 — Trajet disponible -->
+          <article class="wonjo-card">
+            <header class="wc-head">
+              <div class="wc-route">
+                <span class="wc-city">Marseille</span><span class="wc-line"></span>
+                <svg class="wc-cube" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.95)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg>
+                <span class="wc-line"></span>
+                <svg class="wc-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
+                <span class="wc-city">Casablanca</span>
+              </div>
+              <div class="wc-headmeta">
+                <span class="wc-headmeta-side"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg> 2 juillet</span>
+                <span class="wc-kg-pill">15 kg</span>
+              </div>
+            </header>
+            <div class="wc-body">
+              <div class="wc-person">
+                <div class="wc-avatar">YB</div>
+                <div class="wc-person-main">
+                  <div class="wc-name-row"><span class="wc-name">Yasmine B.</span><span class="wc-badge">Ambassadeur</span></div>
+                  <div class="wc-rating"><svg class="wc-star" width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><span class="wc-score">4.9</span><span class="wc-sub">· 21 livraisons</span></div>
+                </div>
+                <div class="wc-price"><div class="wc-price-amount">6€</div><div class="wc-price-unit">/kg</div></div>
+              </div>
+              <div class="wc-divider"></div>
+              <button class="wc-btn wc-btn--teal" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg> Envoyer un colis</button>
+            </div>
+          </article>
+
+          <!-- 5 — Demande de colis -->
+          <article class="wonjo-card">
+            <header class="wc-head">
+              <div class="wc-route">
+                <span class="wc-city">Paris</span><span class="wc-line"></span>
+                <svg class="wc-cube" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.95)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg>
+                <span class="wc-line"></span>
+                <svg class="wc-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
+                <span class="wc-city">Bruxelles</span>
+              </div>
+              <div class="wc-headmeta">
+                <span class="wc-headmeta-side"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg> Avant le 30 juin</span>
+                <span class="wc-kg-pill">2 kg</span>
+              </div>
+            </header>
+            <div class="wc-body">
+              <div class="wc-person">
+                <div class="wc-avatar">LD</div>
+                <div class="wc-person-main">
+                  <div class="wc-name-row"><span class="wc-name">Léa Dubois</span></div>
+                  <div class="wc-rating"><svg class="wc-star" width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><span class="wc-score">5.0</span><span class="wc-sub">· 3 colis confiés</span></div>
+                </div>
+              </div>
+              <div class="wc-desc">
+                <div class="wc-desc-head"><span class="wc-desc-label">Description du colis</span><svg class="wc-desc-plus" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
+                <p class="wc-desc-text">Petit cadeau d'anniversaire bien emballé…</p>
+              </div>
+              <div class="wc-divider"></div>
+              <button class="wc-btn wc-btn--terra" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg> Proposer un transport</button>
+            </div>
+          </article>
+
+          <!-- 6 — Trajet disponible -->
+          <article class="wonjo-card">
+            <header class="wc-head">
+              <div class="wc-route">
+                <span class="wc-city">Genève</span><span class="wc-line"></span>
+                <svg class="wc-cube" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.95)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg>
+                <span class="wc-line"></span>
+                <svg class="wc-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
+                <span class="wc-city">Kinshasa</span>
+              </div>
+              <div class="wc-headmeta">
+                <span class="wc-headmeta-side"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg> 8 juillet</span>
+                <span class="wc-kg-pill">12 kg</span>
+              </div>
+            </header>
+            <div class="wc-body">
+              <div class="wc-person">
+                <div class="wc-avatar">PM</div>
+                <div class="wc-person-main">
+                  <div class="wc-name-row"><span class="wc-name">Patrick M.</span></div>
+                  <div class="wc-rating"><svg class="wc-star" width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><span class="wc-score">4.7</span><span class="wc-sub">· 9 livraisons</span></div>
+                </div>
+                <div class="wc-price"><div class="wc-price-amount">12€</div><div class="wc-price-unit">/kg</div></div>
+              </div>
+              <div class="wc-divider"></div>
+              <button class="wc-btn wc-btn--teal" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg> Envoyer un colis</button>
+            </div>
+          </article>
+
+        </div>
+        <button class="carousel-arrow next" type="button" aria-label="Cartes suivantes">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
+        </button>
+        <div class="carousel-dots" id="corridorDots" role="tablist" aria-label="Pagination des corridors"></div>
       </div>
+
       <p class="corridors-note reveal">Quelques exemples parmi nos trajets. Côté Europe, les départs se font depuis quelques pays seulement (France, Belgique), et d'autres arrivent bientôt.</p>
     </div>
   </section>
@@ -627,21 +922,21 @@
       <div class="testi-grid">
         <div class="testi-card reveal">
           <div class="testi-stars">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span class="testi-score">5,0</span>
           </div>
           <p>« J'envoie régulièrement des médicaments à ma famille au Sénégal. Avec Wonjo c'est 3x moins cher qu'un transporteur classique et je sais que c'est sécurisé. »</p>
           <div class="testi-author"><div class="testi-avatar">MD</div><div class="testi-name">Moussa D.<br><span style="color:var(--muted);font-weight:500;">Paris → Dakar</span></div></div>
         </div>
         <div class="testi-card reveal">
           <div class="testi-stars">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span class="testi-score">5,0</span>
           </div>
           <p>« Je voyage 4 fois par an entre Paris et Abidjan. Wonjo me permet de rentabiliser mon voyage et d'aider des familles à envoyer leurs colis. »</p>
           <div class="testi-author"><div class="testi-avatar">AK</div><div class="testi-name">Aminata K.<br><span style="color:var(--muted);font-weight:500;">Voyageuse fréquente</span></div></div>
         </div>
         <div class="testi-card reveal">
           <div class="testi-stars">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span class="testi-score">5,0</span>
           </div>
           <p>« Simple, rapide et sécurisé. Le paiement est bloqué jusqu'à la livraison, ça rassure vraiment. »</p>
           <div class="testi-author"><div class="testi-avatar">JM</div><div class="testi-name">Jean-Pierre M.<br><span style="color:var(--muted);font-weight:500;">Camerounais à Lyon</span></div></div>
@@ -771,6 +1066,120 @@
       success.hidden = false;
       success.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
+
+    // Carrousel des corridors : dots de pagination + flèches + synchro au scroll
+    (function () {
+      var track = document.getElementById('corridorTrack');
+      var dotsWrap = document.getElementById('corridorDots');
+      if (!track || !dotsWrap) return;
+      var cards = Array.prototype.slice.call(track.querySelectorAll('.wonjo-card'));
+      var carousel = track.closest('[data-carousel]');
+      var prevBtn = carousel.querySelector('.carousel-arrow.prev');
+      var nextBtn = carousel.querySelector('.carousel-arrow.next');
+
+      function scrollToCard(i) {
+        var card = cards[i];
+        if (!card) return;
+        track.scrollTo({ left: card.offsetLeft - (track.clientWidth - card.offsetWidth) / 2, behavior: 'smooth' });
+      }
+
+      cards.forEach(function (_, i) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.setAttribute('role', 'tab');
+        b.setAttribute('aria-label', 'Aller à la carte ' + (i + 1));
+        if (i === 0) b.classList.add('active');
+        b.addEventListener('click', function () { scrollToCard(i); });
+        dotsWrap.appendChild(b);
+      });
+      var dots = Array.prototype.slice.call(dotsWrap.children);
+      var current = 0;
+
+      function activeIndex() {
+        var center = track.scrollLeft + track.clientWidth / 2;
+        var best = 0, bestDist = Infinity;
+        cards.forEach(function (card, i) {
+          var cc = card.offsetLeft + card.offsetWidth / 2;
+          var d = Math.abs(cc - center);
+          if (d < bestDist) { bestDist = d; best = i; }
+        });
+        return best;
+      }
+
+      function syncArrows() {
+        if (prevBtn) prevBtn.disabled = track.scrollLeft <= 4;
+        if (nextBtn) nextBtn.disabled = track.scrollLeft >= track.scrollWidth - track.clientWidth - 4;
+      }
+
+      var raf;
+      track.addEventListener('scroll', function () {
+        if (raf) cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(function () {
+          current = activeIndex();
+          dots.forEach(function (d, i) {
+            d.classList.toggle('active', i === current);
+            d.setAttribute('aria-selected', i === current);
+          });
+          syncArrows();
+        });
+      }, { passive: true });
+
+      if (prevBtn) prevBtn.addEventListener('click', function () { scrollToCard(Math.max(0, current - 1)); });
+      if (nextBtn) nextBtn.addEventListener('click', function () { scrollToCard(Math.min(cards.length - 1, current + 1)); });
+      syncArrows();
+
+      // Défilement automatique (pause au survol / à l'interaction)
+      var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var autoTimer = null;
+      function startAuto() {
+        if (prefersReduced || document.hidden) return;
+        stopAuto();
+        autoTimer = setInterval(function () {
+          scrollToCard(current >= cards.length - 1 ? 0 : current + 1);
+        }, 3500);
+      }
+      function stopAuto() { if (autoTimer) { clearInterval(autoTimer); autoTimer = null; } }
+
+      carousel.addEventListener('pointerenter', stopAuto);
+      carousel.addEventListener('pointerleave', startAuto);
+      carousel.addEventListener('focusin', stopAuto);
+      carousel.addEventListener('focusout', startAuto);
+      track.addEventListener('touchstart', stopAuto, { passive: true });
+      track.addEventListener('touchend', function () { setTimeout(startAuto, 4000); }, { passive: true });
+      document.addEventListener('visibilitychange', function () { document.hidden ? stopAuto() : startAuto(); });
+      startAuto();
+    })();
+
+    // Barre de progression de lecture + mise en surbrillance du lien actif
+    (function () {
+      var bar = document.getElementById('scrollProgress');
+      var navLinks = Array.prototype.slice.call(document.querySelectorAll('.nav-links a'));
+      var sections = navLinks
+        .map(function (a) { return document.querySelector(a.getAttribute('href')); })
+        .filter(Boolean);
+
+      function onScroll() {
+        var h = document.documentElement;
+        var scrolled = h.scrollTop / (h.scrollHeight - h.clientHeight || 1);
+        if (bar) bar.style.transform = 'scaleX(' + Math.min(1, Math.max(0, scrolled)) + ')';
+      }
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+
+      if ('IntersectionObserver' in window && sections.length) {
+        var spy = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              var id = '#' + entry.target.id;
+              navLinks.forEach(function (a) {
+                a.classList.toggle('active', a.getAttribute('href') === id);
+              });
+            }
+          });
+        }, { rootMargin: '-45% 0px -50% 0px' });
+        sections.forEach(function (s) { spy.observe(s); });
+      }
+    })();
   </script>
 
 </body>

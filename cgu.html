@@ -7,30 +7,85 @@
 <link rel="apple-touch-icon" href="/assets/wonjo-logo.png">
 <title>Conditions générales d'utilisation - Wonjo</title>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
   :root {
     --teal: #4A8896;
+    --teal-dark: #3a6b77;
     --brown: #7D4E2E;
     --green: #1D9E75;
-    --bg: #F8F7FF;
-    --text: #1A1A2E;
+    --bg: #fbfaff;
+    --surface: #ffffff;
+    --text: #14142b;
     --muted: #5b5b70;
+    --line: rgba(20,20,43,0.08);
     --brand-gradient: linear-gradient(135deg, #4A8896 0%, #4A8896 45%, #7D4E2E 100%);
+    --radius: 22px;
+    --shadow-sm: 0 4px 16px rgba(20,20,43,0.05);
+    --shadow-md: 0 14px 40px rgba(20,20,43,0.10);
+    --shadow-lg: 0 24px 60px rgba(20,20,43,0.16);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    color: var(--text); background: var(--bg); line-height: 1.55;
+    font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text); background: var(--bg); line-height: 1.6;
+    background-image: radial-gradient(900px 500px at 85% -10%, rgba(74,136,150,0.10), transparent 60%),
+                      radial-gradient(800px 460px at 0% 8%, rgba(125,78,46,0.07), transparent 55%);
+    background-attachment: fixed;
     min-height: 100vh; display: flex; flex-direction: column;
     -webkit-font-smoothing: antialiased;
   }
-  .hero { background: var(--brand-gradient); color: #fff; text-align: center; padding: 40px 20px; }
-  .hero a { color: #fff; text-decoration: none; }
-  .logo { display: inline-flex; align-items: center; gap: 10px; font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em; }
-  .logo img { height: 48px; width: auto; }
-  main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 64px 20px; }
-  main h1 { font-size: 1.6rem; font-weight: 800; margin-bottom: 12px; }
-  main p { color: var(--muted); max-width: 460px; }
+  h1, h2, h3, .logo, .flogo { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; }
+
+  /* TOP BAR + BOUTON RETOUR */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(251,250,255,0.82);
+    backdrop-filter: saturate(180%) blur(14px);
+    -webkit-backdrop-filter: saturate(180%) blur(14px);
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar-inner { max-width: 920px; margin: 0 auto; padding: 0 24px; height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-weight: 700; font-size: 0.95rem; text-decoration: none; color: var(--teal);
+    background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
+    padding: 9px 18px 9px 14px; box-shadow: var(--shadow-sm);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, color 0.15s ease;
+  }
+  .back-btn:hover { transform: translateX(-3px); background: var(--teal); color: #fff; box-shadow: 0 10px 24px rgba(74,136,150,0.32); }
+  .topbar .logo { font-size: 1.3rem; color: var(--text); }
+  .topbar .logo span { color: var(--teal); }
+  .topbar .logo img { height: 30px; }
+
+  /* HERO */
+  .legal-hero { background: var(--brand-gradient); color: #fff; text-align: center; padding: 54px 24px 60px; }
+  .legal-hero .eyebrow { display: inline-block; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.85; margin-bottom: 14px; }
+  .legal-hero h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.12; }
+  .legal-hero .meta { margin-top: 14px; font-size: 0.95rem; opacity: 0.9; }
+
+  .logo { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -0.02em; text-decoration: none; }
+  .logo img { width: auto; display: block; }
+
+  /* CARTE LÉGALE CENTRÉE */
+  main.legal { flex: 1; width: 100%; max-width: 860px; margin: -36px auto 0; padding: 0 24px 80px; }
+  .legal-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-lg); padding: clamp(26px, 5vw, 56px); }
+  /* le titre + la version sont déjà affichés dans le hero : on masque les doublons en tête de contenu */
+  .legal-card > h1:first-child,
+  .legal-card > h1:first-child + h3,
+  .legal-card > h1:first-child + h3 + hr { display: none; }
+  .legal-card h2 {
+    font-size: 1.3rem; font-weight: 800; letter-spacing: -0.02em; color: var(--teal);
+    margin: 40px 0 14px; line-height: 1.25;
+  }
+  .legal-card h2:first-of-type { margin-top: 4px; }
+  .legal-card h3 { font-size: 1.02rem; font-weight: 700; margin: 24px 0 8px; color: var(--text); }
+  .legal-card p { color: #34344a; margin-bottom: 14px; }
+  .legal-card ul { margin: 0 0 18px 1.25rem; }
+  .legal-card li { margin-bottom: 8px; color: #34344a; }
+  .legal-card strong { font-weight: 700; }
+  .legal-card hr { border: none; border-top: 1px solid var(--line); margin: 30px 0; }
+  .legal-card a { color: var(--teal); font-weight: 600; }
 
   /* FOOTER */
   footer { background: #2a1d14; color: #cdbfb4; padding: 44px 20px 28px; font-size: 0.9rem; }
@@ -66,10 +121,255 @@
 </style>
 </head>
 <body>
-  <header class="hero"><a href="/"><div class="logo"><img src="/assets/wonjo-logo.png" alt="Logo Wonjo">Wonjo</div></a></header>
-  <main>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="/" class="back-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        Retour à l'accueil
+      </a>
+      <a href="/" class="logo"><img src="/assets/wonjo-logo.png" alt="Logo Wonjo">Wonjo</a>
+    </div>
+  </header>
+  <section class="legal-hero">
+    <span class="eyebrow">Informations légales</span>
     <h1>Conditions générales d'utilisation</h1>
-    <p>Page en cours de rédaction.</p>
+    <p class="meta">Wonjo v1.0.0 · Mis à jour le 1er juin 2026</p>
+  </section>
+  <main class="legal">
+    <div class="legal-card">
+<h1>Conditions Générales d&#x27;Utilisation Wonjo</h1>
+<h3>Wonjo v1.0.0 - 1er juin 2026</h3>
+<hr>
+<h2>Article 1 - Présentation de Wonjo et statut d&#x27;intermédiaire</h2>
+<p>Wonjo est une plateforme numérique de mise en relation entre des particuliers souhaitant envoyer des colis (ci-après « Expéditeurs ») et des particuliers effectuant des voyages avec de la capacité de transport disponible (ci-après « Voyageurs »).</p>
+<p>Wonjo agit exclusivement en qualité d&#x27;intermédiaire technique. Wonjo n&#x27;est pas transporteur, n&#x27;intervient pas dans l&#x27;exécution du transport, et n&#x27;est partie à aucun contrat conclu entre un Expéditeur et un Voyageur. Le contrat de transport est conclu directement et exclusivement entre l&#x27;Expéditeur et le Voyageur.</p>
+<p>En conséquence, Wonjo ne peut être tenu responsable des incidents survenant pendant le transport, du contenu des colis, des retards, des pertes, des dommages, ni des conséquences légales ou douanières liées au transport de marchandises entre pays.</p>
+<p>L&#x27;utilisation de la plateforme Wonjo implique l&#x27;acceptation pleine et entière des présentes Conditions Générales d&#x27;Utilisation (ci-après « CGU »). Toute personne qui n&#x27;accepte pas ces conditions doit s&#x27;abstenir d&#x27;utiliser la plateforme.</p>
+<hr>
+<h2>Article 2 - Inscription et profil utilisateur</h2>
+<p>Pour accéder aux fonctionnalités de la plateforme Wonjo, chaque utilisateur doit créer un compte personnel en fournissant des informations exactes, complètes et à jour : nom, prénom, adresse e-mail et numéro de téléphone. L&#x27;utilisateur doit être une personne physique âgée d&#x27;au moins 18 ans. Dans sa version actuelle, la plateforme est destinée aux particuliers uniquement.</p>
+<p>Chaque utilisateur est responsable de la confidentialité de ses identifiants de connexion et de toutes les actions effectuées depuis son compte. Wonjo ne peut être tenu responsable de tout accès non autorisé résultant d&#x27;une négligence de l&#x27;utilisateur.</p>
+<h3>Vérification d&#x27;identité (KYC)</h3>
+<p>Afin de garantir la confiance entre les utilisateurs, Wonjo peut exiger la vérification de l&#x27;identité de tout utilisateur avant qu&#x27;il puisse publier un trajet, envoyer un colis, ou recevoir un paiement. Cette vérification est effectuée par un prestataire tiers agréé. Wonjo ne conserve pas les documents d&#x27;identité originaux, seul le statut de vérification (vérifié, en attente, refusé) est enregistré sur la plateforme.</p>
+<p>Un utilisateur dont l&#x27;identité n&#x27;est pas vérifiée peut se voir restreindre l&#x27;accès à certaines fonctionnalités de la plateforme.</p>
+<h3>Unicité du compte</h3>
+<p>Chaque utilisateur ne peut détenir qu&#x27;un seul compte actif sur la plateforme. La création de comptes multiples est strictement interdite et peut entraîner la suspension immédiate de tous les comptes concernés.</p>
+<h3>Suspension et suppression</h3>
+<p>Wonjo se réserve le droit de suspendre ou supprimer tout compte en cas de violation des présentes CGU, de comportement frauduleux, ou de signalement répété par d&#x27;autres utilisateurs. L&#x27;utilisateur dont le compte est suspendu perd l&#x27;accès à la plateforme mais reste responsable des obligations contractuelles en cours vis-à-vis des autres utilisateurs.</p>
+<hr>
+<h2>Article 3 - Rôles : Voyageur et Expéditeur</h2>
+<p>La plateforme Wonjo distingue deux rôles principaux, choisis par l&#x27;utilisateur à l&#x27;inscription :</p>
+<ul>
+<li>Le <strong>Voyageur</strong> est un particulier qui effectue un voyage et dispose d&#x27;une capacité de transport disponible qu&#x27;il souhaite partager contre rémunération.</li>
+<li>L&#x27;<strong>Expéditeur</strong> est un particulier qui souhaite envoyer un ou plusieurs colis via un Voyageur se rendant à la destination souhaitée.</li>
+</ul>
+<p>Ces rôles constituent une préférence d&#x27;affichage et non une restriction d&#x27;utilisation. Un utilisateur inscrit comme Voyageur peut également envoyer des colis, et un utilisateur inscrit comme Expéditeur peut également publier un trajet. Chaque utilisateur est libre de jouer les deux rôles selon ses besoins.</p>
+<h3>Limite de poids</h3>
+<p>Dans sa version actuelle, la plateforme est limitée aux colis de particuliers d&#x27;un poids maximum de 23 kg par envoi. Tout colis dépassant cette limite ne peut pas être pris en charge via la plateforme. L&#x27;Expéditeur déclare le poids exact de son colis au moment de la demande et engage sa responsabilité sur l&#x27;exactitude de cette déclaration.</p>
+<h3>Système de réputation</h3>
+<p>Chaque utilisateur dispose d&#x27;un profil public affichant sa note moyenne, son nombre de transactions réalisées, et les badges obtenus. Ce système de réputation est le principal mécanisme de confiance entre les utilisateurs. Wonjo ne garantit pas la fiabilité des utilisateurs sur la seule base de leur note.</p>
+<hr>
+<h2>Article 4 - Publication d&#x27;un trajet ou d&#x27;une demande de colis</h2>
+<p>Tout utilisateur peut publier une annonce sur la plateforme Wonjo, qu&#x27;il soit Voyageur souhaitant proposer de la capacité de transport ou Expéditeur souhaitant trouver un Voyageur pour son colis.</p>
+<h3>Publication d&#x27;un trajet par un Voyageur</h3>
+<p>Le Voyageur qui publie un trajet s&#x27;engage à fournir des informations exactes et complètes, notamment :</p>
+<ul>
+<li>La ville et le pays de départ ainsi que la ville et le pays d&#x27;arrivée.</li>
+<li>La date de départ prévue.</li>
+<li>Le poids disponible en kilogrammes, dans la limite de 23 kg.</li>
+<li>Le prix demandé par kilogramme.</li>
+</ul>
+<p>Le Voyageur s&#x27;engage à honorer les demandes qu&#x27;il accepte. En cas d&#x27;annulation après acceptation d&#x27;une demande, le Voyageur doit en informer l&#x27;Expéditeur dans les meilleurs délais via la messagerie de la plateforme.</p>
+<h3>Publication d&#x27;une demande de colis par un Expéditeur</h3>
+<p>L&#x27;Expéditeur qui ne trouve pas de trajet correspondant à ses besoins peut publier une demande de colis précisant la destination souhaitée, la date souhaitée, le poids approximatif du colis et son budget par kilogramme. Les Voyageurs intéressés peuvent alors entrer en contact avec l&#x27;Expéditeur.</p>
+<h3>Exactitude des informations</h3>
+<p>Tout utilisateur qui publie une annonce inexacte, trompeuse ou frauduleuse s&#x27;expose à la suspension immédiate de son compte. Wonjo se réserve le droit de retirer toute annonce sans préavis en cas de violation des présentes CGU.</p>
+<hr>
+<h2>Article 5 - Déclaration de contenu et objets interdits</h2>
+<h3>Déclaration obligatoire</h3>
+<p>Tout Expéditeur est tenu de déclarer avec exactitude le contenu de son colis au moment de sa demande, en précisant :</p>
+<ul>
+<li>La nature du contenu (description détaillée des articles contenus).</li>
+<li>La valeur déclarée en euros.</li>
+<li>Le caractère fragile du colis le cas échéant.</li>
+</ul>
+<p>Cette déclaration est enregistrée de façon permanente et horodatée sur la plateforme au moment de la soumission de la demande. Elle constitue une preuve opposable entre l&#x27;Expéditeur et le Voyageur. Elle ne peut pas être modifiée après soumission.</p>
+<p>L&#x27;Expéditeur atteste, en cochant explicitement la case prévue à cet effet, que son colis ne contient aucun des objets figurant sur la liste des objets interdits affichée sur la plateforme au moment de la déclaration. Cette liste est enregistrée dans la déclaration au moment de sa soumission, de sorte que la version applicable est celle en vigueur au jour de l&#x27;envoi.</p>
+<h3>Acceptation éclairée du Voyageur</h3>
+<p>Le Voyageur prend connaissance de la déclaration de contenu complète avant d&#x27;accepter une demande. En acceptant une demande, le Voyageur reconnaît avoir pris connaissance du contenu déclaré et accepte de le transporter tel que déclaré. Cette acceptation est enregistrée de façon permanente et horodatée sur la plateforme.</p>
+<h3>Objets interdits</h3>
+<p>Il est strictement interdit d&#x27;envoyer via la plateforme Wonjo les objets suivants :</p>
+<ul>
+<li>Armes et munitions : armes à feu, couteaux, munitions, explosifs, grenades et tout objet conçu pour blesser.</li>
+<li>Stupéfiants : drogues illicites, précurseurs chimiques, substances contrôlées sans ordonnance médicale valide.</li>
+<li>Espèces non déclarées : billets de banque ou pièces dépassant les seuils légaux sans déclaration douanière préalable.</li>
+<li>Matières dangereuses : matières inflammables, corrosives, radioactives, gaz sous pression, batteries lithium non conformes aux normes de transport aérien.</li>
+<li>Contrefaçons : articles de marque contrefaits, logiciels piratés, documents falsifiés.</li>
+<li>Produits alimentaires non conformes : denrées périssables sans emballage approprié, animaux vivants, produits d&#x27;origine animale sans certificat vétérinaire.</li>
+<li>Médicaments sans ordonnance : médicaments soumis à prescription, substances dopantes, produits amaigrissants non homologués.</li>
+<li>Matériel de surveillance illégal : dispositifs d&#x27;écoute cachés, caméras espions, logiciels malveillants.</li>
+</ul>
+<p>Cette liste n&#x27;est pas exhaustive. Tout objet dont le transport est interdit par la législation du pays de départ, du pays d&#x27;arrivée, ou de tout pays de transit est également interdit sur la plateforme, même s&#x27;il ne figure pas explicitement dans la liste ci-dessus.</p>
+<h3>Responsabilité de l&#x27;Expéditeur</h3>
+<p>L&#x27;Expéditeur est seul responsable du contenu de son colis. En cas de fausse déclaration, l&#x27;Expéditeur engage sa responsabilité civile et pénale, supporte seul les conséquences légales, douanières et financières qui en découlent, et indemnise le Voyageur pour tout préjudice subi du fait de cette fausse déclaration, notamment en cas de saisie douanière, d&#x27;arrestation, ou de confiscation du colis.</p>
+<h3>Responsabilité du Voyageur</h3>
+<p>Le Voyageur est responsable des bagages qu&#x27;il transporte aux yeux des autorités douanières et de sécurité. Wonjo rappelle que le transport de marchandises illicites expose le Voyageur à des poursuites pénales, indépendamment de sa bonne foi. Le Voyageur est encouragé à vérifier physiquement le contenu du colis au moment de la remise et à ne pas accepter de colis dont le contenu lui semble suspect ou ne correspond pas à la déclaration.</p>
+<hr>
+<h2>Article 6 - Le transport et les constats</h2>
+<h3>Les étapes du transport</h3>
+<p>Une fois la demande acceptée par le Voyageur, la transaction suit un processus en plusieurs étapes dont le statut est suivi en temps réel sur la plateforme :</p>
+<ul>
+<li>En attente : la demande a été créée et attend la réponse du Voyageur.</li>
+<li>Acceptée : le Voyageur a accepté la demande et s&#x27;engage à transporter le colis.</li>
+<li>Remis au Voyageur : le colis a été physiquement remis au Voyageur par l&#x27;Expéditeur, confirmé par les deux parties.</li>
+<li>En transit : le Voyageur est en route vers la destination.</li>
+<li>Arrivé : le Voyageur est arrivé dans la ville de destination.</li>
+<li>Livré : le colis a été remis au destinataire et la livraison a été confirmée.</li>
+<li>Annulé : la transaction a été annulée avant la remise physique du colis.</li>
+<li>Litige : un problème a été signalé par l&#x27;une des parties.</li>
+</ul>
+<h3>Les constats photographiques</h3>
+<p>Afin de constituer une preuve de l&#x27;état du colis à chaque étape clé, la plateforme exige la prise de photos horodatées dans les situations suivantes :</p>
+<ul>
+<li>Au moment de la remise du colis au Voyageur, chaque partie soumet une photo confirmant l&#x27;état et l&#x27;emballage du colis. La transition vers le statut &quot;Remis au Voyageur&quot; ne peut avoir lieu qu&#x27;une fois les deux confirmations soumises.</li>
+<li>Au moment de la livraison au destinataire, le Voyageur soumet une photo confirmant la remise. L&#x27;Expéditeur ou le destinataire dispose ensuite d&#x27;un délai de 7 jours pour confirmer la réception ou signaler un problème.</li>
+</ul>
+<p>Ces photos sont conservées de façon permanente sur la plateforme et constituent la preuve contractuelle de l&#x27;état du colis aux étapes concernées. Elles ne peuvent pas être modifiées ou supprimées après soumission.</p>
+<h3>Confirmation de livraison et présomption d&#x27;acceptation</h3>
+<p>Une fois la photo de livraison soumise par le Voyageur, l&#x27;Expéditeur ou le destinataire dispose d&#x27;un délai de 7 jours calendaires pour confirmer la réception ou ouvrir un litige.</p>
+<p>Passé ce délai de 7 jours sans action de la part de l&#x27;Expéditeur ou du destinataire, la livraison est présumée acceptée de façon irréfragable. Cette présomption d&#x27;acceptation entraîne automatiquement le déblocage du paiement en faveur du Voyageur. Le silence de l&#x27;Expéditeur ou du destinataire pendant ce délai vaut acceptation pleine et entière de la livraison telle qu&#x27;effectuée.</p>
+<h3>Annulation</h3>
+<p>Une transaction peut être annulée par l&#x27;une ou l&#x27;autre des parties uniquement avant la remise physique du colis au Voyageur, c&#x27;est-à-dire tant que la transaction est au statut &quot;En attente&quot; ou &quot;Acceptée&quot;. Une fois le colis remis au Voyageur, la transaction ne peut plus être annulée. Seule l&#x27;ouverture d&#x27;un litige est possible à partir de ce stade.</p>
+<h3>Obligations du Voyageur pendant le transport</h3>
+<p>Le Voyageur s&#x27;engage à transporter le colis avec soin, à le maintenir dans l&#x27;état dans lequel il lui a été remis, à informer l&#x27;Expéditeur de tout incident via la messagerie de la plateforme, et à livrer le colis au destinataire désigné par l&#x27;Expéditeur dans un délai raisonnable à compter de son arrivée à destination.</p>
+<hr>
+<h2>Article 7 - Paiement et séquestre</h2>
+<h3>Prix et frais de service</h3>
+<p>Le prix du transport est fixé librement par le Voyageur au moment de la publication de son trajet, exprimé en euros par kilogramme. Le montant total dû par l&#x27;Expéditeur est calculé sur la base du poids déclaré du colis multiplié par le prix par kilogramme fixé par le Voyageur.</p>
+<p>Wonjo perçoit une commission sur chaque transaction réalisée via la plateforme. Le montant de cette commission est affiché à l&#x27;Expéditeur avant la confirmation de sa demande et déduit du montant versé au Voyageur au moment du déblocage du paiement.</p>
+<h3>Séquestre des fonds</h3>
+<p>Afin de protéger les deux parties, le paiement de l&#x27;Expéditeur est séquestré par un prestataire de paiement agréé dès la confirmation de la demande. Les fonds sont conservés en séquestre pendant toute la durée du transport et ne sont versés au Voyageur qu&#x27;à l&#x27;issue de la livraison confirmée, selon les modalités décrites à l&#x27;Article 6.</p>
+<p>Wonjo ne détient jamais les fonds en son nom propre. Le séquestre est géré exclusivement par le prestataire de paiement agréé, conformément à la réglementation applicable aux services de paiement.</p>
+<h3>Déblocage du paiement</h3>
+<p>Le paiement séquestré est débloqué en faveur du Voyageur dans les cas suivants :</p>
+<ul>
+<li>Confirmation explicite de la réception par l&#x27;Expéditeur ou le destinataire avant l&#x27;expiration du délai de 7 jours.</li>
+<li>Expiration du délai de 7 jours sans contestation de la part de l&#x27;Expéditeur ou du destinataire, conformément à la présomption d&#x27;acceptation décrite à l&#x27;Article 6.</li>
+</ul>
+<h3>Gel des fonds en cas de litige</h3>
+<p>En cas d&#x27;ouverture d&#x27;un litige par l&#x27;une des parties, les fonds séquestrés sont gelés et ne peuvent être versés à aucune des parties tant que le litige n&#x27;est pas résolu. Le gel des fonds est automatique et immédiat dès l&#x27;ouverture du litige. Wonjo ne tranche pas les litiges et ne décide pas de l&#x27;attribution des fonds gelés. La résolution du litige et le déblocage des fonds qui en découle résultent exclusivement de l&#x27;accord mutuel des parties, selon les modalités décrites à l&#x27;Article 8.</p>
+<h3>Remboursement</h3>
+<p>En cas d&#x27;annulation de la transaction avant la remise physique du colis, les fonds séquestrés sont remboursés intégralement à l&#x27;Expéditeur, déduction faite des éventuels frais de traitement bancaire non récupérables.</p>
+<h3>Modalités de paiement</h3>
+<p>Les paiements sur la plateforme Wonjo sont traités par un prestataire de paiement agréé. Wonjo accepte les moyens de paiement affichés dans l&#x27;application au moment de la transaction. Wonjo ne stocke jamais les données bancaires de ses utilisateurs.</p>
+<hr>
+<h2>Article 8 - Litiges et résolution</h2>
+<h3>Ouverture d&#x27;un litige</h3>
+<p>Chaque partie dispose de la possibilité d&#x27;ouvrir un litige via la plateforme dans les conditions suivantes :</p>
+<ul>
+<li>L&#x27;Expéditeur peut ouvrir un litige uniquement lorsque la transaction est au statut &quot;Arrivé&quot;, c&#x27;est-à-dire après que le Voyageur a confirmé son arrivée à destination et soumis sa photo de livraison, et avant l&#x27;expiration du délai de 7 jours prévu à l&#x27;Article 6.</li>
+<li>Le Voyageur peut ouvrir un litige à partir du statut &quot;Acceptée&quot; et jusqu&#x27;au statut &quot;Arrivé&quot; inclus, notamment en cas de problème lors de la remise du colis, d&#x27;incident pendant le transport, de saisie douanière, ou d&#x27;impossibilité de livrer le colis au destinataire.</li>
+</ul>
+<p>L&#x27;ouverture d&#x27;un litige entraîne automatiquement et immédiatement le gel des fonds séquestrés, conformément à l&#x27;Article 7, ainsi que la suspension de la présomption d&#x27;acceptation de 7 jours.</p>
+<h3>Caractère terminal du litige</h3>
+<p>Une fois un litige ouvert, aucune transition automatique de statut n&#x27;est possible. Le litige ne peut pas être clôturé unilatéralement par l&#x27;une des parties. Wonjo ne tranche pas les litiges et n&#x27;attribue pas les fonds gelés. Les parties sont invitées à trouver un accord amiable via la messagerie de la plateforme.</p>
+<h3>Résolution bilatérale</h3>
+<p>Pour clore un litige, l&#x27;une des parties peut proposer une résolution via la plateforme. Deux types de résolution sont disponibles :</p>
+<ul>
+<li>Annulation : la transaction est annulée et les fonds séquestrés sont remboursés à l&#x27;Expéditeur. Les modalités pratiques du retour du colis sont laissées à l&#x27;accord des parties et ne relèvent pas de la responsabilité de Wonjo.</li>
+<li>Reprise : le Voyageur reprend le transport du colis depuis l&#x27;étape de remise, et les fonds restent séquestrés jusqu&#x27;à la livraison effective.</li>
+</ul>
+<p>La résolution proposée par l&#x27;une des parties doit être explicitement acceptée par l&#x27;autre partie via la plateforme pour prendre effet. Le silence de l&#x27;une des parties ne vaut pas acceptation d&#x27;une proposition de résolution.</p>
+<p>Une fois la résolution acceptée par les deux parties, la transition de statut correspondante est appliquée automatiquement et le traitement du paiement s&#x27;effectue selon le type de résolution choisi.</p>
+<h3>Absence d&#x27;accord</h3>
+<p>Si les parties ne parviennent pas à un accord via la plateforme, le litige reste ouvert et les fonds restent gelés. Les parties peuvent alors recourir à tout mode de règlement amiable ou judiciaire disponible en dehors de la plateforme. Wonjo ne peut pas être contraint de débloquer les fonds gelés en l&#x27;absence d&#x27;accord mutuel des parties ou de décision de justice.</p>
+<h3>Limitation des recours contre Wonjo</h3>
+<p>Wonjo étant un intermédiaire de mise en relation, aucun recours ne peut être exercé contre Wonjo du fait d&#x27;un litige entre un Expéditeur et un Voyageur, sauf en cas de dysfonctionnement avéré de la plateforme imputable directement à Wonjo.</p>
+<hr>
+<h2>Article 9 - Responsabilité de Wonjo</h2>
+<h3>Ce dont Wonjo est responsable</h3>
+<p>Wonjo s&#x27;engage à mettre à disposition une plateforme fonctionnelle et sécurisée, à protéger les données personnelles de ses utilisateurs conformément à sa Politique de Confidentialité, à maintenir le séquestre des fonds via un prestataire de paiement agréé, et à traiter les signalements d&#x27;utilisateurs dans un délai raisonnable.</p>
+<h3>Ce dont Wonjo n&#x27;est pas responsable</h3>
+<p>En sa qualité d&#x27;intermédiaire de mise en relation, Wonjo ne peut être tenu responsable des éléments suivants :</p>
+<ul>
+<li>Le contenu des colis transportés via la plateforme, qu&#x27;il soit conforme ou non à la déclaration de l&#x27;Expéditeur.</li>
+<li>Les retards, pertes, dommages ou destructions survenant pendant le transport.</li>
+<li>Les conséquences légales, pénales ou douanières liées au transport de marchandises, notamment les saisies, confiscations, amendes ou poursuites judiciaires subies par le Voyageur du fait d&#x27;un contenu non déclaré ou illicite.</li>
+<li>Le comportement des utilisateurs avant, pendant ou après une transaction.</li>
+<li>L&#x27;exactitude des informations publiées par les utilisateurs sur la plateforme.</li>
+<li>Les pertes financières subies par un utilisateur du fait d&#x27;une transaction annulée, d&#x27;un litige non résolu, ou d&#x27;un impayé.</li>
+<li>Les interruptions temporaires de la plateforme dues à des opérations de maintenance, des incidents techniques, ou des causes extérieures indépendantes de la volonté de Wonjo.</li>
+</ul>
+<h3>Limitation de responsabilité</h3>
+<p>Dans les cas où la responsabilité de Wonjo serait reconnue par une décision de justice, le montant total des dommages et intérêts pouvant être mis à la charge de Wonjo est limité au montant des frais de service perçus par Wonjo sur la transaction concernée. Cette limitation s&#x27;applique dans toutes les hypothèses, qu&#x27;il s&#x27;agisse de dommages directs, indirects, accessoires ou consécutifs.</p>
+<h3>Force majeure</h3>
+<p>Wonjo ne peut être tenu responsable de tout manquement à ses obligations résultant d&#x27;un événement de force majeure au sens du droit français, notamment les catastrophes naturelles, les conflits armés, les décisions gouvernementales, les pannes de réseaux de télécommunication, ou tout autre événement imprévisible et irrésistible échappant au contrôle de Wonjo.</p>
+<hr>
+<h2>Article 10 - Données personnelles</h2>
+<h3>Responsable du traitement</h3>
+<p>Les données personnelles collectées via la plateforme Wonjo sont traitées par la société Wonjo, responsable du traitement au sens du Règlement Général sur la Protection des Données (RGPD, Règlement UE 2016/679).</p>
+<h3>Données collectées</h3>
+<p>Dans le cadre de l&#x27;utilisation de la plateforme, Wonjo collecte les données suivantes :</p>
+<ul>
+<li>Données d&#x27;identification : nom, prénom, adresse e-mail, numéro de téléphone.</li>
+<li>Données de profil : photo de profil, rôle choisi, note moyenne, historique des transactions.</li>
+<li>Données de vérification d&#x27;identité : statut de vérification KYC uniquement. Les documents d&#x27;identité originaux ne sont pas conservés par Wonjo et sont traités exclusivement par le prestataire KYC agréé.</li>
+<li>Données de transaction : contenu déclaré des colis, valeur déclarée, photos de constat, journal des étapes de transport.</li>
+<li>Données de paiement : Wonjo ne stocke aucune donnée bancaire. Les données de paiement sont traitées exclusivement par le prestataire de paiement agréé.</li>
+<li>Données de navigation : adresse IP, données de connexion, informations sur l&#x27;appareil utilisé.</li>
+</ul>
+<h3>Finalités du traitement</h3>
+<p>Les données collectées sont utilisées aux fins suivantes :</p>
+<ul>
+<li>Création et gestion des comptes utilisateurs.</li>
+<li>Mise en relation entre Expéditeurs et Voyageurs.</li>
+<li>Suivi des transactions et résolution des litiges.</li>
+<li>Vérification d&#x27;identité et prévention de la fraude.</li>
+<li>Amélioration de la plateforme et de l&#x27;expérience utilisateur.</li>
+<li>Respect des obligations légales et réglementaires applicables.</li>
+</ul>
+<h3>Durée de conservation</h3>
+<p>Les données personnelles sont conservées pendant toute la durée de l&#x27;utilisation active du compte, puis pendant une durée de 5 ans à compter de la clôture du compte, conformément aux obligations légales applicables en matière de conservation des données de transaction. Les photos de constat et les journaux de transaction sont conservés pendant la même durée à titre de preuve.</p>
+<h3>Droits des utilisateurs</h3>
+<p>Conformément au RGPD, chaque utilisateur dispose des droits suivants sur ses données personnelles :</p>
+<ul>
+<li>Droit d&#x27;accès : obtenir une copie des données personnelles détenues par Wonjo.</li>
+<li>Droit de rectification : corriger des données inexactes ou incomplètes.</li>
+<li>Droit à l&#x27;effacement : demander la suppression des données dans les conditions prévues par le RGPD.</li>
+<li>Droit à la portabilité : recevoir ses données dans un format structuré et lisible par machine.</li>
+<li>Droit d&#x27;opposition : s&#x27;opposer au traitement de ses données pour des motifs légitimes.</li>
+</ul>
+<p>Ces droits peuvent être exercés en contactant Wonjo à l&#x27;adresse suivante : dpo@wonjo.app</p>
+<p>Tout utilisateur qui estime que ses droits ne sont pas respectés peut introduire une réclamation auprès de la Commission Nationale de l&#x27;Informatique et des Libertés (CNIL) via le site www.cnil.fr.</p>
+<h3>Transferts de données</h3>
+<p>Dans le cadre de ses activités, Wonjo peut être amené à transférer certaines données personnelles vers des prestataires situés en dehors de l&#x27;Union Européenne, notamment le prestataire KYC et le prestataire de paiement. Ces transferts sont encadrés par des garanties appropriées conformément au RGPD.</p>
+<h3>Cookies et traceurs</h3>
+<p>La plateforme Wonjo est une application mobile. Elle n&#x27;utilise pas de cookies au sens strict. Des traceurs techniques peuvent être utilisés à des fins de fonctionnement de l&#x27;application et d&#x27;analyse d&#x27;audience anonymisée. Ces traceurs ne sont pas utilisés à des fins publicitaires.</p>
+<hr>
+<h2>Article 11 - Modifications des CGU</h2>
+<h3>Droit de modification</h3>
+<p>Wonjo se réserve le droit de modifier les présentes CGU à tout moment, notamment pour adapter la plateforme à de nouvelles fonctionnalités, se conformer à des évolutions légales ou réglementaires, ou ajuster les conditions d&#x27;utilisation en fonction de l&#x27;évolution du service.</p>
+<h3>Notification des modifications</h3>
+<p>Toute modification substantielle des CGU est notifiée aux utilisateurs via une notification dans l&#x27;application ou par e-mail à l&#x27;adresse associée à leur compte, dans un délai raisonnable avant l&#x27;entrée en vigueur de la nouvelle version.</p>
+<h3>Acceptation de la nouvelle version</h3>
+<p>Lors de la publication d&#x27;une nouvelle version des CGU, chaque utilisateur est invité à en prendre connaissance et à les accepter explicitement avant de pouvoir continuer à utiliser la plateforme. Aucune case n&#x27;est pré-cochée. Le refus d&#x27;accepter la nouvelle version entraîne la suspension de l&#x27;accès aux fonctionnalités de la plateforme jusqu&#x27;à acceptation.</p>
+<h3>Versionnage</h3>
+<p>Chaque version des CGU est identifiée par un numéro de version et une date d&#x27;entrée en vigueur. La plateforme conserve un historique des versions acceptées par chaque utilisateur, précisant la version acceptée et la date d&#x27;acceptation. Cet historique constitue une preuve de l&#x27;acceptation des conditions applicables à chaque transaction.</p>
+<h3>Version applicable</h3>
+<p>Les CGU applicables à une transaction donnée sont celles en vigueur au moment de la création de la transaction. Une modification ultérieure des CGU ne peut pas modifier rétroactivement les droits et obligations des parties pour une transaction déjà en cours.</p>
+<hr>
+<h2>Article 12 - Droit applicable et juridiction</h2>
+<h3>Droit applicable</h3>
+<p>Les présentes CGU sont régies et interprétées conformément au droit français. En cas de divergence entre une version traduite des présentes CGU et la version française, la version française prévaut.</p>
+<h3>Résolution amiable</h3>
+<p>En cas de litige entre un utilisateur et Wonjo relatif à l&#x27;interprétation ou à l&#x27;exécution des présentes CGU, les parties s&#x27;engagent à rechercher une solution amiable avant tout recours judiciaire. L&#x27;utilisateur peut adresser sa réclamation à Wonjo à l&#x27;adresse suivante : dpo@wonjo.app. Wonjo s&#x27;engage à répondre dans un délai de 30 jours à compter de la réception de la réclamation.</p>
+<h3>Médiation</h3>
+<p>Conformément aux dispositions du Code de la consommation relatives à la médiation, tout utilisateur ayant la qualité de consommateur au sens du droit français dispose du droit de recourir gratuitement à un médiateur de la consommation en vue de la résolution amiable du litige qui l&#x27;opposerait à Wonjo. Les coordonnées du médiateur compétent seront communiquées à l&#x27;utilisateur sur simple demande adressée à dpo@wonjo.app ou affichées dans la section Aide et Support de l&#x27;application.</p>
+<h3>Juridiction compétente</h3>
+<p>À défaut de résolution amiable, tout litige relatif à la validité, l&#x27;interprétation ou l&#x27;exécution des présentes CGU sera soumis à la compétence exclusive des tribunaux français compétents, sous réserve des règles impératives de compétence applicables aux consommateurs résidant dans un autre État membre de l&#x27;Union Européenne.</p>
+<h3>Utilisateurs hors Union Européenne</h3>
+<p>Pour les utilisateurs résidant en dehors de l&#x27;Union Européenne, notamment sur le continent africain, Wonjo rappelle que les présentes CGU sont régies par le droit français et que tout litige avec Wonjo relève de la compétence des tribunaux français. Ces utilisateurs reconnaissent et acceptent cette clause de juridiction en utilisant la plateforme.</p>
+    </div>
   </main>
 
   <!-- FOOTER -->
