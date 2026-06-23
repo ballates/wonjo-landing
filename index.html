@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wonjo — Envoyez vos colis avec des voyageurs de confiance</title>
-<meta name="description" content="Wonjo connecte les expéditeurs en Europe avec des voyageurs se rendant en Afrique. Envois économiques, voyageurs rémunérés, paiement sécurisé.">
+<title>Wonjo — Envoyez vos colis avec des personnes de confiance</title>
+<meta name="description" content="Wonjo connecte expéditeurs et voyageurs sur les corridors Europe-Afrique. Envois économiques, paiement sécurisé, identité vérifiée.">
 <style>
   :root {
     --teal: #4A8896;
@@ -57,28 +57,76 @@
     margin-bottom: 16px;
     text-shadow: 0 2px 12px rgba(0,0,0,0.15);
   }
-  .tagline { font-size: 1.35rem; font-weight: 700; max-width: 520px; margin: 0 auto 14px; }
-  .subtitle { font-size: 1rem; opacity: 0.92; max-width: 540px; margin: 0 auto 32px; }
+  .tagline { font-size: 1.35rem; font-weight: 700; max-width: 560px; margin: 0 auto 14px; }
+  .subtitle { font-size: 1rem; opacity: 0.92; max-width: 560px; margin: 0 auto 32px; }
+
+  /* HERO fade-in */
+  .hero > * { opacity: 0; transform: translateY(14px); animation: fadeUp 0.7s ease forwards; }
+  .hero .badge { animation-delay: 0.05s; }
+  .hero .logo { animation-delay: 0.15s; }
+  .hero .tagline { animation-delay: 0.25s; }
+  .hero .subtitle { animation-delay: 0.35s; }
+  .hero .hero-ctas { animation-delay: 0.45s; }
+  .hero .hero-loc { animation-delay: 0.55s; }
+  @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+  @media (prefers-reduced-motion: reduce) {
+    .hero > * { opacity: 1; transform: none; animation: none; }
+  }
+
+  .hero-ctas {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+  }
   .cta {
     display: inline-block;
-    background: #fff;
-    color: var(--teal);
     font-size: 1.05rem;
     font-weight: 800;
     text-decoration: none;
-    padding: 15px 34px;
+    padding: 15px 30px;
     border-radius: 14px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    cursor: pointer;
   }
+  .cta-filled {
+    background: #fff;
+    color: var(--teal);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  }
+  .cta-filled:hover { box-shadow: 0 10px 28px rgba(0,0,0,0.24); }
+  .cta-outline {
+    background: transparent;
+    color: #fff;
+    border: 2px solid rgba(255,255,255,0.85);
+    padding: 13px 28px;
+  }
+  .cta-outline:hover { background: rgba(255,255,255,0.12); }
   .cta:active { transform: translateY(1px); }
 
-  /* CORRIDORS */
-  .corridors-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 14px;
+  .hero-loc {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
   }
+  .hero-loc select {
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #fff;
+    background: rgba(255,255,255,0.14);
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 8px;
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+  .hero-loc select option { color: var(--text); }
+
+  /* CORRIDORS */
+  .corridors-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
   .corridor {
     background: #fff;
     border: 1px solid rgba(74,136,150,0.14);
@@ -96,6 +144,34 @@
   .corridor .from { color: var(--text); }
   .corridor .to { color: var(--brown); }
 
+  /* TABS — COMMENT ÇA MARCHE */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+  .tab-btn {
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--muted);
+    background: #fff;
+    border: 1px solid rgba(74,136,150,0.2);
+    border-radius: 999px;
+    padding: 10px 22px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .tab-btn.active {
+    background: var(--brand-gradient);
+    color: #fff;
+    border-color: transparent;
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
   /* STEPS */
   .steps { display: grid; grid-template-columns: 1fr; gap: 18px; }
   .step {
@@ -107,14 +183,12 @@
     gap: 16px;
     align-items: flex-start;
   }
-  .step-num {
+  .step-icon {
     flex-shrink: 0;
-    width: 40px; height: 40px;
+    width: 44px; height: 44px;
     border-radius: 12px;
     background: var(--brand-gradient);
     color: #fff;
-    font-weight: 800;
-    font-size: 1.15rem;
     display: flex; align-items: center; justify-content: center;
   }
   .step h3 { font-size: 1.05rem; margin-bottom: 3px; }
@@ -135,6 +209,94 @@
   .trust-item h3 { font-size: 1.05rem; margin-bottom: 2px; }
   .trust-item p { color: var(--muted); font-size: 0.95rem; }
 
+  /* TARIFS */
+  .pricing-grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
+  .price-card {
+    position: relative;
+    background: #fff;
+    border: 1px solid rgba(74,136,150,0.16);
+    border-radius: 20px;
+    padding: 28px 24px;
+    box-shadow: 0 4px 16px rgba(26,26,46,0.05);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .price-card.featured { border-color: var(--teal); box-shadow: 0 10px 28px rgba(74,136,150,0.18); }
+  .price-badge {
+    align-self: flex-start;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 999px;
+    margin-bottom: 14px;
+  }
+  .price-badge.available { background: rgba(29,158,117,0.14); color: var(--green); }
+  .price-badge.soon { background: rgba(245,166,35,0.16); color: #b9760a; }
+  .price-card h3 { font-size: 1.2rem; margin-bottom: 6px; }
+  .price-amount { font-size: 1.8rem; font-weight: 800; color: var(--teal); margin-bottom: 16px; letter-spacing: -0.02em; }
+  .price-card.disabled .price-amount { color: var(--muted); }
+  .price-features { list-style: none; margin-bottom: 22px; display: flex; flex-direction: column; gap: 10px; }
+  .price-features li { display: flex; gap: 10px; align-items: flex-start; font-size: 0.95rem; color: var(--text); }
+  .price-features li svg { color: var(--green); flex-shrink: 0; margin-top: 3px; }
+  .price-cta {
+    margin-top: auto;
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    font-weight: 800;
+    font-size: 1rem;
+    padding: 13px;
+    border-radius: 12px;
+    background: var(--teal);
+    color: #fff;
+    transition: background 0.15s ease;
+  }
+  .price-cta:hover { background: #3d7280; }
+  .price-cta.ghost { background: transparent; color: var(--teal); border: 2px solid var(--teal); padding: 11px; }
+  .price-cta.ghost:hover { background: rgba(74,136,150,0.08); }
+  /* disabled cards */
+  .price-card.disabled { background: #f4f3f8; }
+  .price-card.disabled .price-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(244,243,248,0.55);
+    backdrop-filter: blur(1px);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 50%;
+    pointer-events: none;
+  }
+  .price-card.disabled .price-overlay span {
+    background: #2a1d14;
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 8px 16px;
+    border-radius: 999px;
+  }
+  .price-card.disabled .price-content { opacity: 0.55; }
+
+  /* TÉMOIGNAGES */
+  .testi { background: #fff; }
+  .testi-grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
+  .testi-card {
+    background: var(--bg);
+    border: 1px solid rgba(74,136,150,0.12);
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+  }
+  .testi-stars { color: var(--amber); display: flex; gap: 4px; margin-bottom: 12px; }
+  .testi-card p { font-size: 0.95rem; color: var(--text); margin-bottom: 16px; flex-grow: 1; }
+  .testi-author { font-weight: 700; font-size: 0.9rem; color: var(--teal); }
+
   /* FORM */
   .beta { background: var(--brand-gradient); color: #fff; }
   .beta h2 { color: #fff; }
@@ -142,12 +304,13 @@
     background: #fff;
     border-radius: 20px;
     padding: 28px 22px;
-    max-width: 420px;
+    max-width: 440px;
     margin: 24px auto 0;
     box-shadow: 0 12px 32px rgba(0,0,0,0.18);
   }
   .form-card label { display: block; font-weight: 700; font-size: 0.9rem; color: var(--text); margin-bottom: 6px; }
-  .form-card input {
+  .form-card input[type="text"],
+  .form-card input[type="email"] {
     width: 100%;
     padding: 13px 14px;
     border: 1px solid #d8d8e4;
@@ -158,6 +321,22 @@
     color: var(--text);
   }
   .form-card input:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(74,136,150,0.15); }
+  .role-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+  .role-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid #d8d8e4;
+    border-radius: 12px;
+    padding: 12px 14px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text);
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .role-option:has(input:checked) { border-color: var(--teal); background: rgba(74,136,150,0.07); }
+  .role-option input { accent-color: var(--teal); width: 18px; height: 18px; }
   .form-card button {
     width: 100%;
     background: var(--teal);
@@ -173,19 +352,60 @@
   }
   .form-card button:hover { background: #3d7280; }
   .form-note { text-align: center; color: var(--muted); font-size: 0.85rem; margin-top: 14px; }
+  .form-success {
+    background: #fff;
+    border-radius: 20px;
+    padding: 36px 26px;
+    max-width: 440px;
+    margin: 24px auto 0;
+    text-align: center;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.18);
+  }
+  .form-success .check {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: rgba(29,158,117,0.14);
+    color: var(--green);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+  }
+  .form-success h3 { color: var(--text); font-size: 1.2rem; margin-bottom: 8px; }
+  .form-success p { color: var(--muted); font-size: 0.95rem; }
 
   /* FOOTER */
-  footer {
-    background: #2a1d14;
-    color: #cdbfb4;
-    text-align: center;
-    padding: 36px 20px;
-    font-size: 0.9rem;
-  }
+  footer { background: #2a1d14; color: #cdbfb4; padding: 44px 20px 28px; font-size: 0.9rem; }
   footer a { color: #e6dbd0; text-decoration: none; }
   footer a:hover { text-decoration: underline; }
-  .footer-links { margin: 12px 0; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
-  .footer-links span { opacity: 0.4; }
+  .footer-top {
+    max-width: 960px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .footer-brand .flogo { font-size: 1.6rem; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
+  .footer-brand p { margin-top: 6px; max-width: 240px; }
+  .footer-col h4 { color: #fff; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
+  .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .footer-socials { display: flex; gap: 12px; margin-top: 12px; }
+  .footer-socials a {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.08);
+    display: flex; align-items: center; justify-content: center;
+    color: #e6dbd0;
+    transition: background 0.15s ease;
+  }
+  .footer-socials a:hover { background: rgba(255,255,255,0.18); }
+  .footer-bottom {
+    max-width: 960px;
+    margin: 32px auto 0;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    text-align: center;
+    font-size: 0.85rem;
+  }
+  .footer-bottom .heart { margin-top: 6px; opacity: 0.8; }
 
   @media (min-width: 640px) {
     .logo { font-size: 4rem; }
@@ -194,6 +414,9 @@
     .steps { grid-template-columns: repeat(3, 1fr); }
     .trust-grid { grid-template-columns: repeat(3, 1fr); }
     .trust-item { flex-direction: column; text-align: center; align-items: center; }
+    .pricing-grid { grid-template-columns: repeat(3, 1fr); }
+    .testi-grid { grid-template-columns: repeat(3, 1fr); }
+    .footer-top { grid-template-columns: 1.4fr 1fr 1fr 1fr; }
   }
 </style>
 </head>
@@ -203,9 +426,23 @@
   <header class="hero">
     <span class="badge">Bêta</span>
     <div class="logo">Wonjo</div>
-    <p class="tagline">Envoyez vos colis avec des voyageurs de confiance</p>
-    <p class="subtitle">Wonjo connecte les expéditeurs en Europe avec des voyageurs se rendant en Afrique. Économisez sur vos envois, voyageurs gagnez de l'argent.</p>
-    <a href="#beta" class="cta">Rejoindre la bêta</a>
+    <p class="tagline">Vos colis voyagent avec des personnes de confiance</p>
+    <p class="subtitle">Wonjo connecte expéditeurs et voyageurs sur les corridors Europe-Afrique. Envois économiques, paiement sécurisé, identité vérifiée.</p>
+    <div class="hero-ctas">
+      <a href="#beta" class="cta cta-filled">Je suis expéditeur</a>
+      <a href="#beta" class="cta cta-outline">Je suis voyageur</a>
+    </div>
+    <div class="hero-loc">
+      <label for="pays">Je vis en :</label>
+      <select id="pays" aria-label="Pays de résidence">
+        <option value="FR">France</option>
+        <option value="BE">Belgique</option>
+        <option value="CH">Suisse</option>
+        <option value="DE">Allemagne</option>
+        <option value="IT">Italie</option>
+        <option value="ES">Espagne</option>
+      </select>
+    </div>
   </header>
 
   <!-- CORRIDORS -->
@@ -239,22 +476,60 @@
   </section>
 
   <!-- COMMENT ÇA MARCHE -->
-  <section class="section" style="background:#fff;">
+  <section class="section" id="comment" style="background:#fff;">
     <div class="wrap">
       <h2>Comment ça marche</h2>
-      <p class="section-sub">Trois étapes simples</p>
-      <div class="steps">
-        <div class="step">
-          <div class="step-num">1</div>
-          <div><h3>Publiez</h3><p>Publiez votre trajet ou votre colis en quelques secondes.</p></div>
+      <p class="section-sub">Choisissez votre profil</p>
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="exp">Je suis expéditeur</button>
+        <button class="tab-btn" data-tab="voy">Je suis voyageur</button>
+      </div>
+
+      <!-- Expéditeur -->
+      <div class="tab-panel active" id="tab-exp">
+        <div class="steps">
+          <div class="step">
+            <div class="step-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+            </div>
+            <div><h3>Décrivez votre colis</h3><p>Poids, destination, valeur déclarée.</p></div>
+          </div>
+          <div class="step">
+            <div class="step-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div><h3>Choisissez un voyageur</h3><p>Parcourez les trajets disponibles et contactez.</p></div>
+          </div>
+          <div class="step">
+            <div class="step-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+            </div>
+            <div><h3>Payez en toute sécurité</h3><p>Paiement bloqué jusqu'à confirmation de livraison.</p></div>
+          </div>
         </div>
-        <div class="step">
-          <div class="step-num">2</div>
-          <div><h3>Accordez-vous</h3><p>Mettez-vous d'accord sur le prix avec l'autre partie.</p></div>
-        </div>
-        <div class="step">
-          <div class="step-num">3</div>
-          <div><h3>Remettez</h3><p>Remise en main propre, paiement sécurisé à la livraison.</p></div>
+      </div>
+
+      <!-- Voyageur -->
+      <div class="tab-panel" id="tab-voy">
+        <div class="steps">
+          <div class="step">
+            <div class="step-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>
+            </div>
+            <div><h3>Publiez votre trajet</h3><p>Destination, date, kilos disponibles, prix/kg.</p></div>
+          </div>
+          <div class="step">
+            <div class="step-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+            </div>
+            <div><h3>Recevez des demandes</h3><p>Les expéditeurs vous contactent directement.</p></div>
+          </div>
+          <div class="step">
+            <div class="step-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
+            </div>
+            <div><h3>Gagnez de l'argent</h3><p>Paiement automatique après livraison confirmée.</p></div>
+          </div>
         </div>
       </div>
     </div>
@@ -288,31 +563,233 @@
     </div>
   </section>
 
+  <!-- TARIFS -->
+  <section class="section" id="tarifs">
+    <div class="wrap">
+      <h2>Des offres pour chaque besoin</h2>
+      <p class="section-sub">Particuliers et entreprises — bientôt disponible</p>
+      <div class="pricing-grid">
+
+        <!-- Particulier -->
+        <div class="price-card featured">
+          <span class="price-badge available">Disponible</span>
+          <h3>Particulier</h3>
+          <div class="price-amount">10% par envoi</div>
+          <ul class="price-features">
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Envoi sécurisé</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> KYC vérifié</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Support inclus</li>
+          </ul>
+          <a href="#beta" class="price-cta">Rejoindre la bêta</a>
+        </div>
+
+        <!-- Business -->
+        <div class="price-card disabled">
+          <div class="price-overlay"><span>Bientôt disponible</span></div>
+          <div class="price-content">
+            <span class="price-badge soon">Bientôt</span>
+            <h3>Business</h3>
+            <div class="price-amount">Sur devis</div>
+            <ul class="price-features">
+              <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Volume illimité</li>
+              <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Tableau de bord entreprise</li>
+              <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> API dédiée</li>
+              <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Account manager</li>
+            </ul>
+            <a href="mailto:contact@wonjo.app" class="price-cta ghost">Nous contacter</a>
+          </div>
+        </div>
+
+        <!-- Enterprise -->
+        <div class="price-card disabled">
+          <div class="price-overlay"><span>Bientôt disponible</span></div>
+          <div class="price-content">
+            <span class="price-badge soon">Bientôt</span>
+            <h3>Enterprise</h3>
+            <div class="price-amount">Sur mesure</div>
+            <ul class="price-features">
+              <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Intégration ERP</li>
+              <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> SLA garanti</li>
+              <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Corridors dédiés</li>
+              <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Facturation mensuelle</li>
+            </ul>
+            <a href="mailto:contact@wonjo.app" class="price-cta ghost">Nous contacter</a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- TÉMOIGNAGES -->
+  <section class="section testi">
+    <div class="wrap">
+      <h2>Ils nous font confiance</h2>
+      <p class="section-sub">Premiers retours de notre communauté bêta</p>
+      <div class="testi-grid">
+        <div class="testi-card">
+          <div class="testi-stars">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+          </div>
+          <p>« J'envoie régulièrement des médicaments à ma famille au Sénégal. Avec Wonjo c'est 3x moins cher qu'un transporteur classique et je sais que c'est sécurisé. »</p>
+          <div class="testi-author">Moussa D., Paris → Dakar</div>
+        </div>
+        <div class="testi-card">
+          <div class="testi-stars">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+          </div>
+          <p>« Je voyage 4 fois par an entre Paris et Abidjan. Wonjo me permet de rentabiliser mon voyage et d'aider des familles à envoyer leurs colis. »</p>
+          <div class="testi-author">Aminata K., voyageuse fréquente</div>
+        </div>
+        <div class="testi-card">
+          <div class="testi-stars">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+          </div>
+          <p>« Simple, rapide et sécurisé. Le paiement est bloqué jusqu'à la livraison, ça rassure vraiment. »</p>
+          <div class="testi-author">Jean-Pierre M., Camerounais à Lyon</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- FORMULAIRE BÊTA -->
   <section class="section beta" id="beta">
     <div class="wrap">
       <h2>Rejoignez la bêta en avant-première</h2>
-      <form class="form-card" action="https://formspree.io/f/xyzabcde" method="POST">
+      <form class="form-card" id="beta-form" action="https://formspree.io/f/meeboeqq" method="POST">
+        <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" style="display:none" aria-hidden="true">
         <label for="prenom">Prénom</label>
         <input type="text" id="prenom" name="prenom" placeholder="Votre prénom" required>
         <label for="email">Email</label>
         <input type="email" id="email" name="email" placeholder="vous@exemple.com" required>
+        <label>Je suis</label>
+        <div class="role-group">
+          <label class="role-option">
+            <input type="radio" name="role" value="Expéditeur" required>
+            Expéditeur (j'envoie des colis)
+          </label>
+          <label class="role-option">
+            <input type="radio" name="role" value="Voyageur">
+            Voyageur (je transporte des colis)
+          </label>
+        </div>
         <button type="submit">Je m'inscris</button>
         <p class="form-note">Disponible sur iOS et Android prochainement</p>
       </form>
+
+      <div class="form-success" id="beta-success" hidden>
+        <div class="check">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        </div>
+        <h3 id="success-title">Merci !</h3>
+        <p>Vous recevrez un email avec les instructions pour rejoindre la bêta.</p>
+      </div>
     </div>
   </section>
 
   <!-- FOOTER -->
   <footer>
-    <div>© 2026 Wonjo — Lampasai SAS</div>
-    <div style="margin-top:6px;"><a href="mailto:contact@wonjo.app">contact@wonjo.app</a></div>
-    <div class="footer-links">
-      <a href="/mentions-legales.html">Mentions légales</a><span>|</span>
-      <a href="/cgu.html">CGU</a><span>|</span>
-      <a href="/confidentialite.html">Confidentialité</a>
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="flogo">Wonjo</div>
+        <p>Vos colis voyagent avec des personnes de confiance, de l'Europe vers l'Afrique.</p>
+        <div class="footer-socials">
+          <a href="https://instagram.com/wonjo.app" aria-label="Instagram" target="_blank" rel="noopener">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+          </a>
+          <a href="https://linkedin.com/company/wonjo" aria-label="LinkedIn" target="_blank" rel="noopener">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>
+          </a>
+          <a href="https://x.com/wonjo_app" aria-label="Twitter / X" target="_blank" rel="noopener">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Produit</h4>
+        <ul>
+          <li><a href="#comment">Comment ça marche</a></li>
+          <li><a href="#tarifs">Tarifs</a></li>
+          <li><a href="#beta">Bêta</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Légal</h4>
+        <ul>
+          <li><a href="/mentions-legales.html">Mentions légales</a></li>
+          <li><a href="/cgu.html">CGU</a></li>
+          <li><a href="/confidentialite.html">Confidentialité</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <ul>
+          <li><a href="mailto:contact@wonjo.app">contact@wonjo.app</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© 2026 Wonjo — Lampasai SAS</div>
+      <div class="heart">Conçu pour la diaspora africaine</div>
     </div>
   </footer>
+
+  <script>
+    // Onglets "Comment ça marche"
+    document.querySelectorAll('.tab-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var tab = btn.dataset.tab;
+        document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.remove('active'); });
+        document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.remove('active'); });
+        btn.classList.add('active');
+        document.getElementById('tab-' + tab).classList.add('active');
+      });
+    });
+
+    // Pré-sélection du profil selon le CTA cliqué dans le hero
+    document.querySelectorAll('.hero-ctas .cta').forEach(function (cta) {
+      cta.addEventListener('click', function () {
+        var isExp = cta.classList.contains('cta-filled');
+        var radio = document.querySelector('input[name="role"][value="' + (isExp ? 'Expéditeur' : 'Voyageur') + '"]');
+        if (radio) radio.checked = true;
+      });
+    });
+
+    // Soumission du formulaire bêta (AJAX vers Formspree) + message de succès
+    var form = document.getElementById('beta-form');
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var prenom = document.getElementById('prenom').value.trim();
+      var data = new FormData(form);
+      fetch(form.action, { method: 'POST', body: data, headers: { 'Accept': 'application/json' } })
+        .then(function (res) {
+          if (res.ok) { showSuccess(prenom); }
+          else { form.submit(); } // fallback navigation classique
+        })
+        .catch(function () { form.submit(); });
+    });
+
+    function showSuccess(prenom) {
+      var success = document.getElementById('beta-success');
+      document.getElementById('success-title').textContent =
+        'Merci ' + (prenom || '') + (prenom ? ' !' : '!');
+      form.hidden = true;
+      success.hidden = false;
+      success.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  </script>
 
 </body>
 </html>
