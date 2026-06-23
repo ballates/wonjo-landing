@@ -3,532 +3,541 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wonjo — Envoyez vos colis avec des personnes de confiance</title>
+<title>Wonjo - Envoyez vos colis avec des personnes de confiance</title>
 <meta name="description" content="Wonjo connecte expéditeurs et voyageurs sur les corridors Europe-Afrique. Envois économiques, paiement sécurisé, identité vérifiée.">
+<link rel="icon" type="image/png" href="/assets/wonjo-logo.png">
+<link rel="apple-touch-icon" href="/assets/wonjo-logo.png">
+<meta property="og:title" content="Wonjo - Envoyez vos colis avec des personnes de confiance">
+<meta property="og:description" content="Wonjo connecte expéditeurs et voyageurs sur les corridors Europe-Afrique. Envois économiques, paiement sécurisé, identité vérifiée.">
+<meta property="og:image" content="https://wonjo.app/assets/wonjo-logo.png">
+<meta property="og:url" content="https://wonjo.app/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
     --teal: #4A8896;
+    --teal-dark: #3a6b77;
     --brown: #7D4E2E;
     --green: #1D9E75;
     --amber: #F5A623;
-    --bg: #F8F7FF;
-    --text: #1A1A2E;
+    --bg: #F7F6FC;
+    --surface: #ffffff;
+    --ink: #14142b;
     --muted: #5b5b70;
+    --line: rgba(20,20,43,0.08);
     --brand-gradient: linear-gradient(135deg, #4A8896 0%, #4A8896 45%, #7D4E2E 100%);
+    --radius: 20px;
+    --shadow-sm: 0 4px 16px rgba(20,20,43,0.05);
+    --shadow-md: 0 14px 40px rgba(20,20,43,0.10);
+    --shadow-lg: 0 24px 60px rgba(20,20,43,0.16);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    color: var(--text);
-    background: var(--bg);
-    line-height: 1.55;
+    font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    background: #fbfaff;
+    background-image: radial-gradient(900px 500px at 85% -10%, rgba(74,136,150,0.10), transparent 60%),
+                      radial-gradient(800px 460px at 0% 8%, rgba(125,78,46,0.07), transparent 55%);
+    background-attachment: fixed;
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
   }
-  .wrap { width: 100%; max-width: 960px; margin: 0 auto; padding: 0 20px; }
-  h2 { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; text-align: center; margin-bottom: 8px; }
-  .section { padding: 56px 0; }
-  .section-sub { text-align: center; color: var(--muted); margin-bottom: 32px; }
+  h1, h2, h3, h4, .nav-logo, .footer-brand .flogo {
+    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+  }
+  .wrap { width: 100%; max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+  a { color: inherit; }
 
-  /* HERO */
-  .hero {
-    background: var(--brand-gradient);
-    color: #fff;
-    text-align: center;
-    padding: 64px 20px 72px;
-  }
-  .badge {
-    display: inline-block;
-    background: rgba(255,255,255,0.18);
-    border: 1px solid rgba(255,255,255,0.4);
-    color: #fff;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    padding: 5px 12px;
-    border-radius: 999px;
-    margin-bottom: 20px;
-  }
-  .logo {
-    font-size: 3.2rem;
+  h2 {
+    font-size: clamp(1.7rem, 4.5vw, 2.4rem);
     font-weight: 800;
     letter-spacing: -0.03em;
-    margin-bottom: 16px;
-    text-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    text-align: center;
+    line-height: 1.15;
+    margin-bottom: 10px;
   }
-  .tagline { font-size: 1.35rem; font-weight: 700; max-width: 560px; margin: 0 auto 14px; }
-  .subtitle { font-size: 1rem; opacity: 0.92; max-width: 560px; margin: 0 auto 32px; }
-
-  /* HERO fade-in */
-  .hero > * { opacity: 0; transform: translateY(14px); animation: fadeUp 0.7s ease forwards; }
-  .hero .badge { animation-delay: 0.05s; }
-  .hero .logo { animation-delay: 0.15s; }
-  .hero .tagline { animation-delay: 0.25s; }
-  .hero .subtitle { animation-delay: 0.35s; }
-  .hero .hero-ctas { animation-delay: 0.45s; }
-  .hero .hero-loc { animation-delay: 0.55s; }
-  @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
-  @media (prefers-reduced-motion: reduce) {
-    .hero > * { opacity: 1; transform: none; animation: none; }
+  .gradient-text {
+    background: var(--brand-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
-
-  .hero-ctas {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin-bottom: 18px;
-  }
-  .cta {
-    display: inline-block;
-    font-size: 1.05rem;
-    font-weight: 800;
-    text-decoration: none;
-    padding: 15px 30px;
-    border-radius: 14px;
-    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
-    cursor: pointer;
-  }
-  .cta-filled {
-    background: #fff;
-    color: var(--teal);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
-  }
-  .cta-filled:hover { box-shadow: 0 10px 28px rgba(0,0,0,0.24); }
-  .cta-outline {
-    background: transparent;
-    color: #fff;
-    border: 2px solid rgba(255,255,255,0.85);
-    padding: 13px 28px;
-  }
-  .cta-outline:hover { background: rgba(255,255,255,0.12); }
-  .cta:active { transform: translateY(1px); }
-
-  .hero-loc {
-    font-size: 0.9rem;
-    opacity: 0.9;
+  .section { padding: 80px 0; position: relative; }
+  .section-sub { text-align: center; color: var(--muted); margin-bottom: 44px; font-size: 1.05rem; }
+  .eyebrow {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-  }
-  .hero-loc select {
-    font-family: inherit;
-    font-size: 0.9rem;
+    gap: 9px;
+    font-size: 0.78rem;
     font-weight: 700;
-    color: #fff;
-    background: rgba(255,255,255,0.14);
-    border: 1px solid rgba(255,255,255,0.35);
-    border-radius: 8px;
-    padding: 5px 10px;
-    cursor: pointer;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    color: var(--teal);
   }
-  .hero-loc select option { color: var(--text); }
+  .eyebrow::before {
+    content: "";
+    width: 28px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--teal);
+  }
+  .center { text-align: center; }
+
+  /* SCROLL REVEAL */
+  .reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.7s cubic-bezier(.42,0,.58,1), transform 0.7s cubic-bezier(.42,0,.58,1); will-change: opacity, transform; }
+  .reveal.visible { opacity: 1; transform: none; }
+  .reveal.from-left { transform: translateX(-36px); }
+  .reveal.from-right { transform: translateX(36px); }
+  .reveal.scale-in { transform: scale(0.94); }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1 !important; transform: none !important; transition: none; }
+    .float, .plane-dot, .blob, .beta-card { animation: none !important; }
+  }
+
+  /* NAV */
+  .nav {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(247,246,252,0.72);
+    backdrop-filter: saturate(180%) blur(14px);
+    -webkit-backdrop-filter: saturate(180%) blur(14px);
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+  .nav.scrolled { border-color: var(--line); }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 68px; }
+  .nav-logo { display: flex; align-items: center; gap: 9px; font-size: 1.45rem; font-weight: 600; letter-spacing: -0.02em; text-decoration: none; color: var(--ink); }
+  .nav-logo img { height: 36px; width: auto; display: block; }
+  .nav-logo span { color: var(--teal); }
+  .nav-links { display: none; gap: 30px; align-items: center; }
+  .nav-links a { text-decoration: none; color: var(--muted); font-weight: 600; font-size: 0.95rem; transition: color 0.15s ease; }
+  .nav-links a:hover { color: var(--ink); }
+  .nav-cta {
+    display: none;
+    background: var(--teal);
+    color: #fff !important;
+    font-weight: 700;
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 999px;
+    font-size: 0.92rem;
+    box-shadow: 0 6px 18px rgba(74,136,150,0.3);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .nav-cta:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(74,136,150,0.4); }
+  .nav-toggle { background: none; border: none; cursor: pointer; padding: 8px; display: flex; }
+  .nav-toggle svg { color: var(--ink); }
+  .mobile-menu {
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 24px 18px;
+    background: rgba(247,246,252,0.96);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--line);
+  }
+  .mobile-menu.open { display: flex; }
+  .mobile-menu a { text-decoration: none; color: var(--ink); font-weight: 600; padding: 12px 4px; border-radius: 10px; }
+  .mobile-menu a.primary { color: var(--teal); }
+
+  /* HERO */
+  .hero { position: relative; padding: 64px 0 72px; overflow: hidden; }
+  .hero-grid { display: grid; grid-template-columns: 1fr; gap: 40px; align-items: center; }
+  .hero h1 {
+    font-size: clamp(2.1rem, 7vw, 3.4rem);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 1.08;
+    margin-bottom: 18px;
+  }
+  .hero .subtitle { font-size: 1.12rem; color: var(--muted); max-width: 520px; margin-bottom: 30px; }
+  .hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 22px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 1.02rem; font-weight: 700; text-decoration: none;
+    padding: 15px 28px; border-radius: 14px; cursor: pointer; border: none;
+    font-family: inherit;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  }
+  .btn-primary { background: var(--teal); color: #fff; box-shadow: 0 10px 28px rgba(74,136,150,0.35); }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 16px 36px rgba(74,136,150,0.45); }
+  .btn-outline { background: var(--surface); color: var(--teal); border: 2px solid rgba(74,136,150,0.3); padding: 13px 26px; }
+  .btn-outline:hover { border-color: var(--teal); transform: translateY(-2px); }
+  .btn:active { transform: translateY(0); }
+  .hero-loc { font-size: 0.92rem; color: var(--muted); display: inline-flex; align-items: center; gap: 8px; }
+  .hero-loc select {
+    font-family: inherit; font-size: 0.92rem; font-weight: 700; color: var(--ink);
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 7px 12px; cursor: pointer;
+  }
+
+  /* hero illustration */
+  .hero-illus { position: relative; }
+  .illus-card {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    padding: 22px;
+    box-shadow: var(--shadow-lg);
+  }
+  .illus-card svg { width: 100%; height: auto; display: block; }
+  .route-path { stroke-dasharray: 6 8; }
+  .city-pin { transform-box: fill-box; transform-origin: center; }
+
+  .float { animation: floaty 5s ease-in-out infinite; }
+  .float.delay { animation-delay: 1.2s; }
+  @keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+  /* decorative blobs */
+  .blob { position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.5; z-index: -1; pointer-events: none; }
+  .blob-1 { width: 340px; height: 340px; background: rgba(74,136,150,0.4); top: -80px; right: -60px; animation: drift 16s ease-in-out infinite; }
+  .blob-2 { width: 300px; height: 300px; background: rgba(125,78,46,0.28); bottom: -100px; left: -80px; animation: drift 20s ease-in-out infinite reverse; }
+  @keyframes drift { 0%,100% { transform: translate(0,0); } 50% { transform: translate(30px,-24px); } }
+
+  /* stat strip */
+  .stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-top: 8px; }
+  .stat { text-align: center; }
+  .stat b { display: block; font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; color: var(--teal); }
+  .stat span { font-size: 0.82rem; color: var(--muted); }
 
   /* CORRIDORS */
-  .corridors-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+  .corridors-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
   .corridor {
-    background: #fff;
-    border: 1px solid rgba(74,136,150,0.14);
-    border-radius: 16px;
-    padding: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-    font-weight: 700;
-    font-size: 1.05rem;
-    box-shadow: 0 4px 16px rgba(26,26,46,0.04);
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 20px; display: flex; align-items: center; justify-content: center; gap: 14px;
+    font-weight: 700; font-size: 1.05rem; white-space: nowrap; box-shadow: var(--shadow-sm);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
+  .corridor:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
   .corridor .plane { color: var(--teal); flex-shrink: 0; }
-  .corridor .from { color: var(--text); }
   .corridor .to { color: var(--brown); }
+  .corridors-note { text-align: center; color: var(--muted); font-size: 0.9rem; max-width: 560px; margin: 24px auto 0; }
 
-  /* TABS — COMMENT ÇA MARCHE */
-  .tabs {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-    margin-bottom: 28px;
-    flex-wrap: wrap;
-  }
+  /* TABS */
+  .tabs { display: inline-flex; gap: 6px; padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; box-shadow: var(--shadow-sm); }
+  .tabs-wrap { display: flex; justify-content: center; margin-bottom: 40px; }
   .tab-btn {
-    font-family: inherit;
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: var(--muted);
-    background: #fff;
-    border: 1px solid rgba(74,136,150,0.2);
-    border-radius: 999px;
-    padding: 10px 22px;
-    cursor: pointer;
-    transition: all 0.15s ease;
+    font-family: inherit; font-size: 0.95rem; font-weight: 700; color: var(--muted);
+    background: transparent; border: none; border-radius: 999px; padding: 11px 24px; cursor: pointer;
+    transition: all 0.2s ease;
   }
-  .tab-btn.active {
-    background: var(--brand-gradient);
-    color: #fff;
-    border-color: transparent;
-  }
+  .tab-btn.active { background: var(--teal); color: #fff; box-shadow: 0 6px 16px rgba(74,136,150,0.3); }
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
 
   /* STEPS */
-  .steps { display: grid; grid-template-columns: 1fr; gap: 18px; }
+  .steps { display: grid; grid-template-columns: 1fr; gap: 20px; }
   .step {
-    background: #fff;
-    border-radius: 16px;
-    padding: 22px;
-    box-shadow: 0 4px 16px rgba(26,26,46,0.04);
-    display: flex;
-    gap: 16px;
-    align-items: flex-start;
+    position: relative; background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 28px 24px; box-shadow: var(--shadow-sm);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
+  .step:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
   .step-icon {
-    flex-shrink: 0;
-    width: 44px; height: 44px;
-    border-radius: 12px;
-    background: var(--brand-gradient);
-    color: #fff;
-    display: flex; align-items: center; justify-content: center;
+    width: 52px; height: 52px; border-radius: 16px; background: var(--teal); color: #fff;
+    display: flex; align-items: center; justify-content: center; margin-bottom: 16px;
+    box-shadow: 0 8px 20px rgba(74,136,150,0.3);
   }
-  .step h3 { font-size: 1.05rem; margin-bottom: 3px; }
-  .step p { color: var(--muted); font-size: 0.95rem; }
+  .step-num { position: absolute; top: 20px; right: 20px; width: 30px; height: 30px; border-radius: 50%; background: rgba(74,136,150,0.12); color: var(--teal); font-size: 0.95rem; font-weight: 800; line-height: 1; display: flex; align-items: center; justify-content: center; }
+  .step h3 { font-size: 1.15rem; margin-bottom: 6px; }
+  .step p { color: var(--muted); font-size: 0.96rem; }
 
   /* TRUST */
-  .trust { background: #fff; }
-  .trust-grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
-  .trust-item { display: flex; gap: 14px; align-items: flex-start; }
+  .trust { background: var(--surface); }
+  .trust-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+  .trust-item { text-align: center; padding: 12px; }
   .trust-icon {
-    flex-shrink: 0;
-    width: 44px; height: 44px;
-    border-radius: 12px;
-    background: rgba(29,158,117,0.12);
-    color: var(--green);
-    display: flex; align-items: center; justify-content: center;
+    width: 60px; height: 60px; border-radius: 18px; background: rgba(29,158,117,0.12); color: var(--green);
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;
   }
-  .trust-item h3 { font-size: 1.05rem; margin-bottom: 2px; }
-  .trust-item p { color: var(--muted); font-size: 0.95rem; }
+  .trust-item h3 { font-size: 1.12rem; margin-bottom: 6px; }
+  .trust-item p { color: var(--muted); font-size: 0.96rem; }
 
   /* TARIFS */
-  .pricing-grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
+  .pricing-grid { display: grid; grid-template-columns: 1fr; gap: 20px; align-items: stretch; }
   .price-card {
-    position: relative;
-    background: #fff;
-    border: 1px solid rgba(74,136,150,0.16);
-    border-radius: 20px;
-    padding: 28px 24px;
-    box-shadow: 0 4px 16px rgba(26,26,46,0.05);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+    position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 24px;
+    padding: 32px 28px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
-  .price-card.featured { border-color: var(--teal); box-shadow: 0 10px 28px rgba(74,136,150,0.18); }
-  .price-badge {
-    align-self: flex-start;
-    font-size: 0.7rem;
-    font-weight: 800;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    padding: 4px 10px;
-    border-radius: 999px;
-    margin-bottom: 14px;
+  .price-card.featured { border-color: rgba(74,136,150,0.5); box-shadow: var(--shadow-md); }
+  .price-card.featured::before {
+    content: ""; position: absolute; inset: 0 0 auto 0; height: 5px; background: var(--brand-gradient);
   }
+  .price-card:not(.disabled):hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); }
+  .price-badge { align-self: flex-start; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; padding: 5px 12px; border-radius: 999px; margin-bottom: 16px; }
   .price-badge.available { background: rgba(29,158,117,0.14); color: var(--green); }
   .price-badge.soon { background: rgba(245,166,35,0.16); color: #b9760a; }
-  .price-card h3 { font-size: 1.2rem; margin-bottom: 6px; }
-  .price-amount { font-size: 1.8rem; font-weight: 800; color: var(--teal); margin-bottom: 16px; letter-spacing: -0.02em; }
+  .price-card h3 { font-size: 1.3rem; margin-bottom: 8px; }
+  .price-amount { font-size: 2rem; font-weight: 800; color: var(--teal); margin-bottom: 20px; letter-spacing: -0.02em; }
   .price-card.disabled .price-amount { color: var(--muted); }
-  .price-features { list-style: none; margin-bottom: 22px; display: flex; flex-direction: column; gap: 10px; }
-  .price-features li { display: flex; gap: 10px; align-items: flex-start; font-size: 0.95rem; color: var(--text); }
+  .price-features { list-style: none; margin-bottom: 26px; display: flex; flex-direction: column; gap: 12px; }
+  .price-features li { display: flex; gap: 10px; align-items: flex-start; font-size: 0.96rem; }
   .price-features li svg { color: var(--green); flex-shrink: 0; margin-top: 3px; }
-  .price-cta {
-    margin-top: auto;
-    display: block;
-    text-align: center;
-    text-decoration: none;
-    font-weight: 800;
-    font-size: 1rem;
-    padding: 13px;
-    border-radius: 12px;
-    background: var(--teal);
-    color: #fff;
-    transition: background 0.15s ease;
-  }
-  .price-cta:hover { background: #3d7280; }
-  .price-cta.ghost { background: transparent; color: var(--teal); border: 2px solid var(--teal); padding: 11px; }
-  .price-cta.ghost:hover { background: rgba(74,136,150,0.08); }
-  /* disabled cards */
-  .price-card.disabled { background: #f4f3f8; }
-  .price-card.disabled .price-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(244,243,248,0.55);
-    backdrop-filter: blur(1px);
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding-top: 50%;
-    pointer-events: none;
-  }
-  .price-card.disabled .price-overlay span {
-    background: #2a1d14;
-    color: #fff;
-    font-size: 0.8rem;
-    font-weight: 800;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    padding: 8px 16px;
-    border-radius: 999px;
-  }
-  .price-card.disabled .price-content { opacity: 0.55; }
+  .price-cta { margin-top: auto; display: block; text-align: center; text-decoration: none; font-weight: 700; font-size: 1rem; padding: 14px; border-radius: 14px; background: var(--teal); color: #fff; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+  .price-cta:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(74,136,150,0.35); }
+  .price-cta.ghost { background: transparent; color: var(--teal); border: 2px solid rgba(74,136,150,0.3); padding: 12px; }
+  .price-card.disabled { background: #f3f2f8; }
+  .price-card.disabled .price-overlay { position: absolute; inset: 0; display: flex; align-items: flex-start; justify-content: flex-end; padding: 18px; pointer-events: none; }
+  .price-card.disabled .price-overlay span { background: #2b2b3a; color: #fff; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; padding: 9px 18px; border-radius: 999px; box-shadow: var(--shadow-md); }
+  .price-card.disabled .price-content { opacity: 0.5; }
 
   /* TÉMOIGNAGES */
-  .testi { background: #fff; }
-  .testi-grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
+  .testi-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
   .testi-card {
-    background: var(--bg);
-    border: 1px solid rgba(74,136,150,0.12);
-    border-radius: 16px;
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 28px; display: flex; flex-direction: column; box-shadow: var(--shadow-sm);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
-  .testi-stars { color: var(--amber); display: flex; gap: 4px; margin-bottom: 12px; }
-  .testi-card p { font-size: 0.95rem; color: var(--text); margin-bottom: 16px; flex-grow: 1; }
-  .testi-author { font-weight: 700; font-size: 0.9rem; color: var(--teal); }
+  .testi-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+  .testi-stars { color: var(--amber); display: flex; gap: 5px; margin-bottom: 16px; }
+  .testi-card p { font-size: 1rem; margin-bottom: 18px; flex-grow: 1; }
+  .testi-author { display: flex; align-items: center; gap: 12px; }
+  .testi-avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--brand-gradient); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.95rem; flex-shrink: 0; object-fit: cover; overflow: hidden; }
+  .testi-name { font-weight: 700; font-size: 0.92rem; color: var(--teal); }
 
-  /* FORM */
-  .beta { background: var(--brand-gradient); color: #fff; }
-  .beta h2 { color: #fff; }
+  /* FORM / BETA */
+  .beta { position: relative; overflow: hidden; }
+  .beta-card {
+    position: relative; color: #fff; border-radius: 32px;
+    padding: 56px 28px; text-align: center; box-shadow: var(--shadow-lg);
+    background: linear-gradient(135deg, #4A8896 0%, #3a6b77 30%, #7D4E2E 60%, #4A8896 100%);
+    background-size: 300% 300%;
+    animation: betaShift 14s ease-in-out infinite;
+  }
+  @keyframes betaShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  .beta-card h2 { color: #fff; }
+  .beta-card .section-sub { color: rgba(255,255,255,0.85); }
   .form-card {
-    background: #fff;
-    border-radius: 20px;
-    padding: 28px 22px;
-    max-width: 440px;
-    margin: 24px auto 0;
-    box-shadow: 0 12px 32px rgba(0,0,0,0.18);
+    background: var(--surface); border-radius: 22px; padding: 30px 24px; max-width: 460px; margin: 0 auto;
+    box-shadow: var(--shadow-lg); text-align: left;
   }
-  .form-card label { display: block; font-weight: 700; font-size: 0.9rem; color: var(--text); margin-bottom: 6px; }
-  .form-card input[type="text"],
-  .form-card input[type="email"] {
-    width: 100%;
-    padding: 13px 14px;
-    border: 1px solid #d8d8e4;
-    border-radius: 12px;
-    font-size: 1rem;
-    margin-bottom: 16px;
-    font-family: inherit;
-    color: var(--text);
+  .form-card label { display: block; font-weight: 700; font-size: 0.9rem; color: var(--ink); margin-bottom: 7px; }
+  .form-card input[type="text"], .form-card input[type="email"] {
+    width: 100%; padding: 14px 15px; border: 1px solid #d8d8e4; border-radius: 12px;
+    font-size: 1rem; margin-bottom: 18px; font-family: inherit; color: var(--ink); transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }
-  .form-card input:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(74,136,150,0.15); }
-  .role-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
-  .role-option {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    border: 1px solid #d8d8e4;
-    border-radius: 12px;
-    padding: 12px 14px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 0.95rem;
-    color: var(--text);
-    transition: border-color 0.15s ease, background 0.15s ease;
-  }
+  .form-card input:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 4px rgba(74,136,150,0.14); }
+  .role-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+  .role-option { display: flex; align-items: center; gap: 10px; border: 1px solid #d8d8e4; border-radius: 12px; padding: 13px 15px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: border-color 0.15s ease, background 0.15s ease; }
   .role-option:has(input:checked) { border-color: var(--teal); background: rgba(74,136,150,0.07); }
   .role-option input { accent-color: var(--teal); width: 18px; height: 18px; }
-  .form-card button {
-    width: 100%;
-    background: var(--teal);
-    color: #fff;
-    font-size: 1.05rem;
-    font-weight: 800;
-    border: none;
-    border-radius: 12px;
-    padding: 15px;
-    cursor: pointer;
-    font-family: inherit;
-    transition: background 0.15s ease;
-  }
-  .form-card button:hover { background: #3d7280; }
-  .form-note { text-align: center; color: var(--muted); font-size: 0.85rem; margin-top: 14px; }
-  .form-success {
-    background: #fff;
-    border-radius: 20px;
-    padding: 36px 26px;
-    max-width: 440px;
-    margin: 24px auto 0;
-    text-align: center;
-    box-shadow: 0 12px 32px rgba(0,0,0,0.18);
-  }
-  .form-success .check {
-    width: 56px; height: 56px;
-    border-radius: 50%;
-    background: rgba(29,158,117,0.14);
-    color: var(--green);
-    display: flex; align-items: center; justify-content: center;
-    margin: 0 auto 16px;
-  }
-  .form-success h3 { color: var(--text); font-size: 1.2rem; margin-bottom: 8px; }
-  .form-success p { color: var(--muted); font-size: 0.95rem; }
+  .form-card button { width: 100%; background: var(--teal); color: #fff; font-size: 1.05rem; font-weight: 800; border: none; border-radius: 12px; padding: 16px; cursor: pointer; font-family: inherit; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+  .form-card button:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(74,136,150,0.4); }
+  .form-note { text-align: center; color: var(--muted); font-size: 0.85rem; margin-top: 16px; }
+  .form-success { background: var(--surface); border-radius: 22px; padding: 44px 28px; max-width: 460px; margin: 0 auto; text-align: center; box-shadow: var(--shadow-lg); }
+  .form-success .check { width: 64px; height: 64px; border-radius: 50%; background: rgba(29,158,117,0.14); color: var(--green); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
+  .form-success h3 { color: var(--ink); font-size: 1.3rem; margin-bottom: 8px; }
+  .form-success p { color: var(--muted); }
 
   /* FOOTER */
-  footer { background: #2a1d14; color: #cdbfb4; padding: 44px 20px 28px; font-size: 0.9rem; }
+  footer { background: linear-gradient(135deg, #173138 0%, #1f2530 48%, #2a1d14 100%); color: #cdc6c0; padding: 56px 24px 32px; font-size: 0.92rem; }
   footer a { color: #e6dbd0; text-decoration: none; }
   footer a:hover { text-decoration: underline; }
-  .footer-top {
-    max-width: 960px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 28px;
-  }
-  .footer-brand .flogo { font-size: 1.6rem; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
-  .footer-brand p { margin-top: 6px; max-width: 240px; }
-  .footer-col h4 { color: #fff; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
-  .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
-  .footer-socials { display: flex; gap: 12px; margin-top: 12px; }
-  .footer-socials a {
-    width: 36px; height: 36px;
-    border-radius: 10px;
-    background: rgba(255,255,255,0.08);
-    display: flex; align-items: center; justify-content: center;
-    color: #e6dbd0;
-    transition: background 0.15s ease;
-  }
-  .footer-socials a:hover { background: rgba(255,255,255,0.18); }
-  .footer-bottom {
-    max-width: 960px;
-    margin: 32px auto 0;
-    padding-top: 20px;
-    border-top: 1px solid rgba(255,255,255,0.1);
-    text-align: center;
-    font-size: 0.85rem;
-  }
+  .footer-top { max-width: 1080px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 32px; }
+  .footer-brand .flogo { display: flex; align-items: center; gap: 10px; font-size: 1.55rem; font-weight: 600; color: #fff; letter-spacing: -0.01em; }
+  .footer-brand .flogo img { height: 40px; width: auto; }
+  .footer-brand .flogo span { color: #7fb3bf; }
+  .footer-brand p { margin-top: 8px; max-width: 260px; }
+  .footer-col h4 { color: #fff; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px; }
+  .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .footer-socials { display: flex; gap: 12px; margin-top: 16px; }
+  .footer-socials a { width: 38px; height: 38px; border-radius: 11px; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; color: #e6dbd0; transition: background 0.15s ease, transform 0.15s ease; }
+  .footer-socials a:hover { background: rgba(255,255,255,0.18); transform: translateY(-2px); }
+  .footer-bottom { max-width: 1080px; margin: 40px auto 0; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center; font-size: 0.85rem; }
   .footer-bottom .heart { margin-top: 6px; opacity: 0.8; }
 
-  @media (min-width: 640px) {
-    .logo { font-size: 4rem; }
-    .tagline { font-size: 1.6rem; }
-    .corridors-grid { grid-template-columns: 1fr 1fr; }
-    .steps { grid-template-columns: repeat(3, 1fr); }
-    .trust-grid { grid-template-columns: repeat(3, 1fr); }
-    .trust-item { flex-direction: column; text-align: center; align-items: center; }
-    .pricing-grid { grid-template-columns: repeat(3, 1fr); }
-    .testi-grid { grid-template-columns: repeat(3, 1fr); }
-    .footer-top { grid-template-columns: 1.4fr 1fr 1fr 1fr; }
+  @media (max-width: 560px) {
+    .tabs { display: flex; width: 100%; max-width: 380px; }
+    .tab-btn { flex: 1; padding: 11px 10px; font-size: 0.9rem; white-space: nowrap; }
+    .hero-ctas .btn { flex: 1; justify-content: center; }
+  }
+
+  @media (min-width: 720px) {
+    .corridors-grid { grid-template-columns: repeat(2,1fr); }
+    .steps { grid-template-columns: repeat(3,1fr); }
+    .trust-grid { grid-template-columns: repeat(3,1fr); }
+    .pricing-grid { grid-template-columns: repeat(3,1fr); }
+    .testi-grid { grid-template-columns: repeat(3,1fr); }
+    .footer-top { grid-template-columns: 1.6fr 1fr 1fr 1fr; }
+  }
+  @media (min-width: 900px) {
+    .nav-links, .nav-cta { display: flex; }
+    .nav-toggle { display: none; }
+    .hero-grid { grid-template-columns: 1.05fr 0.95fr; gap: 56px; }
+    .beta-card { padding: 64px 48px; }
   }
 </style>
 </head>
 <body>
 
-  <!-- HERO -->
-  <header class="hero">
-    <span class="badge">Bêta</span>
-    <div class="logo">Wonjo</div>
-    <p class="tagline">Vos colis voyagent avec des personnes de confiance</p>
-    <p class="subtitle">Wonjo connecte expéditeurs et voyageurs sur les corridors Europe-Afrique. Envois économiques, paiement sécurisé, identité vérifiée.</p>
-    <div class="hero-ctas">
-      <a href="#beta" class="cta cta-filled">Je suis expéditeur</a>
-      <a href="#beta" class="cta cta-outline">Je suis voyageur</a>
+  <!-- NAV -->
+  <nav class="nav" id="nav">
+    <div class="wrap nav-inner">
+      <a href="#top" class="nav-logo"><img src="/assets/wonjo-logo.png" alt="Logo Wonjo">Wonjo</a>
+      <div class="nav-links">
+        <a href="#corridors">Corridors</a>
+        <a href="#comment">Comment ça marche</a>
+        <a href="#tarifs">Tarifs</a>
+        <a href="#avis">Avis</a>
+      </div>
+      <a href="#beta" class="nav-cta">Rejoindre la bêta</a>
+      <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
     </div>
-    <div class="hero-loc">
-      <label for="pays">Je vis en :</label>
-      <select id="pays" aria-label="Pays de résidence">
-        <option value="FR">France</option>
-        <option value="BE">Belgique</option>
-        <option value="CH">Suisse</option>
-        <option value="DE">Allemagne</option>
-        <option value="IT">Italie</option>
-        <option value="ES">Espagne</option>
-      </select>
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="#corridors">Corridors</a>
+      <a href="#comment">Comment ça marche</a>
+      <a href="#tarifs">Tarifs</a>
+      <a href="#avis">Avis</a>
+      <a href="#beta" class="primary">Rejoindre la bêta</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero" id="top">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="wrap">
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <h1 class="reveal">Vos colis voyagent avec des personnes de confiance</h1>
+          <p class="subtitle reveal">Wonjo met en relation expéditeurs et voyageurs pour acheminer vos colis à moindre coût, entre l'Europe et l'Afrique comme d'un pays européen à l'autre. Paiement sécurisé, identités vérifiées.</p>
+        </div>
+
+        <div class="hero-illus reveal scale-in">
+          <div class="illus-card float">
+            <svg viewBox="0 0 360 280" role="img" aria-label="Itinéraire d'un colis de l'Europe vers l'Afrique">
+              <defs>
+                <linearGradient id="g-route" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#4A8896"/>
+                  <stop offset="1" stop-color="#7D4E2E"/>
+                </linearGradient>
+                <radialGradient id="g-globe" cx="0.35" cy="0.3" r="0.9">
+                  <stop offset="0" stop-color="#eaf3f5"/>
+                  <stop offset="1" stop-color="#d7e7ea"/>
+                </radialGradient>
+              </defs>
+
+              <!-- soft globe -->
+              <circle cx="180" cy="150" r="120" fill="url(#g-globe)"/>
+              <path d="M120 70 Q200 60 250 100 M90 150 Q180 130 280 160 M110 210 Q190 220 250 200" stroke="#bcd6db" stroke-width="2" fill="none" opacity="0.7"/>
+
+              <!-- continents (abstract) -->
+              <path d="M120 92 q22 -12 40 4 q14 12 4 26 q-16 14 -34 6 q-20 -10 -10 -36 z" fill="#cfe2e6"/>
+              <path d="M196 150 q26 -6 36 18 q10 30 -10 50 q-22 18 -38 -4 q-16 -26 12 -64 z" fill="#e3d2c4"/>
+
+              <!-- route -->
+              <path id="route" class="route-path" d="M132 108 C 180 70, 220 140, 246 188" stroke="url(#g-route)" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+              <!-- origin pin -->
+              <g class="city-pin">
+                <circle cx="132" cy="108" r="9" fill="#4A8896"/>
+                <circle cx="132" cy="108" r="9" fill="none" stroke="#4A8896" stroke-width="2" opacity="0.4"><animate attributeName="r" values="9;18;9" dur="2.4s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.5;0;0.5" dur="2.4s" repeatCount="indefinite"/></circle>
+              </g>
+              <!-- destination pin -->
+              <g class="city-pin">
+                <circle cx="246" cy="188" r="9" fill="#7D4E2E"/>
+                <circle cx="246" cy="188" r="9" fill="none" stroke="#7D4E2E" stroke-width="2" opacity="0.4"><animate attributeName="r" values="9;18;9" dur="2.4s" begin="1.2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.5;0;0.5" dur="2.4s" begin="1.2s" repeatCount="indefinite"/></circle>
+              </g>
+
+              <!-- flat "send" symbol following the route -->
+              <g>
+                <g transform="translate(-11,-11)">
+                  <circle cx="11" cy="11" r="15" fill="#fff" stroke="#4A8896" stroke-width="1.5"/>
+                  <path transform="translate(3,3) scale(0.66)" d="M2 21l21-9L2 3v7l15 2-15 2z" fill="#4A8896"/>
+                </g>
+                <animateMotion dur="5s" repeatCount="indefinite" rotate="auto" keyPoints="0;1" keyTimes="0;1" calcMode="linear">
+                  <mpath href="#route"/>
+                </animateMotion>
+              </g>
+
+              <!-- floating package -->
+              <g class="float delay">
+                <rect x="280" y="60" width="44" height="44" rx="8" fill="#fff" stroke="#F5A623" stroke-width="2"/>
+                <path d="M280 78 h44 M302 60 v44" stroke="#F5A623" stroke-width="2"/>
+              </g>
+            </svg>
+          </div>
+        </div>
+      </div>
+
     </div>
   </header>
 
   <!-- CORRIDORS -->
-  <section class="section">
+  <section class="section" id="corridors">
     <div class="wrap">
-      <h2>Nos corridors</h2>
-      <p class="section-sub">Europe vers Afrique, en toute simplicité</p>
+      <h2 class="reveal">Des corridors qui rapprochent</h2>
+      <p class="section-sub reveal">De l'Europe vers l'Afrique, et d'un pays d'Europe à l'autre.</p>
       <div class="corridors-grid">
-        <div class="corridor">
-          <span class="from">France</span>
-          <svg class="plane" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>
-          <span class="to">Sénégal</span>
-        </div>
-        <div class="corridor">
-          <span class="from">France</span>
-          <svg class="plane" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>
-          <span class="to">Cameroun</span>
-        </div>
-        <div class="corridor">
-          <span class="from">France</span>
-          <svg class="plane" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>
-          <span class="to">Côte d'Ivoire</span>
-        </div>
-        <div class="corridor">
-          <span class="from">France</span>
-          <svg class="plane" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>
-          <span class="to">Congo</span>
-        </div>
+        <div class="corridor reveal"><span class="from">Paris</span><svg class="plane" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg><span class="to">Dakar</span></div>
+        <div class="corridor reveal"><span class="from">Lyon</span><svg class="plane" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg><span class="to">Abidjan</span></div>
+        <div class="corridor reveal"><span class="from">Bruxelles</span><svg class="plane" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg><span class="to">Douala</span></div>
+        <div class="corridor reveal"><span class="from">Paris</span><svg class="plane" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg><span class="to">Bruxelles</span></div>
       </div>
+      <p class="corridors-note reveal">Quelques exemples parmi nos trajets. Côté Europe, les départs se font depuis quelques pays seulement (France, Belgique), et d'autres arrivent bientôt.</p>
     </div>
   </section>
 
   <!-- COMMENT ÇA MARCHE -->
-  <section class="section" id="comment" style="background:#fff;">
+  <section class="section trust" id="comment">
     <div class="wrap">
-      <h2>Comment ça marche</h2>
-      <p class="section-sub">Choisissez votre profil</p>
-      <div class="tabs">
-        <button class="tab-btn active" data-tab="exp">Je suis expéditeur</button>
-        <button class="tab-btn" data-tab="voy">Je suis voyageur</button>
+      <h2 class="reveal">Comment ça marche</h2>
+      <p class="section-sub reveal">Choisissez votre profil, on s'occupe du reste.</p>
+      <div class="tabs-wrap reveal">
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="exp">Je suis expéditeur</button>
+          <button class="tab-btn" data-tab="voy">Je suis voyageur</button>
+        </div>
       </div>
 
-      <!-- Expéditeur -->
       <div class="tab-panel active" id="tab-exp">
         <div class="steps">
-          <div class="step">
-            <div class="step-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
-            </div>
-            <div><h3>Décrivez votre colis</h3><p>Poids, destination, valeur déclarée.</p></div>
+          <div class="step reveal">
+            <span class="step-num">1</span>
+            <div class="step-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>
+            <h3>Publiez votre annonce de colis</h3><p>Poids, destination, valeur déclarée, ou parcourez directement les trajets des voyageurs.</p>
           </div>
-          <div class="step">
-            <div class="step-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            </div>
-            <div><h3>Choisissez un voyageur</h3><p>Parcourez les trajets disponibles et contactez.</p></div>
+          <div class="step reveal">
+            <span class="step-num">2</span>
+            <div class="step-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+            <h3>Trouvez un voyageur</h3><p>Contactez un voyageur sur son trajet, ou laissez-les vous contacter sur votre annonce.</p>
           </div>
-          <div class="step">
-            <div class="step-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
-            </div>
-            <div><h3>Payez en toute sécurité</h3><p>Paiement bloqué jusqu'à confirmation de livraison.</p></div>
+          <div class="step reveal">
+            <span class="step-num">3</span>
+            <div class="step-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg></div>
+            <h3>Payez en toute sécurité</h3><p>Paiement bloqué jusqu'à confirmation de livraison.</p>
           </div>
         </div>
       </div>
 
-      <!-- Voyageur -->
       <div class="tab-panel" id="tab-voy">
         <div class="steps">
-          <div class="step">
-            <div class="step-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>
-            </div>
-            <div><h3>Publiez votre trajet</h3><p>Destination, date, kilos disponibles, prix/kg.</p></div>
+          <div class="step reveal">
+            <span class="step-num">1</span>
+            <div class="step-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></div>
+            <h3>Publiez votre trajet</h3><p>Destination, date, kilos disponibles, prix/kg, ou parcourez directement les annonces de colis.</p>
           </div>
-          <div class="step">
-            <div class="step-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
-            </div>
-            <div><h3>Recevez des demandes</h3><p>Les expéditeurs vous contactent directement.</p></div>
+          <div class="step reveal">
+            <span class="step-num">2</span>
+            <div class="step-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg></div>
+            <h3>Échangez avec les expéditeurs</h3><p>Recevez des demandes sur votre trajet, ou contactez les expéditeurs sur leurs annonces de colis.</p>
           </div>
-          <div class="step">
-            <div class="step-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
-            </div>
-            <div><h3>Gagnez de l'argent</h3><p>Paiement automatique après livraison confirmée.</p></div>
+          <div class="step reveal">
+            <span class="step-num">3</span>
+            <div class="step-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg></div>
+            <h3>Gagnez de l'argent</h3><p>Paiement automatique après livraison confirmée.</p>
           </div>
         </div>
       </div>
@@ -536,45 +545,37 @@
   </section>
 
   <!-- CONFIANCE -->
-  <section class="section trust">
+  <section class="section">
     <div class="wrap">
-      <h2>La confiance avant tout</h2>
-      <p class="section-sub">Chaque envoi est protégé</p>
+      <h2 class="reveal">La confiance avant tout</h2>
+      <p class="section-sub reveal">Votre argent et vos colis sont protégés à chaque étape.</p>
       <div class="trust-grid">
-        <div class="trust-item">
-          <div class="trust-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          </div>
-          <div><h3>Paiement sécurisé</h3><p>Vos fonds sont gardés en escrow et libérés après livraison confirmée.</p></div>
+        <div class="trust-item reveal">
+          <div class="trust-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+          <h3>Paiement sécurisé</h3><p>Vos fonds sont gardés en escrow et libérés après livraison confirmée.</p>
         </div>
-        <div class="trust-item">
-          <div class="trust-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-          </div>
-          <div><h3>Identité vérifiée</h3><p>KYC obligatoire pour chaque utilisateur — porteurs et expéditeurs.</p></div>
+        <div class="trust-item reveal">
+          <div class="trust-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+          <h3>Identité vérifiée</h3><p>KYC obligatoire pour chaque utilisateur : porteurs et expéditeurs.</p>
         </div>
-        <div class="trust-item">
-          <div class="trust-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          </div>
-          <div><h3>Support disponible</h3><p>Une équipe à votre écoute en cas de litige ou de question.</p></div>
+        <div class="trust-item reveal">
+          <div class="trust-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+          <h3>Support disponible</h3><p>Une équipe à votre écoute en cas de litige ou de question.</p>
         </div>
       </div>
     </div>
   </section>
 
   <!-- TARIFS -->
-  <section class="section" id="tarifs">
+  <section class="section trust" id="tarifs">
     <div class="wrap">
-      <h2>Des offres pour chaque besoin</h2>
-      <p class="section-sub">Particuliers et entreprises — bientôt disponible</p>
+      <h2 class="reveal">Une offre pour chaque besoin</h2>
+      <p class="section-sub reveal">Des particuliers aux entreprises, les offres pro arrivent bientôt.</p>
       <div class="pricing-grid">
-
-        <!-- Particulier -->
-        <div class="price-card featured">
+        <div class="price-card featured reveal">
           <span class="price-badge available">Disponible</span>
           <h3>Particulier</h3>
-          <div class="price-amount">10% par envoi</div>
+          <div class="price-amount">&nbsp;</div>
           <ul class="price-features">
             <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Envoi sécurisé</li>
             <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> KYC vérifié</li>
@@ -583,8 +584,7 @@
           <a href="#beta" class="price-cta">Rejoindre la bêta</a>
         </div>
 
-        <!-- Business -->
-        <div class="price-card disabled">
+        <div class="price-card disabled reveal">
           <div class="price-overlay"><span>Bientôt disponible</span></div>
           <div class="price-content">
             <span class="price-badge soon">Bientôt</span>
@@ -600,8 +600,7 @@
           </div>
         </div>
 
-        <!-- Enterprise -->
-        <div class="price-card disabled">
+        <div class="price-card disabled reveal">
           <div class="price-overlay"><span>Bientôt disponible</span></div>
           <div class="price-content">
             <span class="price-badge soon">Bientôt</span>
@@ -616,49 +615,36 @@
             <a href="mailto:contact@wonjo.app" class="price-cta ghost">Nous contacter</a>
           </div>
         </div>
-
       </div>
     </div>
   </section>
 
   <!-- TÉMOIGNAGES -->
-  <section class="section testi">
+  <section class="section" id="avis">
     <div class="wrap">
-      <h2>Ils nous font confiance</h2>
-      <p class="section-sub">Premiers retours de notre communauté bêta</p>
+      <h2 class="reveal">Ils nous font confiance</h2>
+      <p class="section-sub reveal">Les premiers retours de notre communauté bêta.</p>
       <div class="testi-grid">
-        <div class="testi-card">
+        <div class="testi-card reveal">
           <div class="testi-stars">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
           </div>
           <p>« J'envoie régulièrement des médicaments à ma famille au Sénégal. Avec Wonjo c'est 3x moins cher qu'un transporteur classique et je sais que c'est sécurisé. »</p>
-          <div class="testi-author">Moussa D., Paris → Dakar</div>
+          <div class="testi-author"><div class="testi-avatar">MD</div><div class="testi-name">Moussa D.<br><span style="color:var(--muted);font-weight:500;">Paris → Dakar</span></div></div>
         </div>
-        <div class="testi-card">
+        <div class="testi-card reveal">
           <div class="testi-stars">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
           </div>
           <p>« Je voyage 4 fois par an entre Paris et Abidjan. Wonjo me permet de rentabiliser mon voyage et d'aider des familles à envoyer leurs colis. »</p>
-          <div class="testi-author">Aminata K., voyageuse fréquente</div>
+          <div class="testi-author"><div class="testi-avatar">AK</div><div class="testi-name">Aminata K.<br><span style="color:var(--muted);font-weight:500;">Voyageuse fréquente</span></div></div>
         </div>
-        <div class="testi-card">
+        <div class="testi-card reveal">
           <div class="testi-stars">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
           </div>
           <p>« Simple, rapide et sécurisé. Le paiement est bloqué jusqu'à la livraison, ça rassure vraiment. »</p>
-          <div class="testi-author">Jean-Pierre M., Camerounais à Lyon</div>
+          <div class="testi-author"><div class="testi-avatar">JM</div><div class="testi-name">Jean-Pierre M.<br><span style="color:var(--muted);font-weight:500;">Camerounais à Lyon</span></div></div>
         </div>
       </div>
     </div>
@@ -667,34 +653,25 @@
   <!-- FORMULAIRE BÊTA -->
   <section class="section beta" id="beta">
     <div class="wrap">
-      <h2>Rejoignez la bêta en avant-première</h2>
-      <form class="form-card" id="beta-form" action="https://formspree.io/f/meeboeqq" method="POST">
-        <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" style="display:none" aria-hidden="true">
-        <label for="prenom">Prénom</label>
-        <input type="text" id="prenom" name="prenom" placeholder="Votre prénom" required>
-        <label for="email">Email</label>
-        <input type="email" id="email" name="email" placeholder="vous@exemple.com" required>
-        <label>Je suis</label>
-        <div class="role-group">
-          <label class="role-option">
-            <input type="radio" name="role" value="Expéditeur" required>
-            Expéditeur (j'envoie des colis)
-          </label>
-          <label class="role-option">
-            <input type="radio" name="role" value="Voyageur">
-            Voyageur (je transporte des colis)
-          </label>
-        </div>
-        <button type="submit">Je m'inscris</button>
-        <p class="form-note">Disponible sur iOS et Android prochainement</p>
-      </form>
+      <div class="beta-card reveal scale-in">
+        <h2>Rejoignez la bêta en avant-première</h2>
+        <p class="section-sub">Soyez parmi les premiers à utiliser Wonjo</p>
 
-      <div class="form-success" id="beta-success" hidden>
-        <div class="check">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        <form class="form-card" id="beta-form" action="https://formspree.io/f/meeboeqq" method="POST">
+          <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" style="display:none" aria-hidden="true">
+          <label for="prenom">Prénom</label>
+          <input type="text" id="prenom" name="prenom" placeholder="Votre prénom" required>
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="vous@exemple.com" required>
+          <button type="submit">Je m'inscris</button>
+          <p class="form-note">Disponible sur iOS et Android prochainement</p>
+        </form>
+
+        <div class="form-success" id="beta-success" hidden>
+          <div class="check"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+          <h3 id="success-title">Merci !</h3>
+          <p>Vous recevrez un email avec les instructions pour rejoindre la bêta.</p>
         </div>
-        <h3 id="success-title">Merci !</h3>
-        <p>Vous recevrez un email avec les instructions pour rejoindre la bêta.</p>
       </div>
     </div>
   </section>
@@ -703,51 +680,71 @@
   <footer>
     <div class="footer-top">
       <div class="footer-brand">
-        <div class="flogo">Wonjo</div>
+        <div class="flogo"><img src="/assets/wonjo-logo.png" alt="Logo Wonjo">Wonjo</div>
         <p>Vos colis voyagent avec des personnes de confiance, de l'Europe vers l'Afrique.</p>
         <div class="footer-socials">
-          <a href="https://instagram.com/wonjo.app" aria-label="Instagram" target="_blank" rel="noopener">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
-          </a>
-          <a href="https://linkedin.com/company/wonjo" aria-label="LinkedIn" target="_blank" rel="noopener">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>
-          </a>
-          <a href="https://x.com/wonjo_app" aria-label="Twitter / X" target="_blank" rel="noopener">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-          </a>
+          <a href="https://instagram.com/wonjo.app" aria-label="Instagram" target="_blank" rel="noopener"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg></a>
+          <a href="https://linkedin.com/company/wonjo" aria-label="LinkedIn" target="_blank" rel="noopener"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg></a>
+          <a href="https://x.com/wonjo_app" aria-label="Twitter / X" target="_blank" rel="noopener"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
         </div>
       </div>
       <div class="footer-col">
         <h4>Produit</h4>
-        <ul>
-          <li><a href="#comment">Comment ça marche</a></li>
-          <li><a href="#tarifs">Tarifs</a></li>
-          <li><a href="#beta">Bêta</a></li>
-        </ul>
+        <ul><li><a href="#comment">Comment ça marche</a></li><li><a href="#tarifs">Tarifs</a></li><li><a href="#beta">Bêta</a></li></ul>
       </div>
       <div class="footer-col">
         <h4>Légal</h4>
-        <ul>
-          <li><a href="/mentions-legales.html">Mentions légales</a></li>
-          <li><a href="/cgu.html">CGU</a></li>
-          <li><a href="/confidentialite.html">Confidentialité</a></li>
-        </ul>
+        <ul><li><a href="/mentions-legales.html">Mentions légales</a></li><li><a href="/cgu.html">CGU</a></li><li><a href="/confidentialite.html">Confidentialité</a></li></ul>
       </div>
       <div class="footer-col">
         <h4>Contact</h4>
-        <ul>
-          <li><a href="mailto:contact@wonjo.app">contact@wonjo.app</a></li>
-        </ul>
+        <ul><li><a href="mailto:contact@wonjo.app">contact@wonjo.app</a></li></ul>
       </div>
     </div>
     <div class="footer-bottom">
-      <div>© 2026 Wonjo — Lampasai SAS</div>
+      <div>© 2026 Wonjo - Lampas AI</div>
       <div class="heart">Conçu pour la diaspora africaine</div>
     </div>
   </footer>
 
   <script>
-    // Onglets "Comment ça marche"
+    // Révélation au scroll
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.style.transitionDelay = (entry.target.dataset.delay || 0) + 'ms';
+          entry.target.classList.add('visible');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(function (el, i) {
+      // léger décalage en cascade entre voisins d'une même grille
+      var parent = el.parentElement;
+      var siblings = Array.prototype.filter.call(parent.children, function (c) { return c.classList.contains('reveal'); });
+      var idx = siblings.indexOf(el);
+      if (siblings.length > 1) el.dataset.delay = Math.min(idx, 4) * 80;
+      io.observe(el);
+    });
+
+    // Nav : ombre au scroll + menu mobile
+    var nav = document.getElementById('nav');
+    window.addEventListener('scroll', function () {
+      nav.classList.toggle('scrolled', window.scrollY > 8);
+    }, { passive: true });
+
+    var toggle = document.getElementById('navToggle');
+    var menu = document.getElementById('mobileMenu');
+    toggle.addEventListener('click', function () {
+      var open = menu.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', open);
+    });
+    menu.querySelectorAll('a').forEach(function (a) {
+      a.addEventListener('click', function () { menu.classList.remove('open'); toggle.setAttribute('aria-expanded', false); });
+    });
+
+    // Onglets « Comment ça marche »
     document.querySelectorAll('.tab-btn').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var tab = btn.dataset.tab;
@@ -758,33 +755,18 @@
       });
     });
 
-    // Pré-sélection du profil selon le CTA cliqué dans le hero
-    document.querySelectorAll('.hero-ctas .cta').forEach(function (cta) {
-      cta.addEventListener('click', function () {
-        var isExp = cta.classList.contains('cta-filled');
-        var radio = document.querySelector('input[name="role"][value="' + (isExp ? 'Expéditeur' : 'Voyageur') + '"]');
-        if (radio) radio.checked = true;
-      });
-    });
-
-    // Soumission du formulaire bêta (AJAX vers Formspree) + message de succès
+    // Soumission du formulaire (AJAX Formspree) + message de succès
     var form = document.getElementById('beta-form');
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       var prenom = document.getElementById('prenom').value.trim();
-      var data = new FormData(form);
-      fetch(form.action, { method: 'POST', body: data, headers: { 'Accept': 'application/json' } })
-        .then(function (res) {
-          if (res.ok) { showSuccess(prenom); }
-          else { form.submit(); } // fallback navigation classique
-        })
+      fetch(form.action, { method: 'POST', body: new FormData(form), headers: { 'Accept': 'application/json' } })
+        .then(function (res) { res.ok ? showSuccess(prenom) : form.submit(); })
         .catch(function () { form.submit(); });
     });
-
     function showSuccess(prenom) {
       var success = document.getElementById('beta-success');
-      document.getElementById('success-title').textContent =
-        'Merci ' + (prenom || '') + (prenom ? ' !' : '!');
+      document.getElementById('success-title').textContent = 'Merci ' + (prenom || '') + (prenom ? ' !' : '!');
       form.hidden = true;
       success.hidden = false;
       success.scrollIntoView({ behavior: 'smooth', block: 'center' });
