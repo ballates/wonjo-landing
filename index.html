@@ -3,16 +3,36 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wonjo - Envoyez vos colis avec des personnes de confiance</title>
-<meta name="description" content="Wonjo connecte expéditeurs et voyageurs sur les corridors Europe-Afrique. Envois économiques, paiement sécurisé, identité vérifiée.">
+<title>Wonjo — Envoi de colis entre particuliers · Europe & Afrique</title>
+<meta name="description" content="Wonjo connecte expéditeurs et voyageurs en Europe et entre l'Europe et l'Afrique. Envoyez vos colis à moindre coût avec des personnes de confiance : paiement sécurisé, identités vérifiées, suivi en temps réel.">
+<meta name="keywords" content="envoi de colis Europe Afrique, cotransportage, transport de colis entre particuliers, voyageur colis, expédier un colis en Afrique, Dakar, Abidjan, Douala, Kinshasa, paiement sécurisé, diaspora africaine">
+<meta name="author" content="Wonjo">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+<meta name="theme-color" content="#4A8896">
+<link rel="canonical" href="https://wonjo.app/">
 <link rel="icon" type="image/png" href="/assets/wonjo-logo.png">
 <link rel="apple-touch-icon" href="/assets/wonjo-logo.png">
-<meta property="og:title" content="Wonjo - Envoyez vos colis avec des personnes de confiance">
-<meta property="og:description" content="Wonjo connecte expéditeurs et voyageurs sur les corridors Europe-Afrique. Envois économiques, paiement sécurisé, identité vérifiée.">
-<meta property="og:image" content="https://wonjo.app/assets/wonjo-logo.png">
-<meta property="og:url" content="https://wonjo.app/">
+
+<!-- Open Graph -->
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="Wonjo">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:title" content="Wonjo — Envoi de colis entre particuliers · Europe & Afrique">
+<meta property="og:description" content="Wonjo connecte expéditeurs et voyageurs en Europe et entre l'Europe et l'Afrique. Envois économiques, paiement sécurisé, identités vérifiées.">
+<meta property="og:image" content="https://wonjo.app/assets/og-cover.png">
+<meta property="og:image:secure_url" content="https://wonjo.app/assets/og-cover.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Wonjo — envoi de colis entre particuliers, Europe & Afrique">
+<meta property="og:url" content="https://wonjo.app/">
+
+<!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Wonjo — Envoi de colis entre particuliers · Europe & Afrique">
+<meta name="twitter:description" content="Wonjo connecte expéditeurs et voyageurs en Europe et entre l'Europe et l'Afrique. Envois économiques, paiement sécurisé, identités vérifiées.">
+<meta name="twitter:image" content="https://wonjo.app/assets/og-cover.png">
+<meta name="twitter:image:alt" content="Wonjo — envoi de colis entre particuliers, Europe & Afrique">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -28,7 +48,7 @@
     --ink: #14142b;
     --muted: #5b5b70;
     --line: rgba(20,20,43,0.08);
-    --brand-gradient: linear-gradient(135deg, #4A8896 0%, #4A8896 45%, #7D4E2E 100%);
+    --brand-gradient: linear-gradient(135deg, #4A8896 0%, #7D4E2E 100%);
     --radius: 20px;
     --shadow-sm: 0 4px 16px rgba(20,20,43,0.05);
     --shadow-md: 0 14px 40px rgba(20,20,43,0.10);
@@ -97,17 +117,19 @@
   .reveal.scale-in { transform: scale(0.94); }
   @media (prefers-reduced-motion: reduce) {
     .reveal { opacity: 1 !important; transform: none !important; transition: none; }
-    .float, .plane-dot, .blob, .beta-card { animation: none !important; }
+    .hero, .hero-aurora, .map-badge, .route-dash, .pin-ring,
+    .plane, .hero-eyebrow .live { animation: none !important; }
+    .hl-underline path { stroke-dashoffset: 0 !important; animation: none !important; }
   }
 
   /* NAV */
   .nav {
     position: sticky; top: 0; z-index: 50;
-    background: rgba(247,246,252,0.72);
-    backdrop-filter: saturate(180%) blur(14px);
-    -webkit-backdrop-filter: saturate(180%) blur(14px);
+    background: rgba(247,246,252,0.82);
+    backdrop-filter: saturate(180%) blur(8px);
+    -webkit-backdrop-filter: saturate(180%) blur(8px);
     border-bottom: 1px solid transparent;
-    transition: border-color 0.2s ease, background 0.2s ease;
+    transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
   }
   .nav.scrolled { border-color: var(--line); box-shadow: 0 6px 24px rgba(20,20,43,0.05); }
   .scroll-progress {
@@ -116,9 +138,9 @@
     transition: transform 0.1s linear; will-change: transform;
   }
   .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 68px; }
-  .nav-logo { display: flex; align-items: center; gap: 9px; font-size: 1.45rem; font-weight: 600; letter-spacing: -0.02em; text-decoration: none; color: var(--ink); }
+  .nav-logo { display: flex; align-items: center; gap: 9px; font-size: 1.45rem; font-weight: 600; letter-spacing: -0.02em; text-decoration: none; color: var(--ink); transition: color 0.25s ease; }
   .nav-logo img { height: 36px; width: auto; display: block; }
-  .nav-logo span { color: var(--teal); }
+  .nav-logo span { color: var(--teal); transition: color 0.25s ease; }
   .nav-links { display: none; gap: 30px; align-items: center; }
   .nav-links a { position: relative; text-decoration: none; color: var(--muted); font-weight: 600; font-size: 0.95rem; transition: color 0.15s ease; }
   .nav-links a::after {
@@ -138,11 +160,31 @@
     border-radius: 999px;
     font-size: 0.92rem;
     box-shadow: 0 6px 18px rgba(74,136,150,0.3);
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.25s ease, color 0.25s ease;
   }
   .nav-cta:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(74,136,150,0.4); }
-  .nav-toggle { background: none; border: none; cursor: pointer; padding: 8px; display: flex; }
-  .nav-toggle svg { color: var(--ink); }
+  .nav-toggle { background: none; border: none; cursor: pointer; padding: 10px; display: flex; }
+  .nav-toggle .bars { position: relative; width: 24px; height: 18px; display: block; }
+  .nav-toggle .bars i { position: absolute; left: 0; height: 2.5px; width: 100%; border-radius: 2px; background: var(--ink); transition: transform .3s ease, opacity .2s ease, background .25s ease; }
+  .nav-toggle .bars i:nth-child(1) { top: 0; }
+  .nav-toggle .bars i:nth-child(2) { top: 50%; transform: translateY(-50%); }
+  .nav-toggle .bars i:nth-child(3) { bottom: 0; }
+  .nav-toggle.open .bars i:nth-child(1) { top: 50%; transform: translateY(-50%) rotate(45deg); }
+  .nav-toggle.open .bars i:nth-child(2) { opacity: 0; }
+  .nav-toggle.open .bars i:nth-child(3) { bottom: auto; top: 50%; transform: translateY(-50%) rotate(-45deg); }
+
+  /* back-to-top */
+  .to-top {
+    position: fixed; right: 22px; bottom: 22px; z-index: 60;
+    width: 48px; height: 48px; border-radius: 50%; border: none; cursor: pointer;
+    background: var(--teal); color: #fff; display: grid; place-items: center;
+    box-shadow: 0 12px 28px rgba(74,136,150,0.4);
+    opacity: 0; transform: translateY(16px) scale(0.85); pointer-events: none;
+    transition: opacity .25s ease, transform .25s ease, background .15s ease;
+  }
+  .to-top.show { opacity: 1; transform: none; pointer-events: auto; }
+  .to-top:hover { transform: translateY(-3px); background: var(--teal-dark); }
+  @media (prefers-reduced-motion: reduce) { .nav-toggle .bars i, .to-top { transition: opacity .2s ease; } }
   .mobile-menu {
     display: none;
     flex-direction: column;
@@ -157,66 +199,134 @@
   .mobile-menu a.primary { color: var(--teal); }
 
   /* HERO */
-  .hero { position: relative; padding: 64px 0 72px; overflow: hidden; }
-  .hero-grid { display: grid; grid-template-columns: 1fr; gap: 40px; align-items: center; }
+  .hero {
+    position: relative; overflow: hidden; color: #fff;
+    margin-top: -68px; padding: 124px 0 88px;
+    background: linear-gradient(120deg, #4A8896 0%, #7D4E2E 100%);
+  }
+  .hero::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(900px 520px at 78% 6%, rgba(245,166,35,0.18), transparent 60%),
+      radial-gradient(760px 620px at -6% 28%, rgba(0,0,0,0.30), transparent 60%);
+  }
+  .hero-aurora {
+    position: absolute; inset: -20% -10% auto -10%; height: 72%;
+    background: radial-gradient(closest-side, rgba(255,255,255,0.16), transparent 70%);
+    filter: blur(20px); opacity: .8; pointer-events: none;
+    animation: auroraFloat 12s ease-in-out infinite alternate;
+  }
+  @keyframes auroraFloat { 0% { transform: translate(-6%, -4%) scale(1); } 100% { transform: translate(8%, 6%) scale(1.12); } }
+  .hero .wrap { position: relative; z-index: 2; }
+  .hero-grid { display: grid; grid-template-columns: 1fr; gap: 44px; align-items: center; }
+
+  .hero-eyebrow {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-size: 0.74rem; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase;
+    color: #fff; background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.22);
+    padding: 7px 14px; border-radius: 999px; margin-bottom: 22px; backdrop-filter: blur(6px);
+  }
+  .hero-eyebrow .live { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(29,158,117,0.6);} 70% { box-shadow: 0 0 0 9px rgba(29,158,117,0);} 100% { box-shadow: 0 0 0 0 rgba(29,158,117,0);} }
+
   .hero h1 {
-    font-size: clamp(2.1rem, 7vw, 3.4rem);
-    font-weight: 800;
-    letter-spacing: -0.035em;
-    line-height: 1.08;
-    margin-bottom: 18px;
+    font-size: clamp(2.2rem, 6.4vw, 3.5rem);
+    font-weight: 800; letter-spacing: -0.035em; line-height: 1.06;
+    margin-bottom: 20px; max-width: 560px;
   }
-  .hero .subtitle { font-size: 1.12rem; color: var(--muted); max-width: 520px; margin-bottom: 30px; }
-  .hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 22px; }
-  .btn {
-    display: inline-flex; align-items: center; gap: 8px;
-    font-size: 1.02rem; font-weight: 700; text-decoration: none;
-    padding: 15px 28px; border-radius: 14px; cursor: pointer; border: none;
-    font-family: inherit;
-    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  .hl { position: relative; white-space: nowrap; color: #fff; }
+  .hl-underline { position: absolute; left: -2%; bottom: -0.22em; width: 104%; height: 0.42em; overflow: visible; }
+  .hl-underline path {
+    fill: none; stroke: var(--amber); stroke-width: 6; stroke-linecap: round;
+    stroke-dasharray: 240; stroke-dashoffset: 240; animation: draw 1s .55s cubic-bezier(.5,0,.3,1) forwards;
   }
-  .btn-primary { background: var(--teal); color: #fff; box-shadow: 0 10px 28px rgba(74,136,150,0.35); }
-  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 16px 36px rgba(74,136,150,0.45); }
-  .btn-outline { background: var(--surface); color: var(--teal); border: 2px solid rgba(74,136,150,0.3); padding: 13px 26px; }
-  .btn-outline:hover { border-color: var(--teal); transform: translateY(-2px); }
-  .btn:active { transform: translateY(0); }
-  .hero-loc { font-size: 0.92rem; color: var(--muted); display: inline-flex; align-items: center; gap: 8px; }
-  .hero-loc select {
-    font-family: inherit; font-size: 0.92rem; font-weight: 700; color: var(--ink);
-    background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 7px 12px; cursor: pointer;
-  }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
 
-  /* hero illustration */
+  .hero .subtitle { font-size: 1.14rem; font-weight: 300; color: rgba(255,255,255,0.92); max-width: 500px; margin-bottom: 30px; }
+
+  .hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 30px; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-size: 1.02rem; font-weight: 700; text-decoration: none; padding: 15px 26px; border-radius: 999px;
+    cursor: pointer; border: none; position: relative; overflow: hidden; font-family: inherit;
+    transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+  }
+  .pill svg { transition: transform .2s ease; }
+  .pill-amber { background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.4); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  .pill-amber:hover { transform: translateY(-3px); background: rgba(255,255,255,0.22); }
+  .pill-amber:hover svg { transform: translateX(4px); }
+  .pill-amber::after {
+    content: ""; position: absolute; top: 0; left: -120%; width: 60%; height: 100%;
+    background: linear-gradient(110deg, transparent, rgba(255,255,255,0.6), transparent); transform: skewX(-18deg);
+  }
+  .pill-amber:hover::after { animation: shimmer .9s ease; }
+  @keyframes shimmer { from { left: -120%; } to { left: 160%; } }
+  .pill-glass { background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.4); backdrop-filter: blur(6px); }
+  .pill-glass:hover { transform: translateY(-3px); background: rgba(255,255,255,0.22); }
+  .pill:active { transform: translateY(-1px); }
+
+  .hero-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 22px 30px; }
+  .hero-counter { font-size: 1rem; color: rgba(255,255,255,0.85); font-weight: 600; }
+  .hero-counter b { color: #fff; font-size: 1.5rem; font-weight: 800; }
+  .hero-counter b .plus { color: var(--amber); }
+  .hero-trust { display: flex; align-items: center; gap: 12px; }
+  .avatars { display: flex; }
+  .avatars span {
+    width: 34px; height: 34px; border-radius: 50%; margin-left: -10px;
+    border: 2px solid rgba(255,255,255,0.85); display: grid; place-items: center;
+    font-size: 0.72rem; font-weight: 800; color: #fff;
+  }
+  .avatars span:first-child { margin-left: 0; }
+  .avatars .a1 { background: linear-gradient(150deg,#5C9099,#4A8896); }
+  .avatars .a2 { background: linear-gradient(150deg,#9a6a44,#7D4E2E); }
+  .avatars .a3 { background: linear-gradient(150deg,#34c08e,#1D9E75); }
+  .avatars .a4 { background: linear-gradient(150deg,#f7b94e,#F5A623); color:#3a2a10; }
+  .hero-trust small { font-size: 0.82rem; color: rgba(255,255,255,0.8); line-height: 1.3; }
+  .hero-trust small b { color: #fff; }
+
+  /* carte Europe -> Afrique */
   .hero-illus { position: relative; }
-  .illus-card {
-    position: relative;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 28px;
-    padding: 22px;
-    box-shadow: var(--shadow-lg);
+  .map-card {
+    position: relative; border-radius: 28px; padding: 18px;
+    background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.22);
+    box-shadow: 0 30px 70px rgba(20,15,10,0.35); backdrop-filter: blur(8px);
   }
-  .illus-card svg { width: 100%; height: auto; display: block; }
-  .route-path { stroke-dasharray: 6 8; }
-  .city-pin { transform-box: fill-box; transform-origin: center; }
+  .map-card svg.map { width: 100%; height: auto; display: block; }
+  .map-badge {
+    position: absolute; left: 18px; bottom: 18px;
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(20,30,36,0.55); border: 1px solid rgba(255,255,255,0.18);
+    padding: 9px 14px; border-radius: 14px; backdrop-filter: blur(8px);
+    font-size: 0.82rem; color: #fff; font-weight: 600;
+    animation: floaty 5s ease-in-out infinite;
+  }
+  .map-badge svg { color: var(--amber); }
+  @keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
 
-  .float { animation: floaty 5s ease-in-out infinite; }
-  .float.delay { animation-delay: 1.2s; }
-  @keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-
-  /* decorative blobs */
-  .blob { position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.5; z-index: -1; pointer-events: none; }
-  .blob-1 { width: 340px; height: 340px; background: rgba(74,136,150,0.4); top: -80px; right: -60px; animation: drift 16s ease-in-out infinite; }
-  .blob-2 { width: 300px; height: 300px; background: rgba(125,78,46,0.28); bottom: -100px; left: -80px; animation: drift 20s ease-in-out infinite reverse; }
-  @keyframes drift { 0%,100% { transform: translate(0,0); } 50% { transform: translate(30px,-24px); } }
-
-  /* stat strip */
-  .stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-top: 8px; }
-  .stat { text-align: center; }
-  .stat b { display: block; font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; color: var(--teal); }
-  .stat span { font-size: 0.82rem; color: var(--muted); }
+  .continent { fill: rgba(255,255,255,0.13); stroke: rgba(255,255,255,0.42); stroke-width: 1.4; }
+  .grid-line { stroke: rgba(255,255,255,0.10); stroke-width: 1; }
+  .route-base { fill: none; stroke: rgba(255,255,255,0.45); stroke-width: 2.4; stroke-linecap: round; }
+  .route-dash { fill: none; stroke: var(--amber); stroke-width: 2.6; stroke-linecap: round; stroke-dasharray: 2 9; animation: march 1.1s linear infinite; }
+  @keyframes march { to { stroke-dashoffset: -22; } }
+  .pin-ring { fill: none; stroke: #fff; stroke-width: 2; opacity: 0; transform-box: fill-box; transform-origin: center; animation: ping 2.4s ease-out infinite; }
+  .pin-ring.delay { animation-delay: 1.2s; }
+  @keyframes ping { 0% { opacity: .7; transform: scale(.4);} 80%,100% { opacity: 0; transform: scale(2.1);} }
+  .pin-dot { fill: var(--amber); }
+  .pin-dot.green { fill: var(--green); }
+  .city-label { fill: #fff; font: 700 13px 'Plus Jakarta Sans', sans-serif; }
+  .plane-glow { fill: rgba(255,255,255,0.22); }
+  .plane-body { fill: #fff; }
 
   /* CORRIDORS — carrousel de cartes */
+  #corridors { overflow: hidden; }
+  #corridors::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(420px 320px at 10% 16%, rgba(74,136,150,0.18), transparent 65%),
+      radial-gradient(460px 360px at 90% 20%, rgba(125,78,46,0.15), transparent 65%),
+      radial-gradient(380px 320px at 72% 94%, rgba(245,166,35,0.13), transparent 65%);
+  }
+  #corridors > .wrap { position: relative; z-index: 1; }
   .corridors-note { text-align: center; color: var(--muted); font-size: 0.9rem; max-width: 560px; margin: 28px auto 0; }
 
   .carousel { position: relative; margin-top: 8px; }
@@ -235,9 +345,15 @@
     scroll-snap-align: center;
     flex: 0 0 auto;
     width: min(360px, 84vw);
-    transition: transform 0.3s cubic-bezier(.42,0,.58,1), box-shadow 0.3s ease;
+    transform-style: preserve-3d; will-change: transform;
+    transition: transform 0.35s cubic-bezier(.2,.7,.3,1), box-shadow 0.35s ease;
   }
-  .carousel-track > .wonjo-card:hover { transform: translateY(-6px); box-shadow: 0 1px 2px rgba(31,41,55,0.04), 0 30px 56px -22px rgba(45,30,20,0.34); }
+  .carousel-track > .wonjo-card:hover { box-shadow: 0 1px 2px rgba(31,41,55,0.04), 0 34px 60px -22px rgba(45,30,20,0.42); }
+  /* fallback CSS si le tilt JS n'est pas actif */
+  @media (hover: hover) {
+    .carousel-track > .wonjo-card:hover { transform: perspective(1400px) translateY(-8px) rotateX(4deg) rotateY(-5deg) scale(1.012); }
+    .carousel-track > .wonjo-card.tilt:hover { transform: none; }
+  }
 
   .carousel-dots { display: flex; justify-content: center; align-items: center; gap: 9px; margin-top: 10px; }
   .carousel-dots button {
@@ -268,9 +384,12 @@
      ============================================================ */
   .wonjo-card {
     width: 380px; max-width: 100%;
-    background: #fff;
+    background: rgba(255,255,255,0.66);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    border: 1px solid rgba(255,255,255,0.65);
     border-radius: 26px;
-    box-shadow: 0 1px 2px rgba(31,41,55,0.04), 0 18px 40px -18px rgba(45,30,20,0.22);
+    box-shadow: 0 1px 2px rgba(31,41,55,0.04), 0 20px 44px -20px rgba(45,30,20,0.30);
     overflow: hidden;
     font-family: 'Plus Jakarta Sans', var(--wc-font, system-ui), sans-serif;
     color: #1F2937;
@@ -294,26 +413,27 @@
   .wc-body { padding: 18px 20px 20px; }
   .wc-person { display: flex; align-items: center; gap: 14px; }
   .wc-avatar { width: 58px; height: 58px; border-radius: 50%; flex-shrink: 0; background: linear-gradient(150deg, #5C9099, #4A8896); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+  .wc-avatar.terra { background: linear-gradient(150deg, #9a6a44, #7D4E2E); }
   .wc-person-main { flex: 1; min-width: 0; }
-  .wc-name-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .wc-name { font-size: 21px; font-weight: 800; letter-spacing: -0.5px; color: #16202E; }
-  .wc-badge { font-size: 13px; font-weight: 600; color: #C2872A; border: 1px solid #EAC98D; background: #FDF7EC; padding: 3px 12px; border-radius: 999px; white-space: nowrap; }
+  .wc-name-row { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; }
+  .wc-name { font-size: 15px; font-weight: 800; letter-spacing: -0.5px; color: #16202E; }
+  .wc-badge { font-size: 11px; font-weight: 600; color: #C2872A; border: 1px solid #EAC98D; background: #FDF7EC; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
   .wc-rating { display: flex; align-items: center; gap: 7px; margin-top: 6px; font-size: 17px; }
   .wc-rating .wc-star { color: #E0A12A; }
   .wc-rating .wc-score { font-weight: 700; color: #2C3540; }
   .wc-rating .wc-sub { color: #8A93A0; font-weight: 500; }
   .wc-price { text-align: right; flex-shrink: 0; }
-  .wc-price-amount { font-size: 30px; font-weight: 800; letter-spacing: -1px; color: #16202E; line-height: 1; }
-  .wc-price-unit { font-size: 15px; color: #8A93A0; font-weight: 500; margin-top: 2px; }
+  .wc-price-amount { font-size: 22px; font-weight: 800; letter-spacing: -0.6px; color: #16202E; line-height: 1; }
+  .wc-price-unit { font-size: 13px; color: #8A93A0; font-weight: 500; margin-top: 2px; }
 
-  .wc-desc { margin-top: 18px; background: #F1F2F4; border-radius: 16px; padding: 15px 16px 16px; }
+  .wc-desc { margin-top: 18px; background: rgba(241,242,244,0.72); border-radius: 16px; padding: 15px 16px 16px; }
   .wc-desc-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
   .wc-desc-label { font-size: 12.5px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: #6B7280; }
   .wc-desc-plus { color: #4B5563; flex-shrink: 0; }
   .wc-desc-text { margin-top: 10px; font-size: 17px; line-height: 1.4; color: #5A6472; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   .wc-divider { height: 1px; background: #EBEDF0; margin: 18px 0; }
-  .wc-btn { width: 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 11px; padding: 17px 20px; border-radius: 15px; background: #fff; cursor: pointer; font-family: inherit; font-size: 18px; font-weight: 700; letter-spacing: -0.2px; transition: background .15s, transform .08s; }
+  .wc-btn { width: 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 11px; padding: 17px 20px; border-radius: 15px; background: rgba(255,255,255,0.6); cursor: pointer; font-family: inherit; font-size: 18px; font-weight: 700; letter-spacing: -0.2px; transition: background .15s, transform .08s; }
   .wc-btn:active { transform: scale(0.99); }
   .wc-btn--terra { border: 1.5px solid #D8C3B0; color: #7D4E2E; }
   .wc-btn--terra:hover { background: #FBF6F1; }
@@ -332,33 +452,83 @@
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
 
-  /* STEPS */
-  .steps { display: grid; grid-template-columns: 1fr; gap: 20px; }
-  .step {
-    position: relative; background: var(--surface); border: 1px solid var(--line);
-    border-radius: var(--radius); padding: 28px 24px; box-shadow: var(--shadow-sm);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-  .step:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+  /* STEPS — stepper visuel animé */
+  .steps { display: grid; grid-template-columns: 1fr; gap: 24px; position: relative; max-width: 420px; margin: 0 auto; }
+  .step { position: relative; text-align: center; z-index: 1; }
   .step-icon {
-    width: 52px; height: 52px; border-radius: 16px; background: var(--teal); color: #fff;
-    display: flex; align-items: center; justify-content: center; margin-bottom: 16px;
-    box-shadow: 0 8px 20px rgba(74,136,150,0.3);
+    width: 74px; height: 74px; border-radius: 50%; background: var(--brand-gradient); color: #fff;
+    display: grid; place-items: center; margin: 0 auto 18px; position: relative; z-index: 2;
+    box-shadow: 0 14px 30px rgba(74,136,150,0.32);
   }
-  .step-num { position: absolute; top: 20px; right: 20px; width: 30px; height: 30px; border-radius: 50%; background: rgba(74,136,150,0.12); color: var(--teal); font-size: 0.95rem; font-weight: 800; line-height: 1; display: flex; align-items: center; justify-content: center; }
+  .step-num {
+    position: absolute; top: -3px; right: -3px; width: 27px; height: 27px; border-radius: 50%;
+    background: #fff; color: var(--teal); font-size: 0.85rem; font-weight: 800;
+    display: grid; place-items: center; box-shadow: 0 4px 10px rgba(20,20,43,0.16); z-index: 3;
+  }
   .step h3 { font-size: 1.15rem; margin-bottom: 6px; }
   .step p { color: var(--muted); font-size: 0.96rem; }
+  /* connecteur — vertical (mobile) */
+  .step:not(:last-child)::after {
+    content: ""; position: absolute; z-index: 0;
+    left: 50%; top: 74px; width: 3px; height: calc(100% - 74px + 24px);
+    transform: translateX(-50%) scaleY(0); transform-origin: top center;
+    background: linear-gradient(180deg, var(--teal), var(--brown));
+    transition: transform 0.9s cubic-bezier(.5,0,.3,1);
+  }
+  .steps.drawn .step:nth-child(1)::after { transform: translateX(-50%) scaleY(1); }
+  .steps.drawn .step:nth-child(2)::after { transform: translateX(-50%) scaleY(1); transition-delay: 0.35s; }
+  @media (min-width: 720px) {
+    .step:not(:last-child)::after {
+      top: 37px; left: 50%; width: calc(100% + 24px); height: 3px;
+      transform: scaleX(0); transform-origin: left center;
+      background: linear-gradient(90deg, var(--teal), var(--brown));
+    }
+    .steps.drawn .step:nth-child(1)::after { transform: scaleX(1); }
+    .steps.drawn .step:nth-child(2)::after { transform: scaleX(1); transition-delay: 0.35s; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .step:not(:last-child)::after { transition: none !important; transform: translateX(-50%) scaleY(1) !important; }
+  }
+  @media (prefers-reduced-motion: reduce) and (min-width: 720px) {
+    .step:not(:last-child)::after { transform: scaleX(1) !important; }
+  }
 
   /* TRUST */
   .trust { background: var(--surface); }
-  .trust-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
-  .trust-item { text-align: center; padding: 12px; }
-  .trust-icon {
-    width: 60px; height: 60px; border-radius: 18px; background: rgba(29,158,117,0.12); color: var(--green);
-    display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;
+  .trust-grid { display: grid; grid-template-columns: 1fr; gap: 22px; }
+  .trust-item {
+    text-align: center; padding: 34px 26px; border-radius: 24px;
+    border: 1px solid var(--line); position: relative; overflow: hidden;
+    transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
   }
+  .trust-item::before { content: ""; position: absolute; inset: 0; z-index: 0; }
+  .trust-item.green::before { background: linear-gradient(180deg, rgba(29,158,117,0.10), rgba(29,158,117,0.015)); }
+  .trust-item.teal::before  { background: linear-gradient(180deg, rgba(74,136,150,0.16), rgba(74,136,150,0.06)); }
+  .trust-item.terra::before { background: linear-gradient(180deg, rgba(125,78,46,0.16), rgba(125,78,46,0.06)); }
+  .trust-item.green { border-color: rgba(29,158,117,0.18); }
+  .trust-item.teal  { border-color: rgba(74,136,150,0.18); }
+  .trust-item.terra { border-color: rgba(125,78,46,0.18); }
+  .trust-item > * { position: relative; z-index: 1; }
+  .trust-item:hover { transform: translateY(-6px); box-shadow: 0 22px 48px -20px rgba(45,30,20,0.30); }
+  .trust-icon {
+    width: 84px; height: 84px; border-radius: 24px;
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;
+    transition: transform .3s ease;
+  }
+  .trust-icon.shield  { background: rgba(29,158,117,0.14); color: #1D9E75; }
+  .trust-icon.badge   { background: rgba(74,136,150,0.14); color: #4A8896; }
+  .trust-icon.support { background: rgba(125,78,46,0.14);  color: #7D4E2E; }
+  .trust-item:hover .trust-icon { animation: iconBounce .6s ease; }
+  @keyframes iconBounce { 0%,100% { transform: translateY(0); } 30% { transform: translateY(-11px); } 55% { transform: translateY(-3px); } 75% { transform: translateY(-6px); } }
+  .trust-stat { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-bottom: 10px; }
+  .trust-stat b { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 2.1rem; font-weight: 800; letter-spacing: -.03em; line-height: 1; }
+  .trust-stat span { font-size: .8rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .trust-item.green .trust-stat b { color: #15835f; }
+  .trust-item.teal  .trust-stat b { color: var(--teal); }
+  .trust-item.terra .trust-stat b { color: var(--brown); }
   .trust-item h3 { font-size: 1.12rem; margin-bottom: 6px; }
   .trust-item p { color: var(--muted); font-size: 0.96rem; }
+  @media (prefers-reduced-motion: reduce) { .trust-item:hover .trust-icon { animation: none; } }
 
   /* TARIFS */
   .pricing-grid { display: grid; grid-template-columns: 1fr; gap: 20px; align-items: stretch; }
@@ -367,21 +537,26 @@
     padding: 32px 28px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; overflow: hidden;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
-  .price-card.featured { border: 2px solid var(--teal); box-shadow: var(--shadow-md); }
-  .price-card.featured::before {
-    content: ""; position: absolute; inset: 0 0 auto 0; height: 5px; background: var(--brand-gradient);
+  .price-card.featured { border: 2px solid var(--teal); box-shadow: var(--shadow-md); animation: borderPulse 2.6s ease-in-out infinite; }
+  .price-card.featured:hover { animation-play-state: paused; }
+  @keyframes borderPulse {
+    0%,100% { box-shadow: var(--shadow-md), 0 0 0 0 rgba(74,136,150,0); }
+    50%     { box-shadow: var(--shadow-md), 0 0 0 6px rgba(74,136,150,0.14); }
   }
   .price-popular {
-    position: absolute; top: 18px; right: 18px; background: var(--teal); color: #fff;
+    position: absolute; top: 16px; right: 16px; background: var(--teal); color: #fff;
     font-size: 0.68rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
-    padding: 5px 12px; border-radius: 999px; box-shadow: 0 6px 16px rgba(74,136,150,0.35);
+    padding: 6px 13px; border-radius: 999px; box-shadow: 0 8px 18px rgba(74,136,150,0.4);
+    animation: badgeFloat 3s ease-in-out infinite;
   }
+  @keyframes badgeFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
   .price-card:not(.disabled):hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); }
   .price-badge { align-self: flex-start; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; padding: 5px 12px; border-radius: 999px; margin-bottom: 16px; }
   .price-badge.available { background: rgba(29,158,117,0.14); color: var(--green); }
   .price-badge.soon { background: rgba(245,166,35,0.16); color: #b9760a; }
   .price-card h3 { font-size: 1.3rem; margin-bottom: 8px; }
   .price-amount { font-size: 2.2rem; font-weight: 800; color: var(--teal); letter-spacing: -0.02em; }
+  .price-amount--text { font-size: 1.4rem; }
   .price-sub { color: var(--muted); font-size: 0.9rem; font-weight: 600; margin-bottom: 10px; }
   .price-desc { color: var(--ink); font-size: 0.96rem; margin-bottom: 22px; }
   .price-card.disabled .price-amount { color: var(--muted); }
@@ -392,92 +567,148 @@
   .price-cta:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(74,136,150,0.35); }
   .price-cta.ghost { background: transparent; color: var(--teal); border: 2px solid rgba(74,136,150,0.3); padding: 12px; }
   .price-card.disabled { background: #f3f2f8; }
-  .price-card.disabled .price-overlay { position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center; background: rgba(248,247,255,0.85); pointer-events: none; }
-  .price-card.disabled .price-overlay span { background: #2b2b3a; color: #fff; font-size: 0.85rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; padding: 11px 22px; border-radius: 999px; box-shadow: var(--shadow-md); }
-  .price-card.disabled .price-content { opacity: 0.6; }
-
-  /* TÉMOIGNAGES */
-  .testi-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
-  .testi-card {
-    position: relative;
-    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
-    padding: 28px; display: flex; flex-direction: column; box-shadow: var(--shadow-sm);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  .price-card.disabled .price-overlay {
+    position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+    background: rgba(243,242,248,0.28);
+    backdrop-filter: blur(2px) saturate(120%); -webkit-backdrop-filter: blur(2px) saturate(120%);
   }
-  .testi-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
-  .testi-card p { font-size: 1rem; margin-bottom: 18px; flex-grow: 1; }
-  .testi-author { order: -1; display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
-  .testi-avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--brand-gradient); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.95rem; flex-shrink: 0; object-fit: cover; overflow: hidden; }
-  .testi-name { font-weight: 700; font-size: 0.92rem; color: var(--teal); }
+  .lock-badge { width: 64px; height: 64px; border-radius: 20px; background: #2b2b3a; color: #fff; display: grid; place-items: center; box-shadow: 0 14px 30px rgba(20,20,43,0.3); }
+  .lock-badge .shackle { transform-box: fill-box; transform-origin: bottom center; animation: lockWiggle 3.4s ease-in-out infinite; }
+  @keyframes lockWiggle { 0%,82%,100% { transform: rotate(0); } 86% { transform: rotate(-7deg); } 92% { transform: rotate(5deg); } }
+  .lock-text { background: #2b2b3a; color: #fff; font-size: 0.82rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; padding: 9px 18px; border-radius: 999px; box-shadow: var(--shadow-md); }
+  .price-card.disabled .price-content { opacity: 0.72; filter: saturate(0.7); }
+
+  @media (prefers-reduced-motion: reduce) { .price-card.featured, .price-popular, .lock-badge .shackle { animation: none; } }
+
+  /* TÉMOIGNAGES — carrousel */
+  .testi-carousel { position: relative; margin-top: 8px; }
+  .testi-track {
+    display: flex; gap: 22px; overflow-x: auto; overflow-y: hidden;
+    scroll-snap-type: x mandatory; scroll-behavior: smooth; -webkit-overflow-scrolling: touch;
+    padding: 8px 24px 26px; margin: 0 -24px; scrollbar-width: none;
+  }
+  .testi-track::-webkit-scrollbar { display: none; }
+  .testi-card {
+    scroll-snap-align: center; flex: 0 0 84vw; max-width: 380px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 26px; display: flex; flex-direction: column; box-shadow: var(--shadow-sm);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+  .testi-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); }
+  .testi-top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .testi-avatar { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 0.95rem; flex-shrink: 0; }
+  .testi-avatar.grad-1 { background: linear-gradient(150deg,#5C9099,#3a6b77); }
+  .testi-avatar.grad-2 { background: linear-gradient(150deg,#9a6a44,#7D4E2E); }
+  .testi-avatar.grad-3 { background: linear-gradient(150deg,#34c08e,#15835f); }
+  .testi-avatar.grad-4 { background: linear-gradient(150deg,#f7b94e,#e08a17); }
+  .testi-avatar.grad-5 { background: linear-gradient(150deg,#6a8fd0,#3f5fa8); }
+  .testi-avatar.grad-6 { background: linear-gradient(150deg,#c06a8e,#8e3f63); }
+  .testi-meta { display: flex; flex-direction: column; min-width: 0; }
+  .testi-name { font-weight: 800; font-size: 0.98rem; color: var(--ink); }
+  .testi-loc { font-size: 0.84rem; color: var(--muted); font-weight: 500; }
+  .testi-stars { display: flex; gap: 2px; margin-bottom: 12px; color: var(--amber); }
+  .testi-card p { font-size: 1rem; color: #3a3a4d; }
+  .testi-dots { display: flex; justify-content: center; align-items: center; gap: 9px; margin-top: 10px; }
+  .testi-dots button { width: 9px; height: 9px; padding: 0; border: none; border-radius: 999px; background: rgba(20,20,43,0.16); cursor: pointer; transition: width 0.3s cubic-bezier(.42,0,.58,1), background 0.3s ease; }
+  .testi-dots button:hover { background: rgba(20,20,43,0.3); }
+  .testi-dots button.active { width: 28px; background: var(--teal); }
+  @media (min-width: 760px) { .testi-card { flex: 0 0 calc((100% - 44px) / 3); } }
 
   /* FORM / BETA */
   .beta { position: relative; overflow: hidden; }
   .beta-card {
-    position: relative; color: #fff; border-radius: 32px;
+    position: relative; color: #fff; border-radius: 32px; overflow: hidden;
     padding: 56px 28px; text-align: center; box-shadow: var(--shadow-lg);
-    background: linear-gradient(135deg, #4A8896 0%, #3a6b77 30%, #7D4E2E 60%, #4A8896 100%);
-    background-size: 300% 300%;
-    animation: betaShift 14s ease-in-out infinite;
+    background: linear-gradient(135deg, #4A8896 0%, #7D4E2E 100%);
   }
-  @keyframes betaShift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }
+  .beta-card > * { position: relative; z-index: 1; }
   .beta-card h2 { color: #fff; }
   .beta-card .section-sub { color: rgba(255,255,255,0.85); }
   .form-card {
     background: var(--surface); border-radius: 22px; padding: 30px 24px; max-width: 460px; margin: 0 auto;
     box-shadow: var(--shadow-lg); text-align: left;
   }
-  .form-card label { display: block; font-weight: 700; font-size: 0.9rem; color: var(--ink); margin-bottom: 7px; }
-  .form-card input[type="text"], .form-card input[type="email"] {
-    width: 100%; padding: 14px 15px; border: 1px solid #d8d8e4; border-radius: 12px;
-    font-size: 1rem; margin-bottom: 18px; font-family: inherit; color: var(--ink); transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  .field { position: relative; margin-bottom: 20px; }
+  .field input {
+    width: 100%; padding: 22px 15px 8px; border: 1px solid #d8d8e4; border-radius: 12px;
+    font-size: 1rem; font-family: inherit; color: var(--ink); background: #fff;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }
-  .form-card input:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 4px rgba(74,136,150,0.14); }
+  .field input:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 4px rgba(74,136,150,0.14); }
+  .field label {
+    position: absolute; left: 16px; top: 15px; color: #9296a6; font-size: 1rem; font-weight: 500;
+    pointer-events: none; transform-origin: left top; transition: transform 0.18s ease, color 0.18s ease;
+  }
+  .field input:focus + label,
+  .field input:not(:placeholder-shown) + label { transform: translateY(-9px) scale(0.74); color: var(--teal); font-weight: 700; }
   .role-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
   .role-option { display: flex; align-items: center; gap: 10px; border: 1px solid #d8d8e4; border-radius: 12px; padding: 13px 15px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: border-color 0.15s ease, background 0.15s ease; }
   .role-option:has(input:checked) { border-color: var(--teal); background: rgba(74,136,150,0.07); }
   .role-option input { accent-color: var(--teal); width: 18px; height: 18px; }
-  .form-card button { width: 100%; background: var(--teal); color: #fff; font-size: 1.05rem; font-weight: 800; border: none; border-radius: 12px; padding: 16px; cursor: pointer; font-family: inherit; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+  .form-card button { position: relative; overflow: hidden; width: 100%; background: var(--teal); color: #fff; font-size: 1.05rem; font-weight: 800; border: none; border-radius: 12px; padding: 16px; cursor: pointer; font-family: inherit; transition: transform 0.15s ease, box-shadow 0.15s ease; }
   .form-card button:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(74,136,150,0.4); }
-  .form-note { text-align: center; color: var(--brown); font-weight: 600; font-size: 0.85rem; margin-top: 16px; }
+  .form-card button::after { content: ""; position: absolute; top: 0; left: -130%; width: 55%; height: 100%; background: linear-gradient(110deg, transparent, rgba(255,255,255,0.5), transparent); transform: skewX(-18deg); }
+  .form-card button:hover::after { animation: shimmer 1s ease; }
+  .form-note { text-align: center; color: var(--brown); font-weight: 400; font-size: 0.85rem; margin-top: 16px; }
   .form-success { background: var(--surface); border-radius: 22px; padding: 44px 28px; max-width: 460px; margin: 0 auto; text-align: center; box-shadow: var(--shadow-lg); }
-  .form-success .check { width: 64px; height: 64px; border-radius: 50%; background: rgba(29,158,117,0.14); color: var(--green); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
+  .check-circle { width: 74px; height: 74px; margin: 0 auto 18px; display: block; }
+  .check-circle .c-bg { fill: rgba(29,158,117,0.10); }
+  .check-circle .c-ring { fill: none; stroke: var(--green); stroke-width: 2.5; stroke-dasharray: 166; stroke-dashoffset: 166; animation: ringDraw .5s cubic-bezier(.65,0,.45,1) forwards; }
+  .check-circle .c-tick { fill: none; stroke: var(--green); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 48; stroke-dashoffset: 48; animation: tickDraw .35s .45s cubic-bezier(.65,0,.45,1) forwards; }
+  @keyframes ringDraw { to { stroke-dashoffset: 0; } }
+  @keyframes tickDraw { to { stroke-dashoffset: 0; } }
+  @media (prefers-reduced-motion: reduce) {
+    .form-card button:hover::after { animation: none; }
+    .check-circle .c-ring, .check-circle .c-tick { animation: none; stroke-dashoffset: 0; }
+  }
   .form-success h3 { color: var(--ink); font-size: 1.3rem; margin-bottom: 8px; }
   .form-success p { color: var(--muted); }
 
   /* FOOTER */
-  footer { background: linear-gradient(135deg, #173138 0%, #1f2530 48%, #2a1d14 100%); color: #cdc6c0; padding: 56px 24px 32px; font-size: 0.92rem; }
-  footer a { color: #e6dbd0; text-decoration: none; }
-  footer a:hover { text-decoration: underline; }
+  footer { position: relative; overflow: hidden; background: #1A1A2E; color: #c8c4d6; padding: 56px 24px 32px; font-size: 0.92rem; }
+  footer::before {
+    content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0.5;
+    background:
+      radial-gradient(600px 300px at 12% 0%, rgba(74,136,150,0.18), transparent 60%),
+      radial-gradient(560px 320px at 90% 10%, rgba(125,78,46,0.16), transparent 60%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Cpath d='M0 20h40M20 0v40' stroke='%23ffffff' stroke-width='1' stroke-opacity='0.03'/%3E%3C/svg%3E");
+  }
+  footer > * { position: relative; z-index: 1; }
+  footer a { color: #e6e1f0; text-decoration: none; }
+  .footer-sep { height: 3px; max-width: 1080px; margin: 0 auto 40px; border-radius: 3px; background: linear-gradient(90deg, var(--teal), var(--amber), var(--brown)); opacity: 0.85; }
   .footer-top { max-width: 1080px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 32px; }
   .footer-brand .flogo { display: flex; align-items: center; gap: 10px; font-size: 1.55rem; font-weight: 600; color: #fff; letter-spacing: -0.01em; }
   .footer-brand .flogo img { height: 40px; width: auto; }
   .footer-brand .flogo span { color: #7fb3bf; }
-  .footer-brand p { margin-top: 8px; max-width: 260px; }
+  .footer-brand p { margin-top: 10px; max-width: 260px; color: #a7a2bb; }
   .footer-col h4 { color: #fff; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px; }
-  .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
-  .footer-socials { display: flex; gap: 12px; margin-top: 16px; }
-  .footer-socials a { width: 38px; height: 38px; border-radius: 11px; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; color: #e6dbd0; transition: background 0.15s ease, transform 0.15s ease; }
-  .footer-socials a:hover { background: rgba(255,255,255,0.18); transform: translateY(-2px); }
-  .footer-bottom { max-width: 1080px; margin: 40px auto 0; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center; font-size: 0.85rem; }
+  .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 11px; }
+  .footer-col a { position: relative; display: inline-block; color: #bfbace; }
+  .footer-col a::after { content: ""; position: absolute; left: 0; bottom: -2px; height: 1.5px; width: 100%; background: linear-gradient(90deg, var(--teal), var(--amber)); transform: scaleX(0); transform-origin: left; transition: transform 0.25s cubic-bezier(.42,0,.58,1); }
+  .footer-col a:hover { color: #fff; }
+  .footer-col a:hover::after { transform: scaleX(1); }
+  .footer-socials { display: flex; gap: 12px; margin-top: 18px; }
+  .footer-socials a { width: 40px; height: 40px; border-radius: 12px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; color: #cfcadd; transition: transform 0.18s ease, background 0.18s ease, color 0.18s ease, border-color 0.18s ease; }
+  .footer-socials a:hover { transform: translateY(-3px); color: #fff; }
+  .footer-socials a.ig:hover { background: linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366); border-color: transparent; }
+  .footer-socials a.li:hover { background: #0a66c2; border-color: transparent; }
+  .footer-socials a.fb:hover { background: #1877f2; border-color: transparent; }
+  .footer-bottom { max-width: 1080px; margin: 40px auto 0; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center; font-size: 0.85rem; color: #a7a2bb; }
   .footer-bottom .heart { margin-top: 6px; opacity: 0.8; }
 
   @media (max-width: 560px) {
     .tabs { display: flex; width: 100%; max-width: 380px; }
     .tab-btn { flex: 1; padding: 11px 10px; font-size: 0.9rem; white-space: nowrap; }
-    .hero-ctas .btn { flex: 1; justify-content: center; }
+    .hero-ctas .pill { flex: 1; justify-content: center; }
   }
 
   @media (min-width: 720px) {
-    .steps { grid-template-columns: repeat(3,1fr); }
+    .steps { grid-template-columns: repeat(3,1fr); max-width: none; }
     .trust-grid { grid-template-columns: repeat(3,1fr); }
     .pricing-grid { grid-template-columns: repeat(3,1fr); }
     .price-card.featured { transform: scale(1.04); z-index: 1; }
     .price-card.featured:hover { transform: scale(1.04) translateY(-6px); }
-    .testi-grid { grid-template-columns: repeat(3,1fr); }
     .footer-top { grid-template-columns: 1.6fr 1fr 1fr 1fr; }
   }
   @media (min-width: 900px) {
@@ -486,7 +717,58 @@
     .hero-grid { grid-template-columns: 1.05fr 0.95fr; gap: 56px; }
     .beta-card { padding: 64px 48px; }
   }
+  /* FAQ */
+  .faq-list { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+  .faq-item { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 0 22px; box-shadow: var(--shadow-sm); }
+  .faq-item summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 0; font-weight: 700; font-size: 1.05rem; color: var(--ink); }
+  .faq-item summary::-webkit-details-marker { display: none; }
+  .faq-ic { position: relative; flex-shrink: 0; width: 20px; height: 20px; }
+  .faq-ic::before, .faq-ic::after { content: ""; position: absolute; background: var(--teal); border-radius: 2px; transition: transform .25s ease; }
+  .faq-ic::before { top: 9px; left: 0; width: 20px; height: 2.5px; }
+  .faq-ic::after { left: 9px; top: 0; width: 2.5px; height: 20px; }
+  .faq-item[open] .faq-ic::after { transform: scaleY(0); }
+  .faq-item[open] summary { color: var(--teal); }
+  .faq-answer { padding: 0 0 22px; color: var(--muted); line-height: 1.6; }
+  .faq-answer p { margin: 0; }
 </style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://wonjo.app/#organization",
+      "name": "Wonjo",
+      "url": "https://wonjo.app/",
+      "logo": "https://wonjo.app/assets/wonjo-logo.png",
+      "image": "https://wonjo.app/assets/wonjo-logo.png",
+      "description": "Wonjo connecte expéditeurs et voyageurs en Europe et entre l'Europe et l'Afrique pour des envois de colis économiques et sécurisés.",
+      "email": "contact@wonjo.app",
+      "sameAs": [
+        "https://facebook.com/wonjo.app",
+        "https://instagram.com/wonjo.app",
+        "https://linkedin.com/company/wonjo"
+      ]
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://wonjo.app/#website",
+      "url": "https://wonjo.app/",
+      "name": "Wonjo",
+      "inLanguage": "fr-FR",
+      "publisher": { "@id": "https://wonjo.app/#organization" }
+    },
+    {
+      "@type": "Service",
+      "name": "Envoi de colis entre particuliers",
+      "serviceType": "Transport collaboratif de colis (cotransportage)",
+      "provider": { "@id": "https://wonjo.app/#organization" },
+      "areaServed": ["Europe", "Afrique"],
+      "description": "Mise en relation entre expéditeurs et voyageurs pour transporter des colis en Europe et entre l'Europe et l'Afrique, avec paiement sécurisé et identités vérifiées."
+    }
+  ]
+}
+</script>
 </head>
 <body>
 
@@ -500,10 +782,11 @@
         <a href="#comment">Comment ça marche</a>
         <a href="#tarifs">Tarifs</a>
         <a href="#avis">Avis</a>
+        <a href="#faq">FAQ</a>
       </div>
       <a href="#beta" class="nav-cta">Rejoindre la bêta</a>
-      <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      <button class="nav-toggle" id="navToggle" aria-label="Ouvrir le menu" aria-expanded="false">
+        <span class="bars" aria-hidden="true"><i></i><i></i><i></i></span>
       </button>
     </div>
     <div class="mobile-menu" id="mobileMenu">
@@ -511,74 +794,73 @@
       <a href="#comment">Comment ça marche</a>
       <a href="#tarifs">Tarifs</a>
       <a href="#avis">Avis</a>
+      <a href="#faq">FAQ</a>
       <a href="#beta" class="primary">Rejoindre la bêta</a>
     </div>
   </nav>
 
   <!-- HERO -->
   <header class="hero" id="top">
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
+    <div class="hero-aurora" aria-hidden="true"></div>
     <div class="wrap">
       <div class="hero-grid">
         <div class="hero-copy">
-          <h1 class="reveal">Vos colis voyagent avec des personnes de confiance</h1>
-          <p class="subtitle reveal">Wonjo met en relation expéditeurs et voyageurs pour acheminer vos colis à moindre coût, entre l'Europe et l'Afrique comme d'un pays européen à l'autre. Paiement sécurisé, identités vérifiées.</p>
+          <h1 class="reveal">Vos <span class="hl">colis<svg class="hl-underline" viewBox="0 0 140 18" preserveAspectRatio="none" aria-hidden="true"><path d="M4 12 C 36 4, 104 4, 136 10"/></svg></span> voyagent avec des personnes de confiance</h1>
+          <p class="subtitle reveal">Wonjo met en relation expéditeurs et voyageurs en Europe et entre l'Europe et l'Afrique. Jusqu'à 70&nbsp;% d'économies, paiement sécurisé, identités vérifiées.</p>
+
+          <div class="hero-ctas reveal">
+            <a class="pill pill-amber" href="#beta">Rejoindre la bêta
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </a>
+            <a class="pill pill-glass" href="#corridors">Voir les corridors</a>
+          </div>
+
+          <div class="hero-meta reveal">
+            <!-- TODO: réactiver quand on aura de vraies données
+            <p class="hero-counter">Plus de <b><span class="count" data-count-to="500">0</span><span class="plus">+</span></b> envois facilités</p>
+            -->
+            <div class="hero-trust">
+              <div class="avatars" aria-hidden="true">
+                <span class="a1">MD</span><span class="a2">AK</span><span class="a3">JM</span><span class="a4">+</span>
+              </div>
+              <small><b>4,8/5</b> de satisfaction<br>par notre communauté bêta</small>
+            </div>
+          </div>
         </div>
 
         <div class="hero-illus reveal scale-in">
-          <div class="illus-card float">
-            <svg viewBox="0 0 360 280" role="img" aria-label="Itinéraire d'un colis de l'Europe vers l'Afrique">
-              <defs>
-                <linearGradient id="g-route" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0" stop-color="#4A8896"/>
-                  <stop offset="1" stop-color="#7D4E2E"/>
-                </linearGradient>
-                <radialGradient id="g-globe" cx="0.35" cy="0.3" r="0.9">
-                  <stop offset="0" stop-color="#eaf3f5"/>
-                  <stop offset="1" stop-color="#d7e7ea"/>
-                </radialGradient>
-              </defs>
-
-              <!-- soft globe -->
-              <circle cx="180" cy="150" r="120" fill="url(#g-globe)"/>
-              <path d="M120 70 Q200 60 250 100 M90 150 Q180 130 280 160 M110 210 Q190 220 250 200" stroke="#bcd6db" stroke-width="2" fill="none" opacity="0.7"/>
-
-              <!-- continents (abstract) -->
-              <path d="M120 92 q22 -12 40 4 q14 12 4 26 q-16 14 -34 6 q-20 -10 -10 -36 z" fill="#cfe2e6"/>
-              <path d="M196 150 q26 -6 36 18 q10 30 -10 50 q-22 18 -38 -4 q-16 -26 12 -64 z" fill="#e3d2c4"/>
-
-              <!-- route -->
-              <path id="route" class="route-path" d="M132 108 C 180 70, 220 140, 246 188" stroke="url(#g-route)" stroke-width="3" fill="none" stroke-linecap="round"/>
-
-              <!-- origin pin -->
-              <g class="city-pin">
-                <circle cx="132" cy="108" r="9" fill="#4A8896"/>
-                <circle cx="132" cy="108" r="9" fill="none" stroke="#4A8896" stroke-width="2" opacity="0.4"><animate attributeName="r" values="9;18;9" dur="2.4s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.5;0;0.5" dur="2.4s" repeatCount="indefinite"/></circle>
-              </g>
-              <!-- destination pin -->
-              <g class="city-pin">
-                <circle cx="246" cy="188" r="9" fill="#7D4E2E"/>
-                <circle cx="246" cy="188" r="9" fill="none" stroke="#7D4E2E" stroke-width="2" opacity="0.4"><animate attributeName="r" values="9;18;9" dur="2.4s" begin="1.2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.5;0;0.5" dur="2.4s" begin="1.2s" repeatCount="indefinite"/></circle>
+          <div class="map-card">
+            <svg class="map" viewBox="0 0 380 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Carte stylisée des trajets en Europe et entre l'Europe et l'Afrique : Paris-Dakar, Lyon-Abidjan, Kinshasa-Bruxelles, Paris-N'Djamena, Bruxelles-Paris, un avion suit chaque trajet à tour de rôle">
+              <g class="grid-line">
+                <path d="M40 60 H340 M40 120 H340 M40 180 H340 M40 240 H340 M40 300 H340"/>
+                <path d="M70 30 V330 M130 30 V330 M190 30 V330 M250 30 V330 M310 30 V330"/>
               </g>
 
-              <!-- flat "send" symbol following the route -->
-              <g>
-                <g transform="translate(-11,-11)">
-                  <circle cx="11" cy="11" r="15" fill="#fff" stroke="#4A8896" stroke-width="1.5"/>
-                  <path transform="translate(3,3) scale(0.66)" d="M2 21l21-9L2 3v7l15 2-15 2z" fill="#4A8896"/>
-                </g>
-                <animateMotion dur="5s" repeatCount="indefinite" rotate="auto" keyPoints="0;1" keyTimes="0;1" calcMode="linear">
-                  <mpath href="#route"/>
-                </animateMotion>
-              </g>
+              <path class="continent" d="M108 52 C 138 46, 165 54, 176 70 C 182 80, 176 90, 165 92 C 172 100, 166 110, 154 110 C 142 110, 138 102, 126 106 C 110 111, 96 104, 94 90 C 92 74, 90 60, 108 52 Z"/>
+              <path class="continent" d="M205 130 C 240 130, 262 146, 270 172 C 276 192, 300 196, 300 220 C 300 232, 288 236, 286 250 C 282 280, 266 312, 244 336 C 234 348, 228 360, 217 358 C 208 356, 206 344, 200 334 C 190 318, 174 312, 166 294 C 156 272, 150 258, 150 236 C 150 210, 156 184, 168 162 C 178 144, 188 130, 205 130 Z"/>
 
-              <!-- floating package -->
-              <g class="float delay">
-                <rect x="280" y="60" width="44" height="44" rx="8" fill="#fff" stroke="#F5A623" stroke-width="2"/>
-                <path d="M280 78 h44 M302 60 v44" stroke="#F5A623" stroke-width="2"/>
+              <path id="routeBase" class="route-base" d="M150 90 Q120 163 152 236"/>
+              <path id="routeDash" class="route-dash" d="M150 90 Q120 163 152 236"/>
+
+              <g id="pinO">
+                <circle class="pin-ring" cx="150" cy="90" r="6"/>
+                <circle class="pin-dot green" cx="150" cy="90" r="5.5"/>
+              </g>
+              <g id="pinD">
+                <circle class="pin-ring delay" cx="152" cy="236" r="6"/>
+                <circle class="pin-dot" cx="152" cy="236" r="5.5"/>
+              </g>
+              <text id="labelO" class="city-label" x="160" y="86">Paris</text>
+              <text id="labelD" class="city-label" x="142" y="252" text-anchor="end">Dakar</text>
+
+              <g id="plane" class="plane" transform="translate(150 90)">
+                <circle class="plane-glow" r="12"/>
+                <path class="plane-body" d="M15 0 L-10 -8 L-3 0 L-10 8 Z"/>
               </g>
             </svg>
+            <div class="map-badge">
+              <span><b id="mapRoute">Paris → Dakar</b> · livré à votre destinateur</span>
+            </div>
           </div>
         </div>
       </div>
@@ -590,7 +872,7 @@
   <section class="section" id="corridors">
     <div class="wrap">
       <h2 class="reveal">Des corridors qui rapprochent</h2>
-      <p class="section-sub reveal">Colis à acheminer ou trajets disponibles : un aperçu de ce qui circule sur Wonjo.</p>
+      <p class="section-sub reveal">Exemples d'annonces réelles publiées sur Wonjo.</p>
 
       <div class="carousel reveal" data-carousel>
         <button class="carousel-arrow prev" type="button" aria-label="Cartes précédentes">
@@ -599,7 +881,7 @@
         <div class="carousel-track" id="corridorTrack">
 
           <!-- 1 — Demande de colis -->
-          <article class="wonjo-card">
+          <article class="wonjo-card tilt">
             <header class="wc-head">
               <div class="wc-route">
                 <span class="wc-city">Lyon</span><span class="wc-line"></span>
@@ -615,11 +897,12 @@
             </header>
             <div class="wc-body">
               <div class="wc-person">
-                <div class="wc-avatar">AM</div>
+                <div class="wc-avatar terra">AM</div>
                 <div class="wc-person-main">
-                  <div class="wc-name-row"><span class="wc-name">Alice Martin</span><span class="wc-badge">Ambassadeur</span></div>
+                  <div class="wc-name-row"><span class="wc-name">Alice M.</span><span class="wc-badge">Ambassadeur</span></div>
                   <div class="wc-rating"><svg class="wc-star" width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><span class="wc-score">4.0</span><span class="wc-sub">· 8 colis confiés</span></div>
                 </div>
+                <div class="wc-price"><div class="wc-price-amount">7€</div><div class="wc-price-unit">/kg</div></div>
               </div>
               <div class="wc-desc">
                 <div class="wc-desc-head"><span class="wc-desc-label">Description du colis</span><svg class="wc-desc-plus" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
@@ -631,7 +914,7 @@
           </article>
 
           <!-- 2 — Trajet disponible -->
-          <article class="wonjo-card">
+          <article class="wonjo-card tilt">
             <header class="wc-head">
               <div class="wc-route">
                 <span class="wc-city">Paris</span><span class="wc-line"></span>
@@ -649,10 +932,14 @@
               <div class="wc-person">
                 <div class="wc-avatar">DK</div>
                 <div class="wc-person-main">
-                  <div class="wc-name-row"><span class="wc-name">Diane Koné</span></div>
+                  <div class="wc-name-row"><span class="wc-name">Diane K.</span></div>
                   <div class="wc-rating"><svg class="wc-star" width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><span class="wc-score">4.0</span><span class="wc-sub">· 4 livraisons</span></div>
                 </div>
                 <div class="wc-price"><div class="wc-price-amount">8€</div><div class="wc-price-unit">/kg</div></div>
+              </div>
+              <div class="wc-desc">
+                <div class="wc-desc-head"><span class="wc-desc-label">Description du trajet</span><svg class="wc-desc-plus" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
+                <p class="wc-desc-text">Vol direct, je voyage léger et peux prendre vos colis bien emballés…</p>
               </div>
               <div class="wc-divider"></div>
               <button class="wc-btn wc-btn--teal" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg> Envoyer un colis</button>
@@ -660,7 +947,7 @@
           </article>
 
           <!-- 3 — Demande de colis -->
-          <article class="wonjo-card">
+          <article class="wonjo-card tilt">
             <header class="wc-head">
               <div class="wc-route">
                 <span class="wc-city">Bruxelles</span><span class="wc-line"></span>
@@ -676,11 +963,12 @@
             </header>
             <div class="wc-body">
               <div class="wc-person">
-                <div class="wc-avatar">SE</div>
+                <div class="wc-avatar terra">SE</div>
                 <div class="wc-person-main">
-                  <div class="wc-name-row"><span class="wc-name">Samuel Etoa</span></div>
+                  <div class="wc-name-row"><span class="wc-name">Samuel E.</span></div>
                   <div class="wc-rating"><svg class="wc-star" width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><span class="wc-score">4.8</span><span class="wc-sub">· 12 colis confiés</span></div>
                 </div>
+                <div class="wc-price"><div class="wc-price-amount">9€</div><div class="wc-price-unit">/kg</div></div>
               </div>
               <div class="wc-desc">
                 <div class="wc-desc-head"><span class="wc-desc-label">Description du colis</span><svg class="wc-desc-plus" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
@@ -692,7 +980,7 @@
           </article>
 
           <!-- 4 — Trajet disponible -->
-          <article class="wonjo-card">
+          <article class="wonjo-card tilt">
             <header class="wc-head">
               <div class="wc-route">
                 <span class="wc-city">Marseille</span><span class="wc-line"></span>
@@ -710,10 +998,14 @@
               <div class="wc-person">
                 <div class="wc-avatar">YB</div>
                 <div class="wc-person-main">
-                  <div class="wc-name-row"><span class="wc-name">Yasmine B.</span><span class="wc-badge">Ambassadeur</span></div>
+                  <div class="wc-name-row"><span class="wc-name">Sandra B.</span><span class="wc-badge">Ambassadeur</span></div>
                   <div class="wc-rating"><svg class="wc-star" width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><span class="wc-score">4.9</span><span class="wc-sub">· 21 livraisons</span></div>
                 </div>
                 <div class="wc-price"><div class="wc-price-amount">6€</div><div class="wc-price-unit">/kg</div></div>
+              </div>
+              <div class="wc-desc">
+                <div class="wc-desc-head"><span class="wc-desc-label">Description du trajet</span><svg class="wc-desc-plus" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
+                <p class="wc-desc-text">Place en soute disponible, colis remis en main propre à l'arrivée…</p>
               </div>
               <div class="wc-divider"></div>
               <button class="wc-btn wc-btn--teal" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg> Envoyer un colis</button>
@@ -721,7 +1013,7 @@
           </article>
 
           <!-- 5 — Demande de colis -->
-          <article class="wonjo-card">
+          <article class="wonjo-card tilt">
             <header class="wc-head">
               <div class="wc-route">
                 <span class="wc-city">Paris</span><span class="wc-line"></span>
@@ -737,11 +1029,12 @@
             </header>
             <div class="wc-body">
               <div class="wc-person">
-                <div class="wc-avatar">LD</div>
+                <div class="wc-avatar terra">LD</div>
                 <div class="wc-person-main">
-                  <div class="wc-name-row"><span class="wc-name">Léa Dubois</span></div>
+                  <div class="wc-name-row"><span class="wc-name">Léa D.</span></div>
                   <div class="wc-rating"><svg class="wc-star" width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><span class="wc-score">5.0</span><span class="wc-sub">· 3 colis confiés</span></div>
                 </div>
+                <div class="wc-price"><div class="wc-price-amount">5€</div><div class="wc-price-unit">/kg</div></div>
               </div>
               <div class="wc-desc">
                 <div class="wc-desc-head"><span class="wc-desc-label">Description du colis</span><svg class="wc-desc-plus" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
@@ -753,7 +1046,7 @@
           </article>
 
           <!-- 6 — Trajet disponible -->
-          <article class="wonjo-card">
+          <article class="wonjo-card tilt">
             <header class="wc-head">
               <div class="wc-route">
                 <span class="wc-city">Genève</span><span class="wc-line"></span>
@@ -774,7 +1067,11 @@
                   <div class="wc-name-row"><span class="wc-name">Patrick M.</span></div>
                   <div class="wc-rating"><svg class="wc-star" width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><span class="wc-score">4.7</span><span class="wc-sub">· 9 livraisons</span></div>
                 </div>
-                <div class="wc-price"><div class="wc-price-amount">12€</div><div class="wc-price-unit">/kg</div></div>
+                <div class="wc-price"><div class="wc-price-amount">9€</div><div class="wc-price-unit">/kg</div></div>
+              </div>
+              <div class="wc-desc">
+                <div class="wc-desc-head"><span class="wc-desc-label">Description du trajet</span><svg class="wc-desc-plus" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
+                <p class="wc-desc-text">Je voyage régulièrement, de la place pour vos envois soignés…</p>
               </div>
               <div class="wc-divider"></div>
               <button class="wc-btn wc-btn--teal" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg> Envoyer un colis</button>
@@ -788,7 +1085,7 @@
         <div class="carousel-dots" id="corridorDots" role="tablist" aria-label="Pagination des corridors"></div>
       </div>
 
-      <p class="corridors-note reveal">Quelques exemples parmi nos trajets. Côté Europe, les départs se font depuis quelques pays seulement (France, Belgique), et d'autres arrivent bientôt.</p>
+      <p class="corridors-note reveal">Quelques exemples parmi nos trajets. Pour le moment, seuls quelques pays sont desservis (France, Belgique…), et d'autres arrivent bientôt.</p>
     </div>
   </section>
 
@@ -807,18 +1104,15 @@
       <div class="tab-panel active" id="tab-exp">
         <div class="steps">
           <div class="step reveal">
-            <span class="step-num">1</span>
-            <div class="step-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>
+            <div class="step-icon"><span class="step-num">1</span><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>
             <h3>Publiez votre annonce de colis</h3><p>Poids, destination, valeur déclarée, ou parcourez directement les trajets des voyageurs.</p>
           </div>
           <div class="step reveal">
-            <span class="step-num">2</span>
-            <div class="step-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+            <div class="step-icon"><span class="step-num">2</span><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
             <h3>Trouvez un voyageur</h3><p>Contactez un voyageur sur son trajet, ou laissez-les vous contacter sur votre annonce.</p>
           </div>
           <div class="step reveal">
-            <span class="step-num">3</span>
-            <div class="step-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg></div>
+            <div class="step-icon"><span class="step-num">3</span><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg></div>
             <h3>Payez en toute sécurité</h3><p>Paiement bloqué jusqu'à confirmation de livraison.</p>
           </div>
         </div>
@@ -827,18 +1121,15 @@
       <div class="tab-panel" id="tab-voy">
         <div class="steps">
           <div class="step reveal">
-            <span class="step-num">1</span>
-            <div class="step-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></div>
+            <div class="step-icon"><span class="step-num">1</span><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></div>
             <h3>Publiez votre trajet</h3><p>Destination, date, kilos disponibles, prix/kg, ou parcourez directement les annonces de colis.</p>
           </div>
           <div class="step reveal">
-            <span class="step-num">2</span>
-            <div class="step-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg></div>
+            <div class="step-icon"><span class="step-num">2</span><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg></div>
             <h3>Échangez avec les expéditeurs</h3><p>Recevez des demandes sur votre trajet, ou contactez les expéditeurs sur leurs annonces de colis.</p>
           </div>
           <div class="step reveal">
-            <span class="step-num">3</span>
-            <div class="step-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg></div>
+            <div class="step-icon"><span class="step-num">3</span><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg></div>
             <h3>Gagnez de l'argent</h3><p>Paiement automatique après livraison confirmée.</p>
           </div>
         </div>
@@ -852,17 +1143,20 @@
       <h2 class="reveal">La confiance avant tout</h2>
       <p class="section-sub reveal">Votre argent et vos colis sont protégés à chaque étape.</p>
       <div class="trust-grid">
-        <div class="trust-item reveal">
-          <div class="trust-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
-          <h3>Paiement sécurisé</h3><p>Vos fonds sont gardés en escrow et libérés après livraison confirmée.</p>
+        <div class="trust-item green reveal">
+          <div class="trust-icon shield"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></div>
+          <div class="trust-stat"><b>100%</b><span>fonds protégés</span></div>
+          <h3>Paiement sécurisé</h3><p>Vos fonds sont gardés en sécurité et libérés après livraison confirmée.</p>
         </div>
-        <div class="trust-item reveal">
-          <div class="trust-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
-          <h3>Identité vérifiée</h3><p>KYC obligatoire pour chaque utilisateur : porteurs et expéditeurs.</p>
+        <div class="trust-item teal reveal">
+          <div class="trust-icon badge"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></svg></div>
+          <div class="trust-stat"><b>2 min</b><span>pour le KYC</span></div>
+          <h3>Identité vérifiée</h3><p>KYC obligatoire pour chaque utilisateur : voyageurs et expéditeurs.</p>
         </div>
-        <div class="trust-item reveal">
-          <div class="trust-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
-          <h3>Support disponible</h3><p>Une équipe à votre écoute en cas de litige ou de question.</p>
+        <div class="trust-item terra reveal">
+          <div class="trust-icon support"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg></div>
+          <div class="trust-stat"><b>&lt; 24h</b><span>de réponse</span></div>
+          <h3>Support &amp; litiges</h3><p>Une équipe à votre écoute en cas de litige ou de question.</p>
         </div>
       </div>
     </div>
@@ -873,6 +1167,7 @@
     <div class="wrap">
       <h2 class="reveal">Une offre pour chaque besoin</h2>
       <p class="section-sub reveal">De l'envoi occasionnel aux volumes professionnels</p>
+
       <div class="pricing-grid">
 
         <!-- CARTE 1 — Particulier -->
@@ -880,30 +1175,33 @@
           <span class="price-popular">Populaire</span>
           <span class="price-badge available">Disponible</span>
           <h3>Particulier</h3>
-          <div class="price-amount">Gratuit</div>
-          <p class="price-sub">sans abonnement</p>
-          <p class="price-desc">Pour les particuliers de la diaspora</p>
+          <div class="price-amount price-amount--text">Sans abonnement</div>
+          <p class="price-sub">Vous ne payez qu'une petite commission, et seulement lorsqu'un envoi aboutit.</p>
+          <p class="price-desc">Pour les particuliers (C2C) : </p>
           <ul class="price-features">
-            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Paiement sécurisé en escrow</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Paiement sécurisé jusqu'à la livraison</li>
             <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Identité vérifiée (KYC obligatoire)</li>
-            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Code de livraison 4 chiffres</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Code de livraison</li>
             <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Photos de remise et livraison</li>
             <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Système de litige intégré</li>
             <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Messagerie directe avec le voyageur</li>
             <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Suivi en temps réel du statut</li>
             <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Support inclus</li>
-            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Sans abonnement</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Limité à 23 kg maximum</li>
           </ul>
           <a href="#beta" class="price-cta">Rejoindre la bêta</a>
         </div>
 
         <!-- CARTE 2 — Business -->
         <div class="price-card disabled reveal">
-          <div class="price-overlay"><span>Bientôt disponible</span></div>
+          <div class="price-overlay">
+            <div class="lock-badge"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="shackle" d="M7 10V7a5 5 0 0 1 10 0v3"/><rect width="18" height="11" x="3" y="10" rx="2"/></svg></div>
+            <span class="lock-text">Bientôt disponible</span>
+          </div>
           <div class="price-content">
             <span class="price-badge soon">Bientôt</span>
             <h3>Business</h3>
-            <div class="price-amount">49€</div>
+            <div class="price-amount">29€</div>
             <p class="price-sub">/mois • 5% par envoi</p>
             <p class="price-desc">Pour les PME et e-commerçants</p>
             <ul class="price-features">
@@ -921,11 +1219,14 @@
 
         <!-- CARTE 3 — Enterprise -->
         <div class="price-card disabled reveal">
-          <div class="price-overlay"><span>Bientôt disponible</span></div>
+          <div class="price-overlay">
+            <div class="lock-badge"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="shackle" d="M7 10V7a5 5 0 0 1 10 0v3"/><rect width="18" height="11" x="3" y="10" rx="2"/></svg></div>
+            <span class="lock-text">Bientôt disponible</span>
+          </div>
           <div class="price-content">
             <span class="price-badge soon">Bientôt</span>
             <h3>Enterprise</h3>
-            <div class="price-amount">199€</div>
+            <div class="price-amount">119€</div>
             <p class="price-sub">/mois • 3% par envoi</p>
             <p class="price-desc">Pour les grandes structures et ONG</p>
             <ul class="price-features">
@@ -953,22 +1254,103 @@
     <div class="wrap">
       <h2 class="reveal">Ils nous font confiance</h2>
       <p class="section-sub reveal">Les premiers retours de notre communauté bêta.</p>
-      <div class="testi-grid">
-        <div class="testi-card reveal">
-          <p>« J'envoie régulièrement des médicaments à ma famille au Sénégal. Avec Wonjo c'est 3x moins cher qu'un transporteur classique et je sais que c'est sécurisé. »</p>
-          <div class="testi-author"><div class="testi-avatar">MD</div><div class="testi-name">Moussa D.<br><span style="color:var(--muted);font-weight:500;">Paris → Dakar</span></div></div>
+      <div class="testi-carousel reveal" data-testi>
+        <div class="testi-track" id="testiTrack">
+
+          <article class="testi-card">
+            <div class="testi-top"><div class="testi-avatar grad-1">MD</div><div class="testi-meta"><span class="testi-name">Moussa D.</span><span class="testi-loc">Paris → Dakar</span></div></div>
+            <div class="testi-stars" aria-label="Note : 5 sur 5"></div>
+            <p>« J'envoie régulièrement des médicaments à ma famille au Sénégal. Avec Wonjo c'est 3× moins cher qu'un transporteur classique et je sais que c'est sécurisé. »</p>
+          </article>
+
+          <article class="testi-card">
+            <div class="testi-top"><div class="testi-avatar grad-2">AK</div><div class="testi-meta"><span class="testi-name">Aminata K.</span><span class="testi-loc">Voyageuse fréquente</span></div></div>
+            <div class="testi-stars" aria-label="Note : 5 sur 5"></div>
+            <p>« Je voyage 4 fois par an entre Paris et Abidjan. Wonjo me permet de rentabiliser mon voyage et d'aider des familles à envoyer leurs colis. »</p>
+          </article>
+
+          <article class="testi-card">
+            <div class="testi-top"><div class="testi-avatar grad-3">JM</div><div class="testi-meta"><span class="testi-name">Jean-Pierre M.</span><span class="testi-loc">Camerounais à Lyon</span></div></div>
+            <div class="testi-stars" aria-label="Note : 5 sur 5"></div>
+            <p>« Simple, rapide et sécurisé. Le paiement est bloqué jusqu'à la livraison, ça rassure vraiment. »</p>
+          </article>
+
+          <article class="testi-card">
+            <div class="testi-top"><div class="testi-avatar grad-4">FS</div><div class="testi-meta"><span class="testi-name">Fatou S.</span><span class="testi-loc">Lyon → Bamako</span></div></div>
+            <div class="testi-stars" aria-label="Note : 5 sur 5"></div>
+            <p>« J'ai pu envoyer un cadeau d'anniversaire à ma mère en une semaine. Le voyageur était adorable et très professionnel. »</p>
+          </article>
+
+          <article class="testi-card">
+            <div class="testi-top"><div class="testi-avatar grad-5">PB</div><div class="testi-meta"><span class="testi-name">Patrick B.</span><span class="testi-loc">Bruxelles → Kinshasa</span></div></div>
+            <div class="testi-stars" aria-label="Note : 5 sur 5"></div>
+            <p>« En tant que voyageur, j'apprécie le code de livraison à 4 chiffres : tout est carré, aucune mauvaise surprise. »</p>
+          </article>
+
+          <article class="testi-card">
+            <div class="testi-top"><div class="testi-avatar grad-6">ME</div><div class="testi-meta"><span class="testi-name">Marie E.</span><span class="testi-loc">Paris → Abidjan</span></div></div>
+            <div class="testi-stars" aria-label="Note : 5 sur 5"></div>
+            <p>« Le suivi en temps réel et la messagerie directe changent tout. Je recommande à toute la diaspora. »</p>
+          </article>
+
         </div>
-        <div class="testi-card reveal">
-          <p>« Je voyage 4 fois par an entre Paris et Abidjan. Wonjo me permet de rentabiliser mon voyage et d'aider des familles à envoyer leurs colis. »</p>
-          <div class="testi-author"><div class="testi-avatar">AK</div><div class="testi-name">Aminata K.<br><span style="color:var(--muted);font-weight:500;">Voyageuse fréquente</span></div></div>
-        </div>
-        <div class="testi-card reveal">
-          <p>« Simple, rapide et sécurisé. Le paiement est bloqué jusqu'à la livraison, ça rassure vraiment. »</p>
-          <div class="testi-author"><div class="testi-avatar">JM</div><div class="testi-name">Jean-Pierre M.<br><span style="color:var(--muted);font-weight:500;">Camerounais à Lyon</span></div></div>
-        </div>
+        <div class="testi-dots" id="testiDots" role="tablist" aria-label="Pagination des témoignages"></div>
       </div>
     </div>
   </section>
+
+  <!-- FAQ -->
+  <section class="section trust" id="faq">
+    <div class="wrap">
+      <h2 class="reveal">Questions fréquentes</h2>
+      <p class="section-sub reveal">Tout ce qu'il faut savoir avant d'envoyer ou de transporter un colis.</p>
+      <div class="faq-list">
+        <details class="faq-item reveal">
+          <summary>Comment fonctionne Wonjo ?<span class="faq-ic" aria-hidden="true"></span></summary>
+          <div class="faq-answer"><p>Wonjo met en relation des expéditeurs qui veulent envoyer un colis et des voyageurs qui ont de la place dans leurs bagages. Le voyageur transporte le colis et le paiement n'est libéré qu'après la livraison confirmée.</p></div>
+        </details>
+        <details class="faq-item reveal">
+          <summary>Mon paiement est-il sécurisé ?<span class="faq-ic" aria-hidden="true"></span></summary>
+          <div class="faq-answer"><p>Oui. Votre paiement est gardé en sécurité et n'est versé au voyageur qu'après confirmation de la livraison grâce à un code à 4 chiffres. Tous les utilisateurs passent une vérification d'identité (KYC).</p></div>
+        </details>
+        <details class="faq-item reveal">
+          <summary>Combien coûte un envoi ?<span class="faq-ic" aria-hidden="true"></span></summary>
+          <div class="faq-answer"><p>Sans abonnement pour les particuliers : une petite commission est prélevée uniquement lorsqu'un envoi aboutit. Vous pouvez économiser jusqu'à 70 % par rapport aux solutions classiques.</p></div>
+        </details>
+        <details class="faq-item reveal">
+          <summary>Quels trajets sont disponibles ?<span class="faq-ic" aria-hidden="true"></span></summary>
+          <div class="faq-answer"><p>Des envois en Europe et entre l'Europe et l'Afrique. Au lancement, seuls quelques pays sont desservis (France, Belgique…) et d'autres arrivent bientôt.</p></div>
+        </details>
+        <details class="faq-item reveal">
+          <summary>Comment devenir voyageur et gagner de l'argent ?<span class="faq-ic" aria-hidden="true"></span></summary>
+          <div class="faq-answer"><p>Inscrivez-vous, vérifiez votre identité, puis publiez votre trajet avec l'espace disponible et votre prix au kilo. Vous êtes payé après chaque livraison confirmée.</p></div>
+        </details>
+        <details class="faq-item reveal">
+          <summary>Que se passe-t-il en cas de litige ?<span class="faq-ic" aria-hidden="true"></span></summary>
+          <div class="faq-answer"><p>Un système de litige intégré et une équipe support (réponse en moins de 24h) vous accompagnent. Les photos de remise et de livraison servent de preuve en cas de problème.</p></div>
+        </details>
+        <details class="faq-item reveal">
+          <summary>Quand l'application sera-t-elle disponible ?<span class="faq-ic" aria-hidden="true"></span></summary>
+          <div class="faq-answer"><p>Wonjo est en bêta. Rejoignez la liste d'attente pour faire partie des premiers utilisateurs : l'application arrive bientôt sur iOS et Android.</p></div>
+        </details>
+      </div>
+    </div>
+  </section>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      { "@type": "Question", "name": "Comment fonctionne Wonjo ?", "acceptedAnswer": { "@type": "Answer", "text": "Wonjo met en relation des expéditeurs qui veulent envoyer un colis et des voyageurs qui ont de la place dans leurs bagages. Le voyageur transporte le colis et le paiement n'est libéré qu'après la livraison confirmée." } },
+      { "@type": "Question", "name": "Mon paiement est-il sécurisé ?", "acceptedAnswer": { "@type": "Answer", "text": "Oui. Votre paiement est gardé en sécurité et n'est versé au voyageur qu'après confirmation de la livraison grâce à un code à 4 chiffres. Tous les utilisateurs passent une vérification d'identité (KYC)." } },
+      { "@type": "Question", "name": "Combien coûte un envoi ?", "acceptedAnswer": { "@type": "Answer", "text": "Sans abonnement pour les particuliers : une petite commission est prélevée uniquement lorsqu'un envoi aboutit. Vous pouvez économiser jusqu'à 70 % par rapport aux solutions classiques." } },
+      { "@type": "Question", "name": "Quels trajets sont disponibles ?", "acceptedAnswer": { "@type": "Answer", "text": "Des envois en Europe et entre l'Europe et l'Afrique. Au lancement, seuls quelques pays sont desservis (France, Belgique…) et d'autres arrivent bientôt." } },
+      { "@type": "Question", "name": "Comment devenir voyageur et gagner de l'argent ?", "acceptedAnswer": { "@type": "Answer", "text": "Inscrivez-vous, vérifiez votre identité, puis publiez votre trajet avec l'espace disponible et votre prix au kilo. Vous êtes payé après chaque livraison confirmée." } },
+      { "@type": "Question", "name": "Que se passe-t-il en cas de litige ?", "acceptedAnswer": { "@type": "Answer", "text": "Un système de litige intégré et une équipe support (réponse en moins de 24h) vous accompagnent. Les photos de remise et de livraison servent de preuve en cas de problème." } },
+      { "@type": "Question", "name": "Quand l'application sera-t-elle disponible ?", "acceptedAnswer": { "@type": "Answer", "text": "Wonjo est en bêta. Rejoignez la liste d'attente pour faire partie des premiers utilisateurs : l'application arrive bientôt sur iOS et Android." } }
+    ]
+  }
+  </script>
 
   <!-- FORMULAIRE BÊTA -->
   <section class="section beta" id="beta">
@@ -979,16 +1361,24 @@
 
         <form class="form-card" id="beta-form" action="https://formspree.io/f/meeboeqq" method="POST">
           <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" style="display:none" aria-hidden="true">
-          <label for="prenom">Prénom</label>
-          <input type="text" id="prenom" name="prenom" placeholder="Votre prénom" required>
-          <label for="email">Email</label>
-          <input type="email" id="email" name="email" placeholder="vous@exemple.com" required>
+          <div class="field">
+            <input type="text" id="prenom" name="prenom" placeholder=" " autocomplete="given-name" required>
+            <label for="prenom">Prénom</label>
+          </div>
+          <div class="field">
+            <input type="email" id="email" name="email" placeholder=" " autocomplete="email" required>
+            <label for="email">Email</label>
+          </div>
           <button type="submit">Je m'inscris</button>
           <p class="form-note">Disponible sur iOS et Android prochainement</p>
         </form>
 
         <div class="form-success" id="beta-success" hidden>
-          <div class="check"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+          <svg class="check-circle" viewBox="0 0 56 56" role="img" aria-label="Inscription confirmée">
+            <circle class="c-bg" cx="28" cy="28" r="26"/>
+            <circle class="c-ring" cx="28" cy="28" r="26"/>
+            <path class="c-tick" d="M17 28.5 L24.5 36 L39 21"/>
+          </svg>
           <h3 id="success-title">Merci !</h3>
           <p>Vous recevrez un email avec les instructions pour rejoindre la bêta.</p>
         </div>
@@ -998,14 +1388,15 @@
 
   <!-- FOOTER -->
   <footer>
+    <div class="footer-sep" aria-hidden="true"></div>
     <div class="footer-top">
       <div class="footer-brand">
         <div class="flogo"><img src="/assets/wonjo-logo.png" alt="Logo Wonjo">Wonjo</div>
-        <p>Vos colis voyagent avec des personnes de confiance, de l'Europe vers l'Afrique.</p>
+        <p>Vos colis voyagent avec des personnes de confiance.</p>
         <div class="footer-socials">
-          <a href="https://instagram.com/wonjo.app" aria-label="Instagram" target="_blank" rel="noopener"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg></a>
-          <a href="https://linkedin.com/company/wonjo" aria-label="LinkedIn" target="_blank" rel="noopener"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg></a>
-          <a href="https://x.com/wonjo_app" aria-label="Twitter / X" target="_blank" rel="noopener"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+          <a class="fb" href="https://facebook.com/wonjo.app" aria-label="Facebook" target="_blank" rel="noopener"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+          <a class="ig" href="https://instagram.com/wonjo.app" aria-label="Instagram" target="_blank" rel="noopener"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg></a>
+          <a class="li" href="https://linkedin.com/company/wonjo" aria-label="LinkedIn" target="_blank" rel="noopener"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg></a>
         </div>
       </div>
       <div class="footer-col">
@@ -1023,9 +1414,12 @@
     </div>
     <div class="footer-bottom">
       <div>© 2026 Wonjo - Lampas AI</div>
-      <div class="heart">Conçu pour la diaspora africaine</div>
     </div>
   </footer>
+
+  <button class="to-top" id="toTop" aria-label="Revenir en haut de page">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+  </button>
 
   <script>
     // Révélation au scroll
@@ -1048,6 +1442,28 @@
       io.observe(el);
     });
 
+    // Compteur animé du hero (0 → cible, lancé à l'apparition)
+    document.querySelectorAll('.count[data-count-to]').forEach(function (el) {
+      var target = parseInt(el.dataset.countTo, 10);
+      var animateCount = function () {
+        var start = null, dur = 2000;
+        var step = function (ts) {
+          if (!start) start = ts;
+          var p = Math.min((ts - start) / dur, 1);
+          el.textContent = Math.floor(p * target).toLocaleString('fr-FR');
+          if (p < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      };
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        el.textContent = target.toLocaleString('fr-FR'); return;
+      }
+      var cio = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) { if (e.isIntersecting) { animateCount(); cio.unobserve(e.target); } });
+      }, { threshold: 0.5 });
+      cio.observe(el);
+    });
+
     // Nav : ombre au scroll + menu mobile
     var nav = document.getElementById('nav');
     window.addEventListener('scroll', function () {
@@ -1056,13 +1472,29 @@
 
     var toggle = document.getElementById('navToggle');
     var menu = document.getElementById('mobileMenu');
-    toggle.addEventListener('click', function () {
-      var open = menu.classList.toggle('open');
+    function setMenu(open) {
+      menu.classList.toggle('open', open);
+      toggle.classList.toggle('open', open);
       toggle.setAttribute('aria-expanded', open);
-    });
+      toggle.setAttribute('aria-label', open ? 'Fermer le menu' : 'Ouvrir le menu');
+    }
+    toggle.addEventListener('click', function () { setMenu(!menu.classList.contains('open')); });
     menu.querySelectorAll('a').forEach(function (a) {
-      a.addEventListener('click', function () { menu.classList.remove('open'); toggle.setAttribute('aria-expanded', false); });
+      a.addEventListener('click', function () { setMenu(false); });
     });
+
+    // Bouton « retour en haut » (apparaît après 300px)
+    var toTop = document.getElementById('toTop');
+    if (toTop) {
+      window.addEventListener('scroll', function () { toTop.classList.toggle('show', window.scrollY > 300); }, { passive: true });
+      toTop.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+    }
+
+    // Stepper : tracé de la ligne de connexion au scroll
+    var stepIO = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('drawn'); stepIO.unobserve(e.target); } });
+    }, { threshold: 0.25 });
+    document.querySelectorAll('.steps').forEach(function (s) { stepIO.observe(s); });
 
     // Onglets « Comment ça marche »
     document.querySelectorAll('.tab-btn').forEach(function (btn) {
@@ -1071,7 +1503,10 @@
         document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.remove('active'); });
         document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.remove('active'); });
         btn.classList.add('active');
-        document.getElementById('tab-' + tab).classList.add('active');
+        var panel = document.getElementById('tab-' + tab);
+        panel.classList.add('active');
+        var st = panel.querySelector('.steps');
+        if (st) st.classList.add('drawn');
       });
     });
 
@@ -1203,6 +1638,180 @@
           });
         }, { rootMargin: '-45% 0px -50% 0px' });
         sections.forEach(function (s) { spy.observe(s); });
+      }
+    })();
+
+    // Inclinaison 3D des cartes corridors (suivi du curseur)
+    (function () {
+      var canTilt = window.matchMedia('(hover: hover)').matches &&
+                    !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!canTilt) return;
+      document.querySelectorAll('.wonjo-card.tilt').forEach(function (card) {
+        var raf;
+        card.addEventListener('pointermove', function (e) {
+          var r = card.getBoundingClientRect();
+          var px = (e.clientX - r.left) / r.width - 0.5;
+          var py = (e.clientY - r.top) / r.height - 0.5;
+          if (raf) cancelAnimationFrame(raf);
+          raf = requestAnimationFrame(function () {
+            card.style.transform = 'perspective(1400px) translateY(-8px) rotateX(' +
+              (-py * 7).toFixed(2) + 'deg) rotateY(' + (px * 8).toFixed(2) + 'deg) scale(1.015)';
+          });
+        });
+        card.addEventListener('pointerleave', function () {
+          if (raf) cancelAnimationFrame(raf);
+          card.style.transform = '';
+        });
+      });
+    })();
+
+    // Témoignages : étoiles SVG + carrousel autoplay 5s (pause au survol)
+    (function () {
+      var starSvg = '<svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>';
+      document.querySelectorAll('.testi-stars').forEach(function (s) {
+        s.innerHTML = ''; for (var i = 0; i < 5; i++) s.insertAdjacentHTML('beforeend', starSvg);
+      });
+
+      var track = document.getElementById('testiTrack');
+      var dotsWrap = document.getElementById('testiDots');
+      if (!track || !dotsWrap) return;
+      var cards = Array.prototype.slice.call(track.querySelectorAll('.testi-card'));
+      var carousel = track.closest('[data-testi]');
+
+      function scrollToCard(i) {
+        var c = cards[i]; if (!c) return;
+        track.scrollTo({ left: c.offsetLeft - (track.clientWidth - c.offsetWidth) / 2, behavior: 'smooth' });
+      }
+      cards.forEach(function (_, i) {
+        var b = document.createElement('button');
+        b.type = 'button'; b.setAttribute('role', 'tab');
+        b.setAttribute('aria-label', 'Témoignage ' + (i + 1));
+        if (i === 0) b.classList.add('active');
+        b.addEventListener('click', function () { scrollToCard(i); });
+        dotsWrap.appendChild(b);
+      });
+      var dots = Array.prototype.slice.call(dotsWrap.children), current = 0;
+      function activeIndex() {
+        var center = track.scrollLeft + track.clientWidth / 2, best = 0, bd = Infinity;
+        cards.forEach(function (c, i) { var cc = c.offsetLeft + c.offsetWidth / 2, d = Math.abs(cc - center); if (d < bd) { bd = d; best = i; } });
+        return best;
+      }
+      var raf;
+      track.addEventListener('scroll', function () {
+        if (raf) cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(function () {
+          current = activeIndex();
+          dots.forEach(function (d, i) { d.classList.toggle('active', i === current); d.setAttribute('aria-selected', i === current); });
+        });
+      }, { passive: true });
+
+      var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches, timer = null;
+      function start() { if (reduced || document.hidden) return; stop(); timer = setInterval(function () { scrollToCard(current >= cards.length - 1 ? 0 : current + 1); }, 5000); }
+      function stop() { if (timer) { clearInterval(timer); timer = null; } }
+      carousel.addEventListener('pointerenter', stop);
+      carousel.addEventListener('pointerleave', start);
+      carousel.addEventListener('focusin', stop);
+      carousel.addEventListener('focusout', start);
+      track.addEventListener('touchstart', stop, { passive: true });
+      track.addEventListener('touchend', function () { setTimeout(start, 5000); }, { passive: true });
+      document.addEventListener('visibilitychange', function () { document.hidden ? stop() : start(); });
+      start();
+    })();
+
+    // Carte hero : corridors qui défilent à tour de rôle (avion qui suit chaque trajet)
+    (function () {
+      var routeBase = document.getElementById('routeBase');
+      var routeDash = document.getElementById('routeDash');
+      var labelO = document.getElementById('labelO');
+      var labelD = document.getElementById('labelD');
+      var mapRoute = document.getElementById('mapRoute');
+      var plane = document.getElementById('plane');
+      if (!routeBase || !plane) return;
+
+      var cities = {
+        paris:     { x: 150, y: 90,  name: 'Paris' },
+        bruxelles: { x: 168, y: 66,  name: 'Bruxelles' },
+        lyon:      { x: 163, y: 108, name: 'Lyon' },
+        dakar:     { x: 152, y: 236, name: 'Dakar' },
+        abidjan:   { x: 198, y: 308, name: 'Abidjan' },
+        ndjamena:  { x: 258, y: 238, name: "N'Djamena" },
+        kinshasa:  { x: 244, y: 320, name: 'Kinshasa' }
+      };
+      // étiquette : [dx, dy, ancrage]
+      var labelPos = {
+        paris:     [10, -4, 'start'],
+        bruxelles: [10, -5, 'start'],
+        lyon:      [10, 7, 'start'],
+        dakar:     [-10, 5, 'end'],
+        abidjan:   [10, 14, 'start'],
+        ndjamena:  [9, 4, 'start'],
+        kinshasa:  [9, 14, 'start']
+      };
+      var routes = [ ['paris', 'dakar'], ['lyon', 'abidjan'], ['kinshasa', 'bruxelles'], ['paris', 'ndjamena'], ['bruxelles', 'paris'] ];
+
+      function pathFor(o, d) {
+        var mx = (o.x + d.x) / 2, my = (o.y + d.y) / 2;
+        var dx = d.x - o.x, dy = d.y - o.y;
+        var len = Math.hypot(dx, dy) || 1;
+        var nx = -dy / len, ny = dx / len;
+        if (nx > 0) { nx = -nx; ny = -ny; }           // bomber la courbe vers la gauche (Atlantique)
+        var bow = len * 0.18;
+        return 'M' + o.x + ' ' + o.y + ' Q' + (mx + nx * bow).toFixed(1) + ' ' + (my + ny * bow).toFixed(1) + ' ' + d.x + ' ' + d.y;
+      }
+      function setPin(id, c) {
+        document.querySelectorAll('#pin' + id + ' circle').forEach(function (el) { el.setAttribute('cx', c.x); el.setAttribute('cy', c.y); });
+      }
+      function setLabel(el, key, c) {
+        var lp = labelPos[key];
+        el.textContent = cities[key].name;
+        el.setAttribute('x', c.x + lp[0]); el.setAttribute('y', c.y + lp[1]); el.setAttribute('text-anchor', lp[2]);
+      }
+
+      var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var animId = 0;
+      function flyPlane() {
+        var myId = ++animId;
+        var len = routeBase.getTotalLength(), start = null, dur = 3200;
+        function step(ts) {
+          if (myId !== animId) return;
+          if (!start) start = ts;
+          var p = Math.min((ts - start) / dur, 1);
+          var pt = routeBase.getPointAtLength(p * len);
+          var pt2 = routeBase.getPointAtLength(Math.min(p * len + 1, len));
+          var ang = Math.atan2(pt2.y - pt.y, pt2.x - pt.x) * 180 / Math.PI;
+          plane.setAttribute('transform', 'translate(' + pt.x.toFixed(2) + ' ' + pt.y.toFixed(2) + ') rotate(' + ang.toFixed(1) + ')');
+          if (p < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+      }
+      function show(i) {
+        var r = routes[i], o = cities[r[0]], d = cities[r[1]];
+        var dPath = pathFor(o, d);
+        routeBase.setAttribute('d', dPath);
+        routeDash.setAttribute('d', dPath);
+        setPin('O', o); setPin('D', d);
+        setLabel(labelO, r[0], o); setLabel(labelD, r[1], d);
+        if (mapRoute) mapRoute.textContent = o.name + ' → ' + d.name;
+        if (reduced) {
+          var m = routeBase.getPointAtLength(routeBase.getTotalLength() / 2);
+          plane.setAttribute('transform', 'translate(' + m.x + ' ' + m.y + ')');
+          return;
+        }
+        var L = routeBase.getTotalLength();
+        routeBase.style.transition = 'none';
+        routeBase.style.strokeDasharray = L;
+        routeBase.style.strokeDashoffset = L;
+        routeBase.getBoundingClientRect();
+        routeBase.style.transition = 'stroke-dashoffset 0.9s ease';
+        routeBase.style.strokeDashoffset = 0;
+        flyPlane();
+      }
+
+      var idx = 0;
+      show(0);
+      if (!reduced) {
+        idx = 1;
+        setInterval(function () { show(idx); idx = (idx + 1) % routes.length; }, 4500);
       }
     })();
   </script>
