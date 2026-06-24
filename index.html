@@ -35,7 +35,7 @@
 <meta name="twitter:image:alt" content="Wonjo — envoi de colis entre particuliers, Europe & Afrique">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=M+PLUS+Rounded+1c:wght@800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/css/base.css">
 <style>
   /* Tokens de design : voir assets/css/base.css */
@@ -123,7 +123,7 @@
     transition: transform 0.1s linear; will-change: transform;
   }
   .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 68px; }
-  .nav-logo { display: flex; align-items: center; gap: 9px; font-size: 1.45rem; font-weight: 600; letter-spacing: -0.02em; text-decoration: none; color: var(--ink); transition: color 0.25s ease; }
+  .nav-logo { display: flex; align-items: center; gap: 1px; font-family: 'M PLUS Rounded 1c', 'Plus Jakarta Sans', sans-serif; font-size: 1rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; text-decoration: none; background: var(--brand-gradient); -webkit-background-clip: text; background-clip: text; color: transparent; transition: opacity 0.25s ease; }
   .nav-logo img { height: 36px; width: auto; display: block; }
   .nav-logo span { color: var(--teal); transition: color 0.25s ease; }
   .nav-links { display: none; gap: 30px; align-items: center; }
@@ -659,6 +659,7 @@
   @media (max-width: 560px) {
     .tabs { display: flex; width: 100%; max-width: 380px; }
     .tab-btn { flex: 1; padding: 11px 10px; font-size: 0.9rem; white-space: nowrap; }
+    .hero .subtitle { font-size: 1rem; }
     .hero-ctas { gap: 10px; flex-wrap: nowrap; }
     .hero-ctas .pill { flex: 0 1 auto; min-width: 0; white-space: nowrap; padding: 12px 16px; font-size: 0.9rem; }
     .wc-rating { font-size: 15px; flex-wrap: nowrap; }
