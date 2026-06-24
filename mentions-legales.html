@@ -3,22 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" type="image/png" href="/assets/wonjo-logo.png">
-<link rel="apple-touch-icon" href="/assets/wonjo-logo.png">
+<link rel="icon" type="image/png" href="/assets/img/wonjo-logo.png">
+<link rel="apple-touch-icon" href="/assets/img/wonjo-logo.png">
 <title>Mentions légales - Wonjo</title>
 <meta name="description" content="Mentions légales de Wonjo (Lampasai SAS) : éditeur, hébergeur et informations légales du site.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://wonjo.app/mentions-legales.html">
+<link rel="stylesheet" href="/assets/css/base.css">
 <style>
-  :root {
-    --teal: #4A8896;
-    --brown: #7D4E2E;
-    --green: #1D9E75;
-    --bg: #F8F7FF;
-    --text: #1A1A2E;
-    --muted: #5b5b70;
-    --brand-gradient: linear-gradient(135deg, #4A8896 0%, #4A8896 45%, #7D4E2E 100%);
-  }
+  /* Tokens de design : voir assets/css/base.css */
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body {
@@ -35,41 +28,11 @@
   main h1 { font-size: 1.6rem; font-weight: 800; margin-bottom: 12px; }
   main p { color: var(--muted); max-width: 460px; }
 
-  /* FOOTER */
-  footer { background: #2a1d14; color: #cdbfb4; padding: 44px 20px 28px; font-size: 0.9rem; }
-  footer a { color: #e6dbd0; text-decoration: none; }
-  footer a:hover { text-decoration: underline; }
-  .footer-top {
-    max-width: 960px; margin: 0 auto;
-    display: grid; grid-template-columns: 1fr; gap: 28px; text-align: left;
-  }
-  .footer-brand .flogo { display: flex; align-items: center; gap: 10px; font-size: 1.6rem; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
-  .footer-brand .flogo img { height: 38px; width: auto; }
-  .footer-brand p { margin-top: 6px; max-width: 240px; }
-  .footer-col h4 { color: #fff; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
-  .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
-  .footer-socials { display: flex; gap: 12px; margin-top: 12px; }
-  .footer-socials a {
-    width: 36px; height: 36px; border-radius: 10px;
-    background: rgba(255,255,255,0.08);
-    display: flex; align-items: center; justify-content: center;
-    color: #e6dbd0; transition: background 0.15s ease;
-  }
-  .footer-socials a:hover { background: rgba(255,255,255,0.18); }
-  .footer-bottom {
-    max-width: 960px; margin: 32px auto 0; padding-top: 20px;
-    border-top: 1px solid rgba(255,255,255,0.1);
-    text-align: center; font-size: 0.85rem;
-  }
-  .footer-bottom .heart { margin-top: 6px; opacity: 0.8; }
-
-  @media (min-width: 640px) {
-    .footer-top { grid-template-columns: 1.4fr 1fr 1fr 1fr; }
-  }
+  /* Pied de page : voir assets/css/base.css */
 </style>
 </head>
 <body>
-  <header class="hero"><a href="/"><div class="logo"><img src="/assets/wonjo-logo.png" alt="Logo Wonjo">Wonjo</div></a></header>
+  <header class="hero"><a href="/"><div class="logo"><img src="/assets/img/wonjo-logo.png" alt="Logo Wonjo">Wonjo</div></a></header>
   <main>
     <h1>Mentions légales</h1>
     <p>Page en cours de rédaction.</p>
@@ -77,18 +40,19 @@
 
   <!-- FOOTER -->
   <footer>
+    <div class="footer-sep" aria-hidden="true"></div>
     <div class="footer-top">
       <div class="footer-brand">
-        <div class="flogo"><img src="/assets/wonjo-logo.png" alt="Logo Wonjo">Wonjo</div>
-        <p>Vos colis voyagent avec des personnes de confiance, de l'Europe vers l'Afrique.</p>
+        <div class="flogo"><img src="/assets/img/wonjo-logo.png" alt="Logo Wonjo">Wonjo</div>
+        <p>Vos colis voyagent avec des personnes de confiance.</p>
         <div class="footer-socials">
-          <a href="https://facebook.com/wonjo.app" aria-label="Facebook" target="_blank" rel="noopener">
+          <a class="fb" href="https://facebook.com/wonjo.app" aria-label="Facebook" target="_blank" rel="noopener">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
           </a>
-          <a href="https://instagram.com/wonjo.app" aria-label="Instagram" target="_blank" rel="noopener">
+          <a class="ig" href="https://instagram.com/wonjo.app" aria-label="Instagram" target="_blank" rel="noopener">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
           </a>
-          <a href="https://linkedin.com/company/wonjo" aria-label="LinkedIn" target="_blank" rel="noopener">
+          <a class="li" href="https://linkedin.com/company/wonjo" aria-label="LinkedIn" target="_blank" rel="noopener">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>
           </a>
         </div>

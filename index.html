@@ -10,8 +10,8 @@
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
 <meta name="theme-color" content="#4A8896">
 <link rel="canonical" href="https://wonjo.app/">
-<link rel="icon" type="image/png" href="/assets/wonjo-logo.png">
-<link rel="apple-touch-icon" href="/assets/wonjo-logo.png">
+<link rel="icon" type="image/png" href="/assets/img/wonjo-logo.png">
+<link rel="apple-touch-icon" href="/assets/img/wonjo-logo.png">
 
 <!-- Open Graph -->
 <meta property="og:type" content="website">
@@ -19,8 +19,8 @@
 <meta property="og:locale" content="fr_FR">
 <meta property="og:title" content="Wonjo — Envoi de colis entre particuliers · Europe & Afrique">
 <meta property="og:description" content="Wonjo connecte expéditeurs et voyageurs en Europe et entre l'Europe et l'Afrique. Envois économiques, paiement sécurisé, identités vérifiées.">
-<meta property="og:image" content="https://wonjo.app/assets/og-cover.png">
-<meta property="og:image:secure_url" content="https://wonjo.app/assets/og-cover.png">
+<meta property="og:image" content="https://wonjo.app/assets/img/og-cover.png">
+<meta property="og:image:secure_url" content="https://wonjo.app/assets/img/og-cover.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -31,29 +31,14 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Wonjo — Envoi de colis entre particuliers · Europe & Afrique">
 <meta name="twitter:description" content="Wonjo connecte expéditeurs et voyageurs en Europe et entre l'Europe et l'Afrique. Envois économiques, paiement sécurisé, identités vérifiées.">
-<meta name="twitter:image" content="https://wonjo.app/assets/og-cover.png">
+<meta name="twitter:image" content="https://wonjo.app/assets/img/og-cover.png">
 <meta name="twitter:image:alt" content="Wonjo — envoi de colis entre particuliers, Europe & Afrique">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/base.css">
 <style>
-  :root {
-    --teal: #4A8896;
-    --teal-dark: #3a6b77;
-    --brown: #7D4E2E;
-    --green: #1D9E75;
-    --amber: #F5A623;
-    --bg: #F7F6FC;
-    --surface: #ffffff;
-    --ink: #14142b;
-    --muted: #5b5b70;
-    --line: rgba(20,20,43,0.08);
-    --brand-gradient: linear-gradient(135deg, #4A8896 0%, #7D4E2E 100%);
-    --radius: 20px;
-    --shadow-sm: 0 4px 16px rgba(20,20,43,0.05);
-    --shadow-md: 0 14px 40px rgba(20,20,43,0.10);
-    --shadow-lg: 0 24px 60px rgba(20,20,43,0.16);
-  }
+  /* Tokens de design : voir assets/css/base.css */
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body {
@@ -665,37 +650,7 @@
   .form-success h3 { color: var(--ink); font-size: 1.3rem; margin-bottom: 8px; }
   .form-success p { color: var(--muted); }
 
-  /* FOOTER */
-  footer { position: relative; overflow: hidden; background: #1A1A2E; color: #c8c4d6; padding: 56px 24px 32px; font-size: 0.92rem; }
-  footer::before {
-    content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0.5;
-    background:
-      radial-gradient(600px 300px at 12% 0%, rgba(74,136,150,0.18), transparent 60%),
-      radial-gradient(560px 320px at 90% 10%, rgba(125,78,46,0.16), transparent 60%),
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Cpath d='M0 20h40M20 0v40' stroke='%23ffffff' stroke-width='1' stroke-opacity='0.03'/%3E%3C/svg%3E");
-  }
-  footer > * { position: relative; z-index: 1; }
-  footer a { color: #e6e1f0; text-decoration: none; }
-  .footer-sep { height: 3px; max-width: 1080px; margin: 0 auto 40px; border-radius: 3px; background: linear-gradient(90deg, var(--teal), var(--amber), var(--brown)); opacity: 0.85; }
-  .footer-top { max-width: 1080px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 32px; }
-  .footer-brand .flogo { display: flex; align-items: center; gap: 10px; font-size: 1.55rem; font-weight: 600; color: #fff; letter-spacing: -0.01em; }
-  .footer-brand .flogo img { height: 40px; width: auto; }
-  .footer-brand .flogo span { color: #7fb3bf; }
-  .footer-brand p { margin-top: 10px; max-width: 260px; color: #a7a2bb; }
-  .footer-col h4 { color: #fff; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px; }
-  .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 11px; }
-  .footer-col a { position: relative; display: inline-block; color: #bfbace; }
-  .footer-col a::after { content: ""; position: absolute; left: 0; bottom: -2px; height: 1.5px; width: 100%; background: linear-gradient(90deg, var(--teal), var(--amber)); transform: scaleX(0); transform-origin: left; transition: transform 0.25s cubic-bezier(.42,0,.58,1); }
-  .footer-col a:hover { color: #fff; }
-  .footer-col a:hover::after { transform: scaleX(1); }
-  .footer-socials { display: flex; gap: 12px; margin-top: 18px; }
-  .footer-socials a { width: 40px; height: 40px; border-radius: 12px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; color: #cfcadd; transition: transform 0.18s ease, background 0.18s ease, color 0.18s ease, border-color 0.18s ease; }
-  .footer-socials a:hover { transform: translateY(-3px); color: #fff; }
-  .footer-socials a.ig:hover { background: linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366); border-color: transparent; }
-  .footer-socials a.li:hover { background: #0a66c2; border-color: transparent; }
-  .footer-socials a.fb:hover { background: #1877f2; border-color: transparent; }
-  .footer-bottom { max-width: 1080px; margin: 40px auto 0; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center; font-size: 0.85rem; color: #a7a2bb; }
-  .footer-bottom .heart { margin-top: 6px; opacity: 0.8; }
+  /* Pied de page : voir assets/css/base.css */
 
   @media (max-width: 560px) {
     .tabs { display: flex; width: 100%; max-width: 380px; }
@@ -709,7 +664,6 @@
     .pricing-grid { grid-template-columns: repeat(3,1fr); }
     .price-card.featured { transform: scale(1.04); z-index: 1; }
     .price-card.featured:hover { transform: scale(1.04) translateY(-6px); }
-    .footer-top { grid-template-columns: 1.6fr 1fr 1fr 1fr; }
   }
   @media (min-width: 900px) {
     .nav-links, .nav-cta { display: flex; }
@@ -740,8 +694,8 @@
       "@id": "https://wonjo.app/#organization",
       "name": "Wonjo",
       "url": "https://wonjo.app/",
-      "logo": "https://wonjo.app/assets/wonjo-logo.png",
-      "image": "https://wonjo.app/assets/wonjo-logo.png",
+      "logo": "https://wonjo.app/assets/img/wonjo-logo.png",
+      "image": "https://wonjo.app/assets/img/wonjo-logo.png",
       "description": "Wonjo connecte expéditeurs et voyageurs en Europe et entre l'Europe et l'Afrique pour des envois de colis économiques et sécurisés.",
       "email": "contact@wonjo.app",
       "sameAs": [
@@ -776,7 +730,7 @@
   <nav class="nav" id="nav">
     <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
     <div class="wrap nav-inner">
-      <a href="#top" class="nav-logo"><img src="/assets/wonjo-logo.png" alt="Logo Wonjo">Wonjo</a>
+      <a href="#top" class="nav-logo"><img src="/assets/img/wonjo-logo.png" alt="Logo Wonjo">Wonjo</a>
       <div class="nav-links">
         <a href="#corridors">Corridors</a>
         <a href="#comment">Comment ça marche</a>
@@ -1391,7 +1345,7 @@
     <div class="footer-sep" aria-hidden="true"></div>
     <div class="footer-top">
       <div class="footer-brand">
-        <div class="flogo"><img src="/assets/wonjo-logo.png" alt="Logo Wonjo">Wonjo</div>
+        <div class="flogo"><img src="/assets/img/wonjo-logo.png" alt="Logo Wonjo">Wonjo</div>
         <p>Vos colis voyagent avec des personnes de confiance.</p>
         <div class="footer-socials">
           <a class="fb" href="https://facebook.com/wonjo.app" aria-label="Facebook" target="_blank" rel="noopener"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
