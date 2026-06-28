@@ -709,7 +709,6 @@
       "logo": "https://wonjo.app/assets/img/wonjo-logo.png",
       "image": "https://wonjo.app/assets/img/wonjo-logo.png",
       "description": "Wonjo connecte expéditeurs et voyageurs en Europe et entre l'Europe et l'Afrique pour des envois de colis économiques et sécurisés.",
-      "email": "contact@wonjo.app",
       "sameAs": [
         "https://facebook.com/wonjo.app",
         "https://instagram.com/wonjo.app",
@@ -1179,7 +1178,7 @@
               <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Support prioritaire (réponse &lt; 24h)</li>
               <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Toute l'offre Particulier incluse</li>
             </ul>
-            <a href="mailto:contact@wonjo.app" class="price-cta ghost">Nous contacter</a>
+            <a href="#" class="price-cta ghost" data-mail data-user="contact" data-domain="wonjo.app">Nous contacter</a>
           </div>
         </div>
 
@@ -1207,7 +1206,7 @@
               <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Facturation mensuelle consolidée</li>
               <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Toute l'offre Business incluse</li>
             </ul>
-            <a href="mailto:contact@wonjo.app" class="price-cta ghost">Nous contacter</a>
+            <a href="#" class="price-cta ghost" data-mail data-user="contact" data-domain="wonjo.app">Nous contacter</a>
           </div>
         </div>
 
@@ -1375,7 +1374,7 @@
       </div>
       <div class="footer-col">
         <h4>Contact</h4>
-        <ul><li><a href="mailto:contact@wonjo.app">contact@wonjo.app</a></li></ul>
+        <ul><li><a href="#" data-mail data-show data-user="contact" data-domain="wonjo.app">Nous écrire</a></li></ul>
       </div>
     </div>
     <div class="footer-bottom">
@@ -1388,6 +1387,13 @@
   </button>
 
   <script>
+    // Email masqué (anti-spam) : reconstruit l'adresse au chargement
+    document.querySelectorAll('a[data-mail]').forEach(function (a) {
+      var addr = a.dataset.user + '@' + a.dataset.domain;
+      a.setAttribute('href', 'mailto:' + addr);
+      if (a.hasAttribute('data-show')) a.textContent = addr;
+    });
+
     // Révélation au scroll
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
