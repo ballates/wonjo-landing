@@ -10,8 +10,8 @@
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
 <meta name="theme-color" content="#4A8896">
 <link rel="canonical" href="https://wonjo.app/">
-<link rel="icon" type="image/png" href="/assets/img/wonjo-logo.png">
-<link rel="apple-touch-icon" href="/assets/img/wonjo-logo.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/assets/img/wonjo-favicon.png">
+<link rel="apple-touch-icon" href="/assets/img/wonjo-favicon.png">
 
 <!-- Open Graph -->
 <meta property="og:type" content="website">
@@ -37,6 +37,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=M+PLUS+Rounded+1c:wght@800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/css/base.css">
+
+<!-- Cloudflare Web Analytics -->
+<script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "04905a034889453cbc7b1cf5f2e09d13"}'></script>
+<!-- End Cloudflare Web Analytics -->
 <style>
   /* Tokens de design : voir assets/css/base.css */
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -122,9 +126,9 @@
     background: var(--brand-gradient); transform: scaleX(0); transform-origin: 0 50%;
     transition: transform 0.1s linear; will-change: transform;
   }
-  .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 68px; }
-  .nav-logo { display: flex; align-items: center; gap: 1px; font-family: 'M PLUS Rounded 1c', 'Plus Jakarta Sans', sans-serif; font-size: 1.2rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; text-decoration: none; background: var(--brand-gradient); -webkit-background-clip: text; background-clip: text; color: transparent; transition: opacity 0.25s ease; }
-  .nav-logo img { height: 46px; width: auto; display: block; }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 82px; }
+  .nav-logo { display: flex; align-items: center; gap: 1px; font-family: 'M PLUS Rounded 1c', 'Plus Jakarta Sans', sans-serif; font-size: 1.55rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; text-decoration: none; background: var(--brand-gradient); -webkit-background-clip: text; background-clip: text; color: transparent; transition: opacity 0.25s ease; }
+  .nav-logo img { height: 60px; width: auto; display: block; }
   .nav-logo span { color: var(--teal); transition: color 0.25s ease; }
   .nav-links { display: none; gap: 30px; align-items: center; }
   .nav-links a { position: relative; text-decoration: none; color: var(--muted); font-weight: 600; font-size: 0.95rem; transition: color 0.15s ease; }
@@ -834,7 +838,7 @@
   <section class="section" id="corridors">
     <div class="wrap">
       <h2 class="reveal">Des corridors qui rapprochent</h2>
-      <p class="section-sub reveal">Exemples d'annonces réelles publiées sur Wonjo.</p>
+      <p class="section-sub reveal">Exemples d'annonces publiées sur Wonjo.</p>
 
       <div class="carousel reveal" data-carousel>
         <button class="carousel-arrow prev" type="button" aria-label="Cartes précédentes">
