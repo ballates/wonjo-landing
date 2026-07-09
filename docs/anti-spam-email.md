@@ -7,19 +7,19 @@ Les robots aspirateurs d'emails parcourent le HTML brut et revendent toute adres
 
 ## Ce qui a été fait dans `index.html`
 
-1. **Boutons « Nous contacter »** (sections offres) — les `mailto:` en clair sont
+1. **Boutons « Nous contacter »** (sections offres) - les `mailto:` en clair sont
    remplacés par des liens masqués :
    ```html
    <a href="#" class="price-cta ghost" data-mail data-user="contact" data-domain="wonjo.app">Nous contacter</a>
    ```
 
-2. **Pied de page** — affichait l'email en clair (texte ET lien). Remplacé par un
+2. **Pied de page** - affichait l'email en clair (texte ET lien). Remplacé par un
    lien masqué qui révèle l'adresse seulement après chargement JS (`data-show`) :
    ```html
    <a href="#" data-mail data-show data-user="contact" data-domain="wonjo.app">Nous écrire</a>
    ```
 
-3. **Données structurées SEO (JSON-LD)** — suppression du champ `"email"` de
+3. **Données structurées SEO (JSON-LD)** - suppression du champ `"email"` de
    l'`Organization` qui exposait l'adresse à Google et aux aspirateurs.
 
 4. **Script de reconstruction** (en haut du `<script>` principal en fin de page) :
@@ -32,7 +32,7 @@ Les robots aspirateurs d'emails parcourent le HTML brut et revendent toute adres
    });
    ```
    `user` et `domain` étant séparés, la chaîne complète `contact@wonjo.app`
-   n'existe jamais dans le HTML — les bots ne peuvent pas l'aspirer.
+   n'existe jamais dans le HTML - les bots ne peuvent pas l'aspirer.
 
 ## Pour ajouter un nouveau lien email plus tard
 

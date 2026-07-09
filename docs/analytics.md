@@ -1,4 +1,4 @@
-# Suivi des visites — Cloudflare Web Analytics
+# Suivi des visites - Cloudflare Web Analytics
 
 Le site Wonjo utilise **Cloudflare Web Analytics** pour suivre les visites
 (visites, pages vues, pays, sources de trafic, etc.).
