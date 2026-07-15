@@ -6,36 +6,150 @@
 <link rel="icon" type="image/png" href="/assets/img/wonjo-logo.png">
 <link rel="apple-touch-icon" href="/assets/img/wonjo-logo.png">
 <title>Mentions légales - Wonjo</title>
-<meta name="description" content="Mentions légales de Wonjo (Lampasai SAS) : éditeur, hébergeur et informations légales du site.">
+<meta name="description" content="Mentions légales de Wonjo (Lampasai SAS) : éditeur, hébergeur, propriété intellectuelle et informations légales du site.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://wonjo.app/mentions-legales.html">
+<link rel="stylesheet" href="/assets/css/fonts.css">
 <link rel="stylesheet" href="/assets/css/base.css">
 <style>
   /* Tokens de design : voir assets/css/base.css */
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    color: var(--text); background: var(--bg); line-height: 1.55;
+    font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text); background: var(--bg); line-height: 1.6;
+    background-image: radial-gradient(900px 500px at 85% -10%, rgba(74,136,150,0.10), transparent 60%),
+                      radial-gradient(800px 460px at 0% 8%, rgba(125,78,46,0.07), transparent 55%);
+    background-attachment: fixed;
     min-height: 100vh; display: flex; flex-direction: column;
     -webkit-font-smoothing: antialiased;
   }
-  .hero { background: var(--brand-gradient); color: #fff; text-align: center; padding: 40px 20px; }
-  .hero a { color: #fff; text-decoration: none; }
-  .logo { display: inline-flex; align-items: center; gap: 10px; font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em; }
-  .logo img { height: 48px; width: auto; }
-  main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 64px 20px; }
-  main h1 { font-size: 1.6rem; font-weight: 800; margin-bottom: 12px; }
-  main p { color: var(--muted); max-width: 460px; }
+  h1, h2, h3, .logo, .flogo { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; }
+
+  /* TOP BAR + BOUTON RETOUR */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(251,250,255,0.82);
+    backdrop-filter: saturate(180%) blur(14px);
+    -webkit-backdrop-filter: saturate(180%) blur(14px);
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar-inner { max-width: 920px; margin: 0 auto; padding: 0 24px; height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-weight: 700; font-size: 0.95rem; text-decoration: none; color: var(--teal);
+    background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
+    padding: 9px 18px 9px 14px; box-shadow: var(--shadow-sm);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, color 0.15s ease;
+  }
+  .back-btn:hover { transform: translateX(-3px); background: var(--teal); color: #fff; box-shadow: 0 10px 24px rgba(74,136,150,0.32); }
+  .topbar .logo { font-size: 1.3rem; color: var(--text); }
+  .topbar .logo span { color: var(--teal); }
+  .topbar .logo img { height: 30px; }
+
+  /* HERO */
+  .legal-hero { background: var(--brand-gradient); color: #fff; text-align: center; padding: 54px 24px 60px; }
+  .legal-hero .eyebrow { display: inline-block; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.85; margin-bottom: 14px; }
+  .legal-hero h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.12; }
+  .legal-hero .meta { margin-top: 14px; font-size: 0.95rem; opacity: 0.9; }
+
+  .logo { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -0.02em; text-decoration: none; }
+  .logo img { width: auto; display: block; }
+
+  /* CARTE LÉGALE CENTRÉE */
+  main.legal { flex: 1; width: 100%; max-width: 860px; margin: -36px auto 0; padding: 0 24px 80px; }
+  .legal-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-lg); padding: clamp(26px, 5vw, 56px); }
+  /* le titre + la version sont déjà affichés dans le hero : on masque les doublons en tête de contenu */
+  .legal-card > h1:first-child,
+  .legal-card > h1:first-child + h3,
+  .legal-card > h1:first-child + h3 + hr { display: none; }
+  .legal-card h2 {
+    font-size: 1.3rem; font-weight: 800; letter-spacing: -0.02em; color: var(--teal);
+    margin: 40px 0 14px; line-height: 1.25;
+  }
+  .legal-card h2:first-of-type { margin-top: 4px; }
+  .legal-card h3 { font-size: 1.02rem; font-weight: 700; margin: 24px 0 8px; color: var(--text); }
+  .legal-card p { color: #34344a; margin-bottom: 14px; }
+  .legal-card ul { margin: 0 0 18px 1.25rem; }
+  .legal-card li { margin-bottom: 8px; color: #34344a; }
+  .legal-card strong { font-weight: 700; }
+  .legal-card hr { border: none; border-top: 1px solid var(--line); margin: 30px 0; }
+  .legal-card a { color: var(--teal); font-weight: 600; }
+  .legal-card .todo { color: #B45309; font-weight: 600; }
 
   /* Pied de page : voir assets/css/base.css */
 </style>
 </head>
 <body>
-  <header class="hero"><a href="/"><div class="logo"><img src="/assets/img/wonjo-logo.png" alt="Logo Wonjo">Wonjo</div></a></header>
-  <main>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="/" class="back-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        Retour à l'accueil
+      </a>
+      <a href="/" class="logo"><img src="/assets/img/wonjo-logo.png" alt="Logo Wonjo">Wonjo</a>
+    </div>
+  </header>
+  <section class="legal-hero">
+    <span class="eyebrow">Informations légales</span>
     <h1>Mentions légales</h1>
-    <p>Page en cours de rédaction.</p>
+    <p class="meta">Wonjo v1.0.0 · Mis à jour le 1er juin 2026</p>
+  </section>
+  <main class="legal">
+    <div class="legal-card">
+<h1>Mentions légales Wonjo</h1>
+<h3>Wonjo v1.0.0 - 1er juin 2026</h3>
+<hr>
+
+<h2>Article 1 - Éditeur du site</h2>
+<p>Le site accessible à l'adresse wonjo.app (ci-après « le Site ») et l'application mobile Wonjo sont édités par :</p>
+<ul>
+<li>Dénomination sociale : Lampasai SAS</li>
+<li>Forme juridique : Société par actions simplifiée (SAS)</li>
+<li>Siège social : <span class="todo">[À compléter]</span></li>
+<li>Numéro SIREN/SIRET : <span class="todo">[À compléter]</span></li>
+<li>Capital social : <span class="todo">[À compléter]</span></li>
+<li>Numéro de TVA intracommunautaire : <span class="todo">[À compléter]</span></li>
+<li>Adresse e-mail de contact : <a href="mailto:contact@wonjo.app">contact@wonjo.app</a></li>
+</ul>
+<p>Directeur de la publication : <span class="todo">[À compléter]</span>.</p>
+
+<hr>
+<h2>Article 2 - Hébergement</h2>
+<p>Le site wonjo.app est hébergé par :</p>
+<ul>
+<li>GitHub, Inc. (GitHub Pages), 88 Colin P Kelly Jr St, San Francisco, CA 94107, États-Unis.</li>
+<li>Site web de l'hébergeur : <a href="https://pages.github.com" target="_blank" rel="noopener">pages.github.com</a></li>
+</ul>
+<p>L'application mobile Wonjo et ses données (comptes, messages, transactions) sont hébergées sur l'infrastructure Supabase, dont les conditions sont détaillées dans notre <a href="/confidentialite.html">Politique de Confidentialité</a>.</p>
+
+<hr>
+<h2>Article 3 - Propriété intellectuelle</h2>
+<p>L'ensemble des éléments composant le Site et l'application Wonjo (textes, graphismes, logos, icônes, structure, marque « Wonjo ») sont la propriété exclusive de Lampasai SAS ou de ses partenaires, et sont protégés par les législations françaises et internationales relatives à la propriété intellectuelle.</p>
+<p>Toute reproduction, représentation, modification, publication ou adaptation de tout ou partie des éléments du Site, quel que soit le moyen ou le procédé utilisé, est interdite sans l'autorisation écrite préalable de Lampasai SAS.</p>
+
+<hr>
+<h2>Article 4 - Données personnelles</h2>
+<p>Le traitement des données personnelles des utilisateurs du Site et de l'application Wonjo est détaillé dans notre <a href="/confidentialite.html">Politique de Confidentialité</a>, conforme au Règlement Général sur la Protection des Données (RGPD, Règlement UE 2016/679).</p>
+<p>Pour exercer vos droits ou pour toute question relative à vos données, vous pouvez contacter le Délégué à la Protection des Données à l'adresse : <a href="mailto:dpo@wonjo.app">dpo@wonjo.app</a>.</p>
+
+<hr>
+<h2>Article 5 - Cookies et traceurs</h2>
+<p>Le Site utilise Cloudflare Web Analytics, un outil de mesure d'audience qui ne dépose aucun cookie et ne collecte aucune donnée personnelle identifiante. Aucun consentement préalable n'est donc requis au titre de la réglementation applicable aux cookies.</p>
+<p>L'application mobile Wonjo n'utilise pas de cookies au sens strict ; le détail des traceurs techniques éventuellement utilisés est précisé dans nos <a href="/cgu.html">Conditions Générales d'Utilisation</a>.</p>
+
+<hr>
+<h2>Article 6 - Liens hypertextes</h2>
+<p>Le Site peut contenir des liens hypertextes vers d'autres sites internet ou ressources (réseaux sociaux, partenaires, etc.). Lampasai SAS ne dispose d'aucun moyen de contrôle sur ces sites et décline toute responsabilité quant à leur contenu.</p>
+
+<hr>
+<h2>Article 7 - Droit applicable et juridiction compétente</h2>
+<p>Les présentes mentions légales sont soumises au droit français. En cas de litige et à défaut de résolution amiable, les tribunaux français seront seuls compétents, sous réserve des règles de compétence d'ordre public applicables.</p>
+
+<hr>
+<h2>Article 8 - Contact</h2>
+<p>Pour toute question relative au Site ou à ses présentes mentions légales, vous pouvez nous contacter à l'adresse : <a href="mailto:contact@wonjo.app">contact@wonjo.app</a>.</p>
+    </div>
   </main>
 
   <!-- FOOTER -->
