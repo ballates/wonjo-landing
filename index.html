@@ -402,15 +402,15 @@
   /* Compense la largeur du chevron (cote droit) pour que l'icone colis reste
      centree entre les deux villes, comme dans l'app (wc-route). */
   .wc-spacer { width: 16px; flex-shrink: 0; }
-  .wc-headmeta { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; gap: 8px; }
-  .wc-headmeta-side { display: flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.92); min-height: 16px; }
+  .wc-headmeta { display: flex; align-items: center; margin-top: 10px; gap: 8px; }
+  .wc-headmeta-side { flex: 1; display: flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.92); min-height: 16px; white-space: nowrap; }
   .wc-headmeta-side.right { justify-content: flex-end; }
   .wc-nature-btn {
     width: 16px; height: 16px; border-radius: 8px;
     border: 1px solid rgba(255,255,255,0.9);
     display: flex; align-items: center; justify-content: center;
   }
-  .wc-kg-pill { background: rgba(40,30,25,0.34); color: #fff; font-size: 14px; font-weight: 700; padding: 5px 13px; border-radius: 999px; white-space: nowrap; }
+  .wc-kg-pill { flex-shrink: 0; background: rgba(40,30,25,0.34); color: #fff; font-size: 14px; font-weight: 700; padding: 5px 13px; border-radius: 999px; white-space: nowrap; }
 
   .wc-body { padding: 18px 20px 20px; }
   .wc-person { display: flex; align-items: center; gap: 14px; }
@@ -420,13 +420,14 @@
   .wc-name-row { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; }
   .wc-name { font-size: 15px; font-weight: 800; letter-spacing: -0.5px; color: #16202E; }
   .wc-badge { font-size: 11px; font-weight: 600; color: #C2872A; border: 1px solid #EAC98D; background: #FDF7EC; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+  .wc-verified { flex-shrink: 0; }
   .wc-rating { display: flex; align-items: center; gap: 7px; margin-top: 6px; font-size: 17px; }
   .wc-rating .wc-star { color: #E0A12A; }
   .wc-rating .wc-score { font-weight: 700; color: #2C3540; }
   .wc-rating .wc-sub { color: #8A93A0; font-weight: 500; }
   .wc-price { text-align: right; flex-shrink: 0; }
-  .wc-price-amount { font-size: 22px; font-weight: 800; letter-spacing: -0.6px; color: #16202E; line-height: 1; }
-  .wc-price-unit { font-size: 13px; color: #8A93A0; font-weight: 500; margin-top: 2px; }
+  .wc-price-amount { font-size: 22px; font-weight: 800; letter-spacing: -0.6px; color: #7D4E2E; line-height: 1; }
+  .wc-price-unit { font-size: 13px; color: #9CA3AF; font-weight: 500; margin-top: 2px; }
 
   .wc-desc { margin-top: 18px; background: rgba(241,242,244,0.72); border-radius: 16px; padding: 15px 16px 16px; }
   .wc-desc-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
@@ -899,7 +900,7 @@
               <div class="wc-person">
                 <div class="wc-avatar terra">AM</div>
                 <div class="wc-person-main">
-                  <div class="wc-name-row"><span class="wc-name">Alice M.</span><span class="wc-badge">Ambassadeur</span></div>
+                  <div class="wc-name-row"><span class="wc-name">Alice M.</span><svg class="wc-verified" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-8 8.5-4.5-1-8-3.5-8-8.5V6l8-4 8 4z"/><path d="m9 12 2 2 4-4"/></svg><span class="wc-badge">Ambassadeur</span></div>
                   <div class="wc-rating"><svg class="wc-star" width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><span class="wc-score">4.0</span><span class="wc-sub">· 8 colis confiés</span></div>
                 </div>
                 <div class="wc-price"><div class="wc-price-amount">7€</div><div class="wc-price-unit">/kg</div></div>
@@ -933,7 +934,7 @@
               <div class="wc-person">
                 <div class="wc-avatar">DK</div>
                 <div class="wc-person-main">
-                  <div class="wc-name-row"><span class="wc-name">Diane K.</span></div>
+                  <div class="wc-name-row"><span class="wc-name">Diane K.</span><svg class="wc-verified" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-8 8.5-4.5-1-8-3.5-8-8.5V6l8-4 8 4z"/><path d="m9 12 2 2 4-4"/></svg></div>
                   <div class="wc-rating"><svg class="wc-star" width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><span class="wc-score">4.0</span><span class="wc-sub">· 4 livraisons</span></div>
                 </div>
                 <div class="wc-price"><div class="wc-price-amount">8€</div><div class="wc-price-unit">/kg</div></div>
@@ -947,19 +948,19 @@
             </div>
           </article>
 
-          <!-- 3 - Demande de colis -->
+          <!-- 3 - Demande de document -->
           <article class="wonjo-card tilt">
             <header class="wc-head">
               <div class="wc-route">
                 <span class="wc-city">Bruxelles</span><span class="wc-spacer"></span><span class="wc-line"></span>
-                <svg class="wc-cube" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.95)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg>
+                <svg class="wc-cube" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.95)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
                 <span class="wc-line"></span>
                 <svg class="wc-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
                 <span class="wc-city">Douala</span>
               </div>
               <div class="wc-headmeta">
                 <span class="wc-headmeta-side"><span class="wc-nature-btn"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></span>
-                <span class="wc-kg-pill">3 kg</span>
+                <span class="wc-kg-pill">2 env.</span>
                 <span class="wc-headmeta-side right"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg> Avant le 5 juillet</span>
               </div>
             </header>
@@ -967,14 +968,14 @@
               <div class="wc-person">
                 <div class="wc-avatar terra">SE</div>
                 <div class="wc-person-main">
-                  <div class="wc-name-row"><span class="wc-name">Samuel E.</span></div>
+                  <div class="wc-name-row"><span class="wc-name">Samuel E.</span><svg class="wc-verified" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-8 8.5-4.5-1-8-3.5-8-8.5V6l8-4 8 4z"/><path d="m9 12 2 2 4-4"/></svg></div>
                   <div class="wc-rating"><svg class="wc-star" width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><span class="wc-score">4.8</span><span class="wc-sub">· 12 colis confiés</span></div>
                 </div>
-                <div class="wc-price"><div class="wc-price-amount">9€</div><div class="wc-price-unit">/kg</div></div>
+                <div class="wc-price"><div class="wc-price-amount">6€</div></div>
               </div>
               <div class="wc-desc">
-                <div class="wc-desc-head"><span class="wc-desc-label">Description du colis</span><svg class="wc-desc-plus" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
-                <p class="wc-desc-text">Documents et médicaments pour ma mère…</p>
+                <div class="wc-desc-head"><span class="wc-desc-label">Description du document</span><svg class="wc-desc-plus" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
+                <p class="wc-desc-text">Passeport et diplôme à faire parvenir à mon oncle…</p>
               </div>
               <div class="wc-divider"></div>
               <button class="wc-btn wc-btn--terra" type="button"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg> Proposer un transport</button>
@@ -1001,7 +1002,7 @@
               <div class="wc-person">
                 <div class="wc-avatar">YB</div>
                 <div class="wc-person-main">
-                  <div class="wc-name-row"><span class="wc-name">Sandra B.</span><span class="wc-badge">Ambassadeur</span></div>
+                  <div class="wc-name-row"><span class="wc-name">Sandra B.</span><svg class="wc-verified" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-8 8.5-4.5-1-8-3.5-8-8.5V6l8-4 8 4z"/><path d="m9 12 2 2 4-4"/></svg><span class="wc-badge">Ambassadeur</span></div>
                   <div class="wc-rating"><svg class="wc-star" width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><span class="wc-score">4.9</span><span class="wc-sub">· 21 livraisons</span></div>
                 </div>
                 <div class="wc-price"><div class="wc-price-amount">6€</div><div class="wc-price-unit">/kg</div></div>
@@ -1035,7 +1036,7 @@
               <div class="wc-person">
                 <div class="wc-avatar terra">LD</div>
                 <div class="wc-person-main">
-                  <div class="wc-name-row"><span class="wc-name">Léa D.</span></div>
+                  <div class="wc-name-row"><span class="wc-name">Léa D.</span><svg class="wc-verified" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-8 8.5-4.5-1-8-3.5-8-8.5V6l8-4 8 4z"/><path d="m9 12 2 2 4-4"/></svg></div>
                   <div class="wc-rating"><svg class="wc-star" width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><span class="wc-score">5.0</span><span class="wc-sub">· 3 colis confiés</span></div>
                 </div>
                 <div class="wc-price"><div class="wc-price-amount">5€</div><div class="wc-price-unit">/kg</div></div>
@@ -1069,7 +1070,7 @@
               <div class="wc-person">
                 <div class="wc-avatar">PM</div>
                 <div class="wc-person-main">
-                  <div class="wc-name-row"><span class="wc-name">Patrick M.</span></div>
+                  <div class="wc-name-row"><span class="wc-name">Patrick M.</span><svg class="wc-verified" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-8 8.5-4.5-1-8-3.5-8-8.5V6l8-4 8 4z"/><path d="m9 12 2 2 4-4"/></svg></div>
                   <div class="wc-rating"><svg class="wc-star" width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg><span class="wc-score">4.7</span><span class="wc-sub">· 9 livraisons</span></div>
                 </div>
                 <div class="wc-price"><div class="wc-price-amount">9€</div><div class="wc-price-unit">/kg</div></div>
