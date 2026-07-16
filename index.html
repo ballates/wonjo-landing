@@ -399,9 +399,17 @@
   .wc-cube, .wc-chevron { flex-shrink: 0; }
   .wc-cube { opacity: 0.95; }
   .wc-chevron { opacity: 0.8; }
+  /* Compense la largeur du chevron (cote droit) pour que l'icone colis reste
+     centree entre les deux villes, comme dans l'app (wc-route). */
+  .wc-spacer { width: 16px; flex-shrink: 0; }
   .wc-headmeta { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; gap: 8px; }
-  .wc-headmeta-side { display: flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.92); }
+  .wc-headmeta-side { display: flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.92); min-height: 16px; }
   .wc-headmeta-side.right { justify-content: flex-end; }
+  .wc-nature-btn {
+    width: 16px; height: 16px; border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.9);
+    display: flex; align-items: center; justify-content: center;
+  }
   .wc-kg-pill { background: rgba(40,30,25,0.34); color: #fff; font-size: 14px; font-weight: 700; padding: 5px 13px; border-radius: 999px; white-space: nowrap; }
 
   .wc-body { padding: 18px 20px 20px; }
@@ -875,14 +883,14 @@
           <article class="wonjo-card tilt">
             <header class="wc-head">
               <div class="wc-route">
-                <span class="wc-city">Lyon</span><span class="wc-line"></span>
+                <span class="wc-city">Lyon</span><span class="wc-spacer"></span><span class="wc-line"></span>
                 <svg class="wc-cube" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.95)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg>
                 <span class="wc-line"></span>
                 <svg class="wc-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
                 <span class="wc-city">Abidjan</span>
               </div>
               <div class="wc-headmeta">
-                <span class="wc-headmeta-side"></span>
+                <span class="wc-headmeta-side"><span class="wc-nature-btn"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></span>
                 <span class="wc-kg-pill">5 kg</span>
                 <span class="wc-headmeta-side right"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg> Avant le 28 juin</span>
               </div>
@@ -909,7 +917,7 @@
           <article class="wonjo-card tilt">
             <header class="wc-head">
               <div class="wc-route">
-                <span class="wc-city">Paris</span><span class="wc-line"></span>
+                <span class="wc-city">Paris</span><span class="wc-spacer"></span><span class="wc-line"></span>
                 <svg class="wc-cube" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.95)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg>
                 <span class="wc-line"></span>
                 <svg class="wc-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
@@ -943,14 +951,14 @@
           <article class="wonjo-card tilt">
             <header class="wc-head">
               <div class="wc-route">
-                <span class="wc-city">Bruxelles</span><span class="wc-line"></span>
+                <span class="wc-city">Bruxelles</span><span class="wc-spacer"></span><span class="wc-line"></span>
                 <svg class="wc-cube" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.95)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg>
                 <span class="wc-line"></span>
                 <svg class="wc-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
                 <span class="wc-city">Douala</span>
               </div>
               <div class="wc-headmeta">
-                <span class="wc-headmeta-side"></span>
+                <span class="wc-headmeta-side"><span class="wc-nature-btn"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></span>
                 <span class="wc-kg-pill">3 kg</span>
                 <span class="wc-headmeta-side right"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg> Avant le 5 juillet</span>
               </div>
@@ -977,7 +985,7 @@
           <article class="wonjo-card tilt">
             <header class="wc-head">
               <div class="wc-route">
-                <span class="wc-city">Marseille</span><span class="wc-line"></span>
+                <span class="wc-city">Marseille</span><span class="wc-spacer"></span><span class="wc-line"></span>
                 <svg class="wc-cube" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.95)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg>
                 <span class="wc-line"></span>
                 <svg class="wc-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
@@ -1011,14 +1019,14 @@
           <article class="wonjo-card tilt">
             <header class="wc-head">
               <div class="wc-route">
-                <span class="wc-city">Paris</span><span class="wc-line"></span>
+                <span class="wc-city">Paris</span><span class="wc-spacer"></span><span class="wc-line"></span>
                 <svg class="wc-cube" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.95)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg>
                 <span class="wc-line"></span>
                 <svg class="wc-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
                 <span class="wc-city">Bruxelles</span>
               </div>
               <div class="wc-headmeta">
-                <span class="wc-headmeta-side"></span>
+                <span class="wc-headmeta-side"><span class="wc-nature-btn"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></span>
                 <span class="wc-kg-pill">2 kg</span>
                 <span class="wc-headmeta-side right"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg> Avant le 30 juin</span>
               </div>
@@ -1045,7 +1053,7 @@
           <article class="wonjo-card tilt">
             <header class="wc-head">
               <div class="wc-route">
-                <span class="wc-city">Genève</span><span class="wc-line"></span>
+                <span class="wc-city">Genève</span><span class="wc-spacer"></span><span class="wc-line"></span>
                 <svg class="wc-cube" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.95)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg>
                 <span class="wc-line"></span>
                 <svg class="wc-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
