@@ -1,0 +1,72 @@
+# Decap CMS - edition des textes juridiques par le service juridique.
+#
+# L'interface est servie par wonjo.app, mais elle ecrit dans le depot de
+# l'application (Wonjo-app/wonjo), ou vit la source de verite : legal/.
+#
+# editorial_workflow : chaque enregistrement cree une PULL REQUEST, jamais un
+# commit direct sur main. C'est la relecture avant publication.
+#
+# Publier en base reste un geste separe : le workflow "Juridique" du depot
+# applicatif, declenche a la main. Fusionner une PR ne rend aucune version
+# active - activer rebloque tous les utilisateurs au gate d'acceptation.
+
+backend:
+  name: github
+  repo: Wonjo-app/wonjo
+  branch: main
+  # GitHub Pages n'heberge pas de backend : l'authentification GitHub passe
+  # par un petit proxy OAuth a deployer (voir admin/README.md). Tant qu'il
+  # n'existe pas, l'edition se fait par pull request directement sur GitHub.
+  base_url: https://auth.wonjo.app
+
+publish_mode: editorial_workflow
+
+locale: fr
+
+# Aucun media : les textes juridiques ne contiennent ni image ni piece jointe.
+media_folder: legal/.media
+public_folder: /legal/.media
+
+collections:
+  - name: cgu
+    label: Conditions générales d'utilisation
+    label_singular: version des CGU
+    folder: legal/cgu
+    extension: md
+    create: true
+    # Le nom du fichier EST le numero de version : il doit correspondre a la
+    # ligne d'en-tete du texte et a ce qui sera enregistre en base.
+    slug: '{{fields.version}}'
+    summary: 'Version {{fields.version}}'
+    editor:
+      preview: false
+    fields:
+      - name: version
+        label: Numéro de version (ex. 1.5.0)
+        widget: string
+        pattern: ['^[0-9]+\.[0-9]+\.[0-9]+$', 'Format attendu : 1.5.0']
+      # widget "text" et non "markdown" : l'editeur riche reserialise le
+      # markdown et changerait des octets. Le texte d'une version publiee doit
+      # rester identique a ce qui est en base, au caractere pres.
+      - name: body
+        label: Texte
+        widget: text
+
+  - name: confidentialite
+    label: Politique de confidentialité
+    label_singular: version de la politique
+    folder: legal/confidentialite
+    extension: md
+    create: true
+    slug: '{{fields.version}}'
+    summary: 'Version {{fields.version}}'
+    editor:
+      preview: false
+    fields:
+      - name: version
+        label: Numéro de version (ex. 1.2.0)
+        widget: string
+        pattern: ['^[0-9]+\.[0-9]+\.[0-9]+$', 'Format attendu : 1.2.0']
+      - name: body
+        label: Texte
+        widget: text
