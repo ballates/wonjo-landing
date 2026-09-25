@@ -17,14 +17,23 @@ export function MfaEnrollPage() {
   useEffect(() => {
     if (started.current) return;
     started.current = true;
-    supabase.auth.mfa.enroll({ factorType: 'totp' }).then(({ data, error: enrollError }) => {
+    async function start() {
+      // Un rechargement de cet ecran avant validation laisse un facteur
+      // "unverified" en base ; supabase.auth.mfa.enroll() refuse d'en
+      // recreer un avec le meme nom (vide) tant que l'ancien traine.
+      const { data: existing } = await supabase.auth.mfa.listFactors();
+      const pending = existing?.totp.filter((f) => f.status === 'unverified') ?? [];
+      await Promise.all(pending.map((f) => supabase.auth.mfa.unenroll({ factorId: f.id })));
+
+      const { data, error: enrollError } = await supabase.auth.mfa.enroll({ factorType: 'totp' });
       if (enrollError) {
         setError(enrollError.message);
         return;
       }
       setFactorId(data.id);
       setQrSvg(data.totp.qr_code);
-    });
+    }
+    start();
   }, []);
 
   async function handleVerify(e: React.FormEvent) {
