@@ -8,7 +8,6 @@ import { useAuth } from './AuthContext';
 export function MfaEnrollPage() {
   const { refreshMfaState, signOut } = useAuth();
   const [qrSvg, setQrSvg] = useState<string | null>(null);
-  const [secret, setSecret] = useState<string | null>(null);
   const [factorId, setFactorId] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +24,6 @@ export function MfaEnrollPage() {
       }
       setFactorId(data.id);
       setQrSvg(data.totp.qr_code);
-      setSecret(data.totp.secret);
     });
   }, []);
 
@@ -57,7 +55,6 @@ export function MfaEnrollPage() {
         <h1>Activer la double authentification</h1>
         <p>Obligatoire pour tout accès au back-office. Scanne ce code avec Google Authenticator, 1Password ou équivalent.</p>
         {qrSvg && <div className="mfa-qr"><img src={qrSvg} alt="QR code à scanner avec ton authenticator" /></div>}
-        {secret && <p className="mfa-secret">Ou saisis la clé manuellement : <code>{secret}</code></p>}
         <label>
           Code à 6 chiffres
           <input
