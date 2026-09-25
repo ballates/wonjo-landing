@@ -28,7 +28,7 @@ body {
   padding: 32px;
   border-radius: 14px;
   border: 1px solid var(--border);
-  width: 360px;
+  width: 440px;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -58,7 +58,8 @@ body {
   border: 1px solid var(--border) !important;
 }
 .auth-error { color: var(--danger); font-size: 13px; margin: 0; }
-.mfa-qr svg { width: 180px; height: 180px; }
+.mfa-qr { display: flex; justify-content: center; }
+.mfa-qr img { width: 180px; height: 180px; }
 .mfa-secret { font-size: 12px; word-break: break-all; }
 
 .layout { display: flex; min-height: 100vh; }

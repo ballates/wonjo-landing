@@ -56,7 +56,7 @@ export function MfaEnrollPage() {
       <form className="auth-card" onSubmit={handleVerify}>
         <h1>Activer la double authentification</h1>
         <p>Obligatoire pour tout accès au back-office. Scanne ce code avec Google Authenticator, 1Password ou équivalent.</p>
-        {qrSvg && <div className="mfa-qr" dangerouslySetInnerHTML={{ __html: qrSvg }} />}
+        {qrSvg && <div className="mfa-qr"><img src={qrSvg} alt="QR code à scanner avec ton authenticator" /></div>}
         {secret && <p className="mfa-secret">Ou saisis la clé manuellement : <code>{secret}</code></p>}
         <label>
           Code à 6 chiffres
