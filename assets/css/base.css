@@ -53,6 +53,8 @@ footer a { color: #e6e1f0; text-decoration: none; }
 .footer-socials a.li:hover { background: #0a66c2; border-color: transparent; }
 .footer-bottom { max-width: 1080px; margin: 40px auto 0; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center; font-size: 0.85rem; color: #a7a2bb; }
 .footer-bottom .heart { margin-top: 6px; opacity: 0.8; }
+.footer-admin-link { display: inline-block; margin-top: 8px; color: #6b6680; font-size: 0.75rem; text-decoration: none; }
+.footer-admin-link:hover { color: #a7a2bb; text-decoration: underline; }
 
 @media (min-width: 720px) {
   .footer-top { grid-template-columns: 1.6fr 1fr 1fr 1fr; }
