@@ -1,0 +1,4 @@
+backoffice/node_modules/
+backoffice/dist/
+backoffice/.env.local
+_site/
