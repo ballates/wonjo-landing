@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
+import { AuthShell } from '../components/AuthShell';
 
 // Premiere connexion d'un admin : aucun facteur TOTP verifie sur son compte.
 // La MFA est obligatoire (admin_est_authentifie() exige aal2) - il n'y a pas
@@ -22,7 +23,7 @@ export function MfaEnrollPage() {
       // "unverified" en base ; supabase.auth.mfa.enroll() refuse d'en
       // recreer un avec le meme nom (vide) tant que l'ancien traine.
       const { data: existing } = await supabase.auth.mfa.listFactors();
-      const pending = existing?.totp.filter((f) => f.status === 'unverified') ?? [];
+      const pending = existing?.totp.filter((f) => (f.status as string) === 'unverified') ?? [];
       await Promise.all(pending.map((f) => supabase.auth.mfa.unenroll({ factorId: f.id })));
 
       const { data, error: enrollError } = await supabase.auth.mfa.enroll({ factorType: 'totp' });
@@ -59,8 +60,11 @@ export function MfaEnrollPage() {
   }
 
   return (
-    <div className="auth-screen">
-      <form className="auth-card" onSubmit={handleVerify}>
+    <AuthShell>
+      <form
+        className="auth-card"
+        onSubmit={handleVerify}
+      >
         <h1>Activer la double authentification</h1>
         <p>Obligatoire pour tout accès au back-office. Scanne ce code avec Google Authenticator, 1Password ou équivalent.</p>
         {qrSvg && <div className="mfa-qr"><img src={qrSvg} alt="QR code à scanner avec ton authenticator" /></div>}
@@ -82,6 +86,6 @@ export function MfaEnrollPage() {
         </button>
         <button type="button" className="auth-secondary" onClick={() => signOut()}>Annuler</button>
       </form>
-    </div>
+    </AuthShell>
   );
 }

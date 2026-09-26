@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from './AuthContext';
+import { AuthShell } from '../components/AuthShell';
 
 export function LoginPage() {
   const { signIn, error } = useAuth();
@@ -18,20 +19,21 @@ export function LoginPage() {
   }
 
   return (
-    <div className="auth-screen">
-      <form className="auth-card" onSubmit={handleSubmit}>
-        <h1>Wonjo — Back-office</h1>
-        <label>
-          Email
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus />
-        </label>
-        <label>
-          Mot de passe
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        </label>
-        {error && <p className="auth-error">{error}</p>}
-        <button type="submit" disabled={loading}>{loading ? 'Connexion…' : 'Se connecter'}</button>
-      </form>
-    </div>
+    <AuthShell>
+        <form className="auth-card" onSubmit={handleSubmit}>
+          <h1>Connexion au back-office</h1>
+          <p>Identifiez-vous avec votre compte administrateur.</p>
+          <label>
+            Email
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus />
+          </label>
+          <label>
+            Mot de passe
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          </label>
+          {error && <p className="auth-error">{error}</p>}
+          <button type="submit" disabled={loading}>{loading ? 'Connexion…' : 'Se connecter'}</button>
+        </form>
+    </AuthShell>
   );
 }

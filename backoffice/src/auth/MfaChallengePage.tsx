@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
+import { AuthShell } from '../components/AuthShell';
 
 export function MfaChallengePage() {
   const { refreshMfaState, signOut } = useAuth();
@@ -37,8 +38,11 @@ export function MfaChallengePage() {
   }
 
   return (
-    <div className="auth-screen">
-      <form className="auth-card" onSubmit={handleSubmit}>
+    <AuthShell>
+      <form
+        className="auth-card"
+        onSubmit={handleSubmit}
+      >
         <h1>Code de vérification</h1>
         <label>
           Code à 6 chiffres
@@ -58,6 +62,6 @@ export function MfaChallengePage() {
         </button>
         <button type="button" className="auth-secondary" onClick={() => signOut()}>Annuler</button>
       </form>
-    </div>
+    </AuthShell>
   );
 }

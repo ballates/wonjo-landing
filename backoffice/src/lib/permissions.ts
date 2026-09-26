@@ -25,7 +25,7 @@ export function peutGererAdmins(role: AdminRole | null): boolean {
 
 export const LABELS_ROLES: Record<AdminRole, string> = {
   super_admin: 'Super admin',
-  moderation: 'Modération',
+  moderation: 'Confiance & sécurité',
   finance: 'Finance',
   lecture_seule: 'Lecture seule',
 };

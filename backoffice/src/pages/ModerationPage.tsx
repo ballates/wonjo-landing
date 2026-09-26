@@ -1,155 +1,227 @@
 import { useEffect, useState } from 'react';
+import { Select } from '../components/Select';
 import { supabase } from '../lib/supabase';
-import type { FicheCompte, Litige, Signalement } from '../lib/types';
+import { StatutBadge } from '../components/Badge';
+import { Avatar } from '../components/Avatar';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../auth/AuthContext';
+import { peutGererAdmins } from '../lib/permissions';
+import { DataTable, type Column } from '../components/DataTable';
+import { useFicheCompte, VoirFicheButton } from '../components/FicheCompte';
+import { LABELS_NIVEAU, LABELS_STATUT_KYC, LABELS_STATUT_SIGNALEMENT, dateHeure, depuis, nomComplet } from '../lib/labels';
+import type { CompteRecherche, Litige, Signalement } from '../lib/types';
 
-type Tab = 'signalements' | 'litiges';
+type Tab = 'comptes' | 'signalements' | 'litiges';
+
+const LABELS_PAIEMENT: Record<string, string> = {
+  libere: 'Libéré', escrow: 'En séquestre', en_attente: 'En attente', rembourse: 'Remboursé',
+};
 
 export function ModerationPage() {
-  const [tab, setTab] = useState<Tab>('signalements');
+  const location = useLocation();
+  const ongletDemande = (location.state as { tab?: Tab } | null)?.tab;
+  const [tab, setTab] = useState<Tab>(ongletDemande ?? 'comptes');
+  useEffect(() => { if (ongletDemande) setTab(ongletDemande); }, [ongletDemande, location.key]);
   return (
     <div>
-      <h1>Modération</h1>
+      <div className="page-head">
+        <div>
+          <h1>Modération</h1>
+          <p className="page-sub">Consulter un compte, le bloquer ou le débloquer, traiter les signalements et les litiges.</p>
+        </div>
+      </div>
       <div className="tabs">
+        <button className={tab === 'comptes' ? 'active' : ''} onClick={() => setTab('comptes')}>Comptes</button>
         <button className={tab === 'signalements' ? 'active' : ''} onClick={() => setTab('signalements')}>Signalements</button>
         <button className={tab === 'litiges' ? 'active' : ''} onClick={() => setTab('litiges')}>Litiges</button>
       </div>
-      {tab === 'signalements' ? <SignalementsTab /> : <LitigesTab />}
+      {tab === 'comptes' && <ComptesTab />}
+      {tab === 'signalements' && <SignalementsTab />}
+      {tab === 'litiges' && <LitigesTab />}
     </div>
+  );
+}
+
+function ComptesTab() {
+  const [items, setItems] = useState<CompteRecherche[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [selection, setSelection] = useState<Set<string>>(new Set());
+  const { role } = useAuth();
+  const peutEnvoyer = peutGererAdmins(role);
+  const navigate = useNavigate();
+
+  function load() {
+    supabase.rpc('admin_rechercher_comptes', { p_recherche: '', p_limite: 2000 }).then(({ data, error: rpcError }) => {
+      if (rpcError) { setError(rpcError.message); return; }
+      setItems((data ?? []) as CompteRecherche[]);
+    });
+  }
+  useEffect(load, []);
+  const { ouvrir, modal } = useFicheCompte(load);
+
+  const columns: Column<CompteRecherche>[] = [
+    { key: 'avatar', label: 'Avatar', render: (c) => <Avatar src={c.photo_url} nom={nomComplet(c.prenom, c.nom)} size={36} />, width: 70 },
+    { key: 'prenom', label: 'Prénom', value: (c) => c.prenom, render: (c) => <strong>{c.prenom || '-'}</strong> },
+    { key: 'nom', label: 'Nom', value: (c) => c.nom },
+    { key: 'email', label: 'Email', value: (c) => c.email },
+    { key: 'statut', filter: 'options', label: 'Statut', value: (c) => (c.bloque ? 'Bloqué' : 'Actif'), render: (c) => (c.bloque ? <span className="badge badge-danger">Bloqué</span> : <span className="badge badge-green">Actif</span>) },
+    {
+      key: 'verif', filter: 'options', label: 'Vérifié', value: (c) => (c.id_verifie ? 'Identité' : c.telephone_verifie ? 'Téléphone' : 'Non vérifié'),
+      render: (c) => (c.id_verifie ? <span className="badge badge-green">Identité</span> : c.telephone_verifie ? <span className="badge badge-teal">Téléphone</span> : <span className="badge badge-muted">Non vérifié</span>),
+    },
+    { key: 'niveau', filter: 'options', label: 'Niveau', value: (c) => LABELS_NIVEAU[c.niveau], render: (c) => <span className={`badge ${c.niveau === 'debutant' ? 'badge-muted' : `badge-niveau-${c.niveau}`}`}>{LABELS_NIVEAU[c.niveau]}</span> },
+    { key: 'kyc', filter: 'options', label: 'KYC', value: (c) => LABELS_STATUT_KYC[c.kyc_status ?? 'none'] ?? c.kyc_status, render: (c) => <StatutBadge statut={c.kyc_status ?? 'none'} label={LABELS_STATUT_KYC[c.kyc_status ?? 'none'] ?? String(c.kyc_status)} /> },
+    { key: 'connexion', label: 'Dernière connexion', value: (c) => c.derniere_connexion ?? '', render: (c) => depuis(c.derniere_connexion) },
+    { key: 'actions', label: '', render: (c) => <VoirFicheButton onClick={() => ouvrir(c.id)} />, width: 150 },
+  ];
+
+  if (error) return <p className="page-error">{error}</p>;
+  if (!items) return <p className="loading-state">Chargement…</p>;
+  const choisis = items.filter((c) => selection.has(c.id));
+  return (
+    <>
+      <DataTable
+        rows={items}
+        columns={columns}
+        rowKey={(c) => c.id}
+        searchPlaceholder="Rechercher un nom, un email…"
+        emptyText="Aucun compte ne correspond."
+        {...(peutEnvoyer ? { selected: selection, onSelectedChange: setSelection } : {})}
+      />
+      {peutEnvoyer && selection.size > 0 && (
+        <div className="selection-bar">
+          <span>{selection.size} compte(s) sélectionné(s)</span>
+          <div className="action-row">
+            <button className="btn btn-sm" onClick={() => setSelection(new Set())}>Tout désélectionner</button>
+            <button
+              className="btn btn-sm"
+              onClick={() => navigate('/commissions', { state: { ids: [...selection], noms: choisis.map((c) => nomComplet(c.prenom, c.nom) || c.email) } })}
+            >
+              Réduire la commission
+            </button>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => navigate('/emails', { state: { ids: [...selection], noms: choisis.map((c) => nomComplet(c.prenom, c.nom) || c.email) } })}
+            >
+              Envoyer un email
+            </button>
+          </div>
+        </div>
+      )}
+      {modal}
+    </>
   );
 }
 
 function SignalementsTab() {
-  const [items, setItems] = useState<Signalement[]>([]);
+  const [items, setItems] = useState<Signalement[] | null>(null);
   const [statut, setStatut] = useState<string>('nouveau');
   const [error, setError] = useState<string | null>(null);
-  const [fiche, setFiche] = useState<FicheCompte | null>(null);
 
-  async function load() {
-    const { data, error: rpcError } = await supabase.rpc('admin_lister_signalements', {
-      p_statut: statut || null,
-      p_limite: 50,
-      p_offset: 0,
+  function load() {
+    supabase.rpc('admin_lister_signalements', { p_statut: statut || null, p_limite: 500, p_offset: 0 }).then(({ data, error: rpcError }) => {
+      if (rpcError) { setError(rpcError.message); return; }
+      setItems((data ?? []) as Signalement[]);
     });
-    if (rpcError) { setError(rpcError.message); return; }
-    setItems((data ?? []) as Signalement[]);
   }
-
-  useEffect(() => { load(); }, [statut]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(load, [statut]); // eslint-disable-line react-hooks/exhaustive-deps
+  const { ouvrir, modal } = useFicheCompte(load);
 
   async function traiter(id: string, nouveauStatut: string) {
-    const note = window.prompt('Note (optionnelle) :') ?? undefined;
-    const { error: rpcError } = await supabase.rpc('admin_traiter_signalement', {
-      p_id: id,
-      p_statut: nouveauStatut,
-      p_note: note || null,
-    });
+    const note = window.prompt('Note (facultative) :');
+    if (note === null) return;
+    const { error: rpcError } = await supabase.rpc('admin_traiter_signalement', { p_id: id, p_statut: nouveauStatut, p_note: note || null });
     if (rpcError) { alert(rpcError.message); return; }
-    await load();
+    load();
   }
 
-  async function voirCompte(userId: string) {
-    const { data, error: rpcError } = await supabase.rpc('admin_fiche_compte', { p_user_id: userId }).single();
-    if (rpcError) { alert(rpcError.message); return; }
-    setFiche(data as FicheCompte);
-  }
+  const columns: Column<Signalement>[] = [
+    { key: 'raison', filter: 'options', label: 'Raison', value: (s) => s.raison },
+    { key: 'details', label: 'Détails', value: (s) => s.details },
+    { key: 'date', label: 'Créé le', value: (s) => s.created_at, render: (s) => dateHeure(s.created_at) },
+    { key: 'statut', filter: 'options', label: 'Statut', value: (s) => LABELS_STATUT_SIGNALEMENT[s.statut] ?? s.statut, render: (s) => <StatutBadge statut={s.statut} label={LABELS_STATUT_SIGNALEMENT[s.statut] ?? s.statut} /> },
+    {
+      key: 'actions', label: 'Actions', render: (s) => (
+        <div className="action-row">
+          <VoirFicheButton onClick={() => ouvrir(s.cible_id)} />
+          {s.statut === 'nouveau' && <button className="btn btn-sm" onClick={() => traiter(s.id, 'en_cours')}>Prendre en charge</button>}
+          {s.statut !== 'clos_sans_suite' && s.statut !== 'clos_action_prise' && (
+            <>
+              <button className="btn btn-sm" onClick={() => traiter(s.id, 'clos_sans_suite')}>Clore sans suite</button>
+              <button className="btn btn-sm" onClick={() => traiter(s.id, 'clos_action_prise')}>Clore - action prise</button>
+            </>
+          )}
+        </div>
+      ),
+    },
+  ];
 
   return (
-    <div>
-      <select value={statut} onChange={(e) => setStatut(e.target.value)}>
-        <option value="nouveau">Nouveau</option>
-        <option value="en_cours">En cours</option>
-        <option value="clos_sans_suite">Clos sans suite</option>
-        <option value="clos_action_prise">Clos - action prise</option>
-        <option value="">Tous</option>
-      </select>
+    <>
       {error && <p className="page-error">{error}</p>}
-      <table>
-        <thead><tr><th>Raison</th><th>Détails</th><th>Créé le</th><th>Statut</th><th>Actions</th></tr></thead>
-        <tbody>
-          {items.map((s) => (
-            <tr key={s.id}>
-              <td>{s.raison}</td>
-              <td>{s.details}</td>
-              <td>{new Date(s.created_at).toLocaleString('fr-FR')}</td>
-              <td>{s.statut}</td>
-              <td>
-                <button onClick={() => voirCompte(s.cible_id)}>Voir le compte</button>
-                <button onClick={() => traiter(s.id, 'en_cours')}>En cours</button>
-                <button onClick={() => traiter(s.id, 'clos_sans_suite')}>Clore sans suite</button>
-                <button onClick={() => traiter(s.id, 'clos_action_prise')}>Clore - action prise</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {fiche && <FicheCompteModal fiche={fiche} onClose={() => setFiche(null)} onChanged={() => voirCompte(fiche.id)} />}
-    </div>
+      {!items ? <p className="loading-state">Chargement…</p> : (
+        <DataTable
+          rows={items}
+          columns={columns}
+          rowKey={(s) => s.id}
+          initialSort={{ key: 'date', dir: 'desc' }}
+          emptyText="Aucun signalement dans cette file."
+          toolbar={(
+            <Select
+              ariaLabel="Statut des signalements"
+              value={statut}
+              onChange={(v) => { setItems(null); setStatut(v); }}
+              minWidth={200}
+              options={[
+                { value: 'nouveau', label: 'Nouveaux' },
+                { value: 'en_cours', label: 'En cours' },
+                { value: 'clos_sans_suite', label: 'Clos sans suite' },
+                { value: 'clos_action_prise', label: 'Clos - action prise' },
+                { value: '', label: 'Tous les statuts' },
+              ]}
+            />
+          )}
+        />
+      )}
+      {modal}
+    </>
   );
 }
 
 function LitigesTab() {
-  const [items, setItems] = useState<Litige[]>([]);
+  const [items, setItems] = useState<Litige[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.rpc('admin_lister_litiges', { p_limite: 50, p_offset: 0 }).then(({ data, error: rpcError }) => {
+    supabase.rpc('admin_lister_litiges', { p_limite: 500, p_offset: 0 }).then(({ data, error: rpcError }) => {
       if (rpcError) { setError(rpcError.message); return; }
       setItems((data ?? []) as Litige[]);
     });
   }, []);
+  const { ouvrir, modal } = useFicheCompte();
+
+  const columns: Column<Litige>[] = [
+    { key: 'colis', label: 'Colis', value: (l) => l.description_colis },
+    { key: 'montant', label: 'Montant', value: (l) => Number(l.montant_total), render: (l) => `${Number(l.montant_total).toFixed(2)} €` },
+    { key: 'paiement', filter: 'options', label: 'Statut paiement', value: (l) => LABELS_PAIEMENT[l.statut_paiement] ?? l.statut_paiement },
+    { key: 'conteste', label: 'Contesté le', value: (l) => l.conteste_at, render: (l) => (l.conteste_at ? dateHeure(l.conteste_at) : '-') },
+    { key: 'resolutions', label: 'Résolutions en attente', value: (l) => l.resolutions_en_attente },
+    {
+      key: 'actions', label: 'Parties', render: (l) => (
+        <div className="action-row">
+          <button className="btn btn-soft btn-sm" onClick={() => ouvrir(l.expediteur_id)}>Expéditeur</button>
+          <button className="btn btn-soft btn-sm" onClick={() => ouvrir(l.porteur_id)}>Porteur</button>
+        </div>
+      ),
+    },
+  ];
 
   if (error) return <p className="page-error">{error}</p>;
-
+  if (!items) return <p className="loading-state">Chargement…</p>;
   return (
-    <table>
-      <thead><tr><th>Colis</th><th>Montant</th><th>Statut paiement</th><th>Contesté le</th><th>Résolutions en attente</th></tr></thead>
-      <tbody>
-        {items.map((l) => (
-          <tr key={l.id}>
-            <td>{l.description_colis}</td>
-            <td>{l.montant_total} €</td>
-            <td>{l.statut_paiement}</td>
-            <td>{l.conteste_at ? new Date(l.conteste_at).toLocaleString('fr-FR') : '—'}</td>
-            <td>{l.resolutions_en_attente}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
-
-function FicheCompteModal({ fiche, onClose, onChanged }: { fiche: FicheCompte; onClose: () => void; onChanged: () => void }) {
-  async function bloquer() {
-    const motif = window.prompt('Motif du blocage (obligatoire) :');
-    if (!motif) return;
-    const { error } = await supabase.rpc('admin_bloquer_compte', { p_user_id: fiche.id, p_motif: motif });
-    if (error) { alert(error.message); return; }
-    onChanged();
-  }
-
-  async function debloquer() {
-    const motif = window.prompt('Motif du déblocage (optionnel) :') ?? undefined;
-    const { error } = await supabase.rpc('admin_debloquer_compte', { p_user_id: fiche.id, p_motif: motif || null });
-    if (error) { alert(error.message); return; }
-    onChanged();
-  }
-
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2>{fiche.prenom} {fiche.nom}</h2>
-        <p>Statut : {fiche.bloque ? 'BLOQUÉ' : 'actif'} · KYC : {fiche.kyc_status ?? '—'}</p>
-        <p>Livraisons : {fiche.nombre_livraisons ?? 0} · Colis confiés : {fiche.nombre_colis_confies ?? 0}</p>
-        <p>Signalements reçus : {fiche.signalements} ({fiche.signaleurs_distincts} personnes distinctes)</p>
-        {fiche.raisons && <p>Raisons : {fiche.raisons.filter(Boolean).join(', ')}</p>}
-        <div className="modal-actions">
-          {fiche.bloque
-            ? <button onClick={debloquer}>Débloquer ce compte</button>
-            : <button className="danger" onClick={bloquer}>Bloquer ce compte</button>}
-          <button onClick={onClose}>Fermer</button>
-        </div>
-      </div>
-    </div>
+    <>
+      <DataTable rows={items} columns={columns} rowKey={(l) => l.id} initialSort={{ key: 'conteste', dir: 'desc' }} emptyText="Aucun litige en cours." />
+      {modal}
+    </>
   );
 }

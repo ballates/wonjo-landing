@@ -17,10 +17,29 @@ export interface StatsRevenusJour {
   nb_transactions: number;
 }
 
+export interface StatsColisJour {
+  jour: string;
+  colis_crees: number;
+  colis_livres: number;
+}
+
+export interface RepartitionTransaction {
+  statut_paiement: string;
+  nb: number;
+  montant: number;
+  commission: number;
+}
+
+export interface RepartitionTypeEnvoi {
+  type_envoi: string;
+  nb: number;
+}
+
 export interface CompteActif {
   id: string;
   prenom: string;
   nom: string;
+  photo_url: string | null;
   nombre_livraisons: number | null;
   nombre_colis_confies: number | null;
 }
@@ -56,6 +75,7 @@ export interface FicheKyc {
   id: string;
   prenom: string;
   nom: string;
+  photo_url: string | null;
   kyc_status: string | null;
   kyc_reject_reason: string | null;
   kyc_attempts: number | null;
@@ -63,12 +83,34 @@ export interface FicheKyc {
   created_at: string;
 }
 
+export interface CompteRecherche {
+  id: string;
+  prenom: string;
+  nom: string;
+  email: string;
+  photo_url: string | null;
+  bloque: boolean;
+  kyc_status: string | null;
+  id_verifie: boolean | null;
+  telephone_verifie: boolean | null;
+  niveau: 'debutant' | 'ambassadeur' | 'legende';
+  derniere_connexion: string | null;
+  created_at: string;
+}
+
 export interface FicheCompte {
   id: string;
   prenom: string;
   nom: string;
+  email: string | null;
+  photo_url: string | null;
   bloque: boolean;
   kyc_status: string | null;
+  id_verifie: boolean | null;
+  telephone_verifie: boolean | null;
+  derniere_connexion: string | null;
+  badges: string[] | null;
+  note_moyenne: number | null;
   nombre_livraisons: number | null;
   nombre_colis_confies: number | null;
   created_at: string;
@@ -76,4 +118,19 @@ export interface FicheCompte {
   signaleurs_distincts: number;
   dernier_signalement: string | null;
   raisons: string[] | null;
+}
+
+export interface ActionHistorique {
+  id: string;
+  created_at: string;
+  action: string;
+  motif: string | null;
+  admin_nom: string | null;
+  admin_avatar: string | null;
+}
+
+export interface EntreeJournal extends ActionHistorique {
+  cible_type: string | null;
+  cible_id: string | null;
+  cible_nom: string | null;
 }

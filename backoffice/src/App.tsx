@@ -8,6 +8,10 @@ import { DashboardPage } from './pages/DashboardPage';
 import { ModerationPage } from './pages/ModerationPage';
 import { KycPage } from './pages/KycPage';
 import { AdminsPage } from './pages/AdminsPage';
+import { JournalPage } from './pages/JournalPage';
+import { EmailsPage } from './pages/EmailsPage';
+import { CommissionsPage } from './pages/CommissionsPage';
+import { AFairePage } from './pages/AFairePage';
 
 function Gate() {
   const { status } = useAuth();
@@ -15,7 +19,7 @@ function Gate() {
   switch (status) {
     case 'loading':
     case 'checking':
-      return <div className="auth-screen"><p>Chargement…</p></div>;
+      return <div className="auth-screen"><span className="spinner" role="status" aria-label="Chargement" /></div>;
     case 'signed_out':
       return <LoginPage />;
     case 'need_mfa_enroll':
@@ -40,6 +44,10 @@ function Gate() {
               <Route path="moderation" element={<ModerationPage />} />
               <Route path="kyc" element={<KycPage />} />
               <Route path="admins" element={<AdminsPage />} />
+              <Route path="journal" element={<JournalPage />} />
+              <Route path="emails" element={<EmailsPage />} />
+              <Route path="commissions" element={<CommissionsPage />} />
+              <Route path="a-faire" element={<AFairePage />} />
             </Route>
           </Routes>
         </HashRouter>

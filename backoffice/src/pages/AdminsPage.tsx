@@ -1,15 +1,25 @@
 import { useEffect, useState } from 'react';
+import { Select, type Option } from '../components/Select';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../auth/AuthContext';
 import { LABELS_ROLES } from '../lib/permissions';
+import { Person } from '../components/Avatar';
+import { DataTable, type Column } from '../components/DataTable';
 import type { AdminRow } from '../lib/adminTypes';
 import type { AdminRole } from '../auth/AuthContext';
 
 const ROLES: AdminRole[] = ['super_admin', 'moderation', 'finance', 'lecture_seule'];
+const HINTS_ROLES: Record<AdminRole, string> = {
+  super_admin: 'Tout, y compris gérer les administrateurs',
+  moderation: 'Comptes, signalements, litiges, KYC',
+  finance: 'Chiffres et revenus uniquement',
+  lecture_seule: 'Consultation du tableau de bord',
+};
+const ROLE_OPTIONS: Option<AdminRole>[] = ROLES.map((r) => ({ value: r, label: LABELS_ROLES[r], hint: HINTS_ROLES[r] }));
 
 export function AdminsPage() {
-  const { email: monEmail } = useAuth();
-  const [admins, setAdmins] = useState<AdminRow[]>([]);
+  const { profil } = useAuth();
+  const [admins, setAdmins] = useState<AdminRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function load() {
@@ -27,39 +37,50 @@ export function AdminsPage() {
   }
 
   async function toggleActif(admin: AdminRow) {
+    const verbe = admin.actif ? 'Désactiver' : 'Réactiver';
+    if (!window.confirm(`${verbe} l'accès de ${admin.nom_affiche ?? admin.email} au back-office ?`)) return;
     const fn = admin.actif ? 'admin_desactiver_admin' : 'admin_reactiver_admin';
     const { error: rpcError } = await supabase.rpc(fn, { p_user_id: admin.user_id });
     if (rpcError) { alert(rpcError.message); return; }
     await load();
   }
 
+  const columns: Column<AdminRow>[] = [
+    { key: 'nom', label: 'Administrateur', value: (a) => a.nom_affiche ?? a.email, render: (a) => <Person src={a.avatar_url} nom={a.nom_affiche ?? a.email} sub={a.email} /> },
+    {
+      key: 'role', filter: 'options', label: 'Rôle', value: (a) => LABELS_ROLES[a.role], render: (a) => (
+        <Select
+          size="sm"
+          ariaLabel="Rôle"
+          value={a.role}
+          disabled={a.user_id === profil?.user_id}
+          onChange={(v) => changerRole(a.user_id, v)}
+          minWidth={170}
+          options={ROLE_OPTIONS}
+        />
+      ),
+    },
+    { key: 'statut', filter: 'options', label: 'Statut', value: (a) => (a.actif ? 'Actif' : 'Désactivé'), render: (a) => <span className={`badge ${a.actif ? 'badge-green' : 'badge-muted'}`}>{a.actif ? 'Actif' : 'Désactivé'}</span> },
+    { key: 'depuis', label: 'Depuis', value: (a) => a.created_at, render: (a) => new Date(a.created_at).toLocaleDateString('fr-FR') },
+    {
+      key: 'actions', label: '', render: (a) => (a.user_id === profil?.user_id ? <span className="hint">C'est vous</span> : (
+        <button className={`btn btn-sm ${a.actif ? 'btn-danger-outline' : 'btn-soft'}`} onClick={() => toggleActif(a)}>{a.actif ? 'Désactiver' : 'Réactiver'}</button>
+      )),
+    },
+  ];
+
   return (
     <div>
-      <h1>Administrateurs</h1>
+      <div className="page-head">
+        <div>
+          <h1>Administrateurs</h1>
+          <p className="page-sub">Gérer les accès au back-office. Chaque action est tracée dans le journal.</p>
+        </div>
+      </div>
       {error && <p className="page-error">{error}</p>}
-      <table>
-        <thead><tr><th>Email</th><th>Rôle</th><th>Statut</th><th>Depuis</th><th>Actions</th></tr></thead>
-        <tbody>
-          {admins.map((a) => (
-            <tr key={a.user_id}>
-              <td>{a.email}</td>
-              <td>
-                <select value={a.role} onChange={(e) => changerRole(a.user_id, e.target.value as AdminRole)}>
-                  {ROLES.map((r) => <option key={r} value={r}>{LABELS_ROLES[r]}</option>)}
-                </select>
-              </td>
-              <td>{a.actif ? 'Actif' : 'Désactivé'}</td>
-              <td>{new Date(a.created_at).toLocaleDateString('fr-FR')}</td>
-              <td>
-                {a.email !== monEmail && (
-                  <button onClick={() => toggleActif(a)}>{a.actif ? 'Désactiver' : 'Réactiver'}</button>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
+      {!admins ? <p className="loading-state">Chargement…</p> : (
+        <DataTable rows={admins} columns={columns} rowKey={(a) => a.user_id} searchPlaceholder="Rechercher un administrateur…" />
+      )}
       <InviteForm onInvited={load} />
     </div>
   );
@@ -78,9 +99,7 @@ function InviteForm({ onInvited }: { onInvited: () => void }) {
     setError(null);
     setSuccess(false);
     try {
-      const { error: fnError } = await supabase.functions.invoke('admin-inviter', {
-        body: { email, role },
-      });
+      const { error: fnError } = await supabase.functions.invoke('admin-inviter', { body: { email, role } });
       if (fnError) throw fnError;
       setSuccess(true);
       setEmail('');
@@ -93,22 +112,15 @@ function InviteForm({ onInvited }: { onInvited: () => void }) {
   }
 
   return (
-    <form className="invite-form" onSubmit={handleSubmit}>
-      <h2>Inviter un administrateur</h2>
+    <form className="panel invite-form" onSubmit={handleSubmit}>
+      <h3>Inviter un administrateur</h3>
+      <p className="chart-sub">La personne reçoit un email pour choisir son mot de passe, puis active la double authentification.</p>
       <div className="invite-row">
-        <input
-          type="email"
-          placeholder="email@exemple.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <select value={role} onChange={(e) => setRole(e.target.value as AdminRole)}>
-          {ROLES.map((r) => <option key={r} value={r}>{LABELS_ROLES[r]}</option>)}
-        </select>
-        <button type="submit" disabled={loading}>{loading ? 'Envoi…' : 'Inviter'}</button>
+        <input type="email" placeholder="email@exemple.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <Select ariaLabel="Rôle" value={role} onChange={setRole} minWidth={200} options={ROLE_OPTIONS} />
+        <button className="btn btn-primary" type="submit" disabled={loading}>{loading ? 'Envoi…' : 'Envoyer l\'invitation'}</button>
       </div>
-      {error && <p className="auth-error">{error}</p>}
+      {error && <p className="page-error" style={{ marginTop: 10 }}>{error}</p>}
       {success && <p className="invite-success">Invitation envoyée.</p>}
     </form>
   );
