@@ -88,7 +88,6 @@ export function ProfilModal({ onClose }: { onClose: () => void }) {
             Nom affiché
             <input type="text" value={nomAffiche} placeholder={profil?.nom ?? 'Ex. Ben'} onChange={(e) => setNomAffiche(e.target.value)} />
           </label>
-          <p className="hint">C'est ce nom qui apparaît dans l'historique des actions ("Bloqué par …"). Vide = prénom/nom de votre compte, sinon votre email.</p>
           <p className="hint">Email : {email} · Rôle : {role ? LABELS_ROLES[role] : ''}</p>
         </div>
 

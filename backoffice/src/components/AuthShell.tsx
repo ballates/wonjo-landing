@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import { Brand } from './Brand';
+import { Brand, brandMark } from './Brand';
+import { IconFacebook, IconLinkedin } from './Icons';
 
 const ATOUTS = [
   { titre: 'Modération et vérifications', texte: 'Comptes, signalements, litiges et KYC au même endroit.' },
@@ -46,8 +47,15 @@ export function AuthShell({ children }: { children: ReactNode }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: 'easeOut', delay: 0.1 }}
         >
+          <a className="auth-form-brand" href="https://wonjo.app" target="_blank" rel="noopener">
+            <img src={brandMark} alt="Wonjo" /><span>WONJO</span>
+          </a>
           {children}
           <p className="auth-foot">Accès réservé à l'équipe Wonjo.</p>
+          <div className="auth-socials">
+            <a href="https://facebook.com/wonjo.app" aria-label="Facebook" target="_blank" rel="noopener"><IconFacebook /></a>
+            <a href="https://linkedin.com/company/wonjo" aria-label="LinkedIn" target="_blank" rel="noopener"><IconLinkedin /></a>
+          </div>
         </motion.div>
       </main>
     </div>

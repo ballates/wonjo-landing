@@ -27,8 +27,8 @@ export function useFicheCompte(onChanged?: () => void) {
 
 export function VoirFicheButton({ onClick }: { onClick: () => void }) {
   return (
-    <button className="btn btn-soft btn-sm" onClick={onClick}>
-      <IconEye /> Ouvrir la fiche
+    <button className="btn btn-soft btn-sm" onClick={onClick} title="Ouvrir la fiche">
+      <IconEye /> Fiche
     </button>
   );
 }

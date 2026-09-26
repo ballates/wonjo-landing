@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, LabelList } from 'recharts';
 import { supabase } from '../../lib/supabase';
-import { Kpi, VizTooltip } from '../../components/Kpi';
+import { Kpi, VizTooltip, pourcent } from '../../components/Kpi';
 import { LABELS_BADGES, LABELS_STATUT_KYC } from '../../lib/labels';
 
 interface StatsCommunaute {
@@ -35,7 +35,7 @@ function HBar({ data, height }: { data: { label: string; nb: number; pct?: numbe
         <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: 'var(--muted)' }} axisLine={false} tickLine={false} />
         <YAxis dataKey="label" type="category" tick={{ fontSize: 12.5, fill: 'var(--text)' }} axisLine={false} tickLine={false} width={150} />
         <Tooltip content={<VizTooltip />} cursor={{ fill: 'var(--hover)' }} />
-        <Bar dataKey="nb" name="Membres" fill="var(--series-1)" radius={[0, 4, 4, 0]} maxBarSize={24} isAnimationActive animationDuration={700}>
+        <Bar dataKey="nb" name="Membres" fill="var(--teal)" radius={[0, 4, 4, 0]} maxBarSize={24} isAnimationActive={false}>
           <LabelList
             dataKey="nb"
             position="right"
@@ -74,18 +74,37 @@ export function CommunauteTab() {
     { label: 'Ambassadeur (5-10)', nb: s.niveaux.ambassadeur ?? 0 },
     { label: 'Légende (11+)', nb: s.niveaux.legende ?? 0 },
   ];
-  const badges = s.badges.map((b) => ({ label: LABELS_BADGES[b.type] ?? b.type, nb: b.nb }));
+  const badges = Object.values(
+    s.badges.reduce<Record<string, { label: string; nb: number }>>((acc, b) => {
+      const label = LABELS_BADGES[b.type] ?? b.type;
+      acc[label] = { label, nb: (acc[label]?.nb ?? 0) + b.nb };
+      return acc;
+    }, {}),
+  );
   const kyc = ['approved', 'pending', 'rejected', 'none'].map((k) => ({ label: LABELS_STATUT_KYC[k] ?? k, nb: s.kyc[k] ?? 0 }));
 
   return (
     <section>
       <div className="cards">
         <Kpi index={0} label="Membres" value={s.total} />
-        <Kpi index={1} label="Identité vérifiée" value={s.identite_verifiee} hint={`${pct(s.identite_verifiee, s.total)} % des membres`} />
-        <Kpi index={2} label="Téléphone vérifié" value={s.telephone_verifie} hint={`${pct(s.telephone_verifie, s.total)} %`} />
-        <Kpi index={3} label="Non vérifiés (identité)" value={s.non_verifies} hint={`dont ${s.aucune_verification} sans aucune vérif.`} />
-        <Kpi index={4} label="Actifs (7 jours)" value={s.actifs_7j} hint={`${s.actifs_30j} sur 30 jours`} />
-        <Kpi index={5} label="Inactifs (+30 jours)" value={s.inactifs_30j} hint="à relancer" />
+        <Kpi index={1} label="Identité vérifiée" value={pct(s.identite_verifiee, s.total)} format={pourcent} hint={`${s.identite_verifiee} membre(s)`} />
+        <Kpi index={2} label="Téléphone vérifié" value={pct(s.telephone_verifie, s.total)} format={pourcent} hint={`${s.telephone_verifie} membre(s)`} />
+        <Kpi index={3} label="Non vérifiés" value={s.aucune_verification} hint={`${pct(s.aucune_verification, s.total)} % des membres`} />
+        <Kpi index={4} label="Réputation élevée" value={pct((s.niveaux.ambassadeur ?? 0) + (s.niveaux.legende ?? 0), s.total)} format={pourcent} hint={`${(s.niveaux.ambassadeur ?? 0) + (s.niveaux.legende ?? 0)} ambassadeurs ou légendes`} />
+        <Kpi index={5} label="Note moyenne" value={Number(s.avis.note_moyenne ?? 0)} format={(n) => `${n.toFixed(1)} / 5`} hint={`${s.avis.nb} avis`} />
+      </div>
+
+      <div className="chart-card">
+        <h3>Joignabilité et paiements</h3>
+        <div className="stat-list stat-list--nowrap">
+          <div><strong>{s.stripe_configure}</strong><span>paiement configuré</span></div>
+          <div><strong>{s.push_actif}</strong><span>notifications activées</span></div>
+          <div><strong>{s.avis.note_moyenne ?? '-'} / 5</strong><span>note moyenne ({s.avis.nb})</span></div>
+          <div><strong>{s.bloques}</strong><span>comptes bloqués</span></div>
+          {s.langues.map((l) => (
+            <div key={l.langue}><strong>{l.nb}</strong><span>{l.langue === 'fr' ? 'français' : l.langue === 'en' ? 'anglais' : l.langue}</span></div>
+          ))}
+        </div>
       </div>
 
       <div className="grid-2">
@@ -116,19 +135,6 @@ export function CommunauteTab() {
           <h3>Vérification d'identité (KYC)</h3>
           <p className="chart-sub">Répartition des statuts.</p>
           <HBar data={kyc} />
-        </div>
-      </div>
-
-      <div className="chart-card">
-        <h3>Joignabilité et paiements</h3>
-        <div className="stat-list">
-          <div><strong>{s.stripe_configure}</strong><span>peuvent recevoir un paiement (Stripe configuré)</span></div>
-          <div><strong>{s.push_actif}</strong><span>ont activé les notifications</span></div>
-          <div><strong>{s.avis.note_moyenne ?? '-'} / 5</strong><span>note moyenne ({s.avis.nb} avis)</span></div>
-          <div><strong>{s.bloques}</strong><span>comptes bloqués</span></div>
-          {s.langues.map((l) => (
-            <div key={l.langue}><strong>{l.nb}</strong><span>langue : {l.langue === 'fr' ? 'français' : l.langue === 'en' ? 'anglais' : l.langue}</span></div>
-          ))}
         </div>
       </div>
     </section>

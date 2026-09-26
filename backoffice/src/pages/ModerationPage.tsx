@@ -5,17 +5,14 @@ import { StatutBadge } from '../components/Badge';
 import { Avatar } from '../components/Avatar';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
-import { peutGererAdmins } from '../lib/permissions';
+import { peutGererAdmins, peutVoirRevenus } from '../lib/permissions';
 import { DataTable, type Column } from '../components/DataTable';
+import { Modal } from '../components/Modal';
 import { useFicheCompte, VoirFicheButton } from '../components/FicheCompte';
-import { LABELS_NIVEAU, LABELS_STATUT_KYC, LABELS_STATUT_SIGNALEMENT, dateHeure, depuis, nomComplet } from '../lib/labels';
+import { LABELS_NIVEAU, LABELS_PAIEMENT, LABELS_STATUT_KYC, LABELS_STATUT_SIGNALEMENT, dateHeure, depuis, nomComplet } from '../lib/labels';
 import type { CompteRecherche, Litige, Signalement } from '../lib/types';
 
 type Tab = 'comptes' | 'signalements' | 'litiges';
-
-const LABELS_PAIEMENT: Record<string, string> = {
-  libere: 'Libéré', escrow: 'En séquestre', en_attente: 'En attente', rembourse: 'Remboursé',
-};
 
 export function ModerationPage() {
   const location = useLocation();
@@ -26,7 +23,7 @@ export function ModerationPage() {
     <div>
       <div className="page-head">
         <div>
-          <h1>Modération</h1>
+          <h1>Signalements & litiges</h1>
           <p className="page-sub">Consulter un compte, le bloquer ou le débloquer, traiter les signalements et les litiges.</p>
         </div>
       </div>
@@ -72,7 +69,7 @@ function ComptesTab() {
     { key: 'niveau', filter: 'options', label: 'Niveau', value: (c) => LABELS_NIVEAU[c.niveau], render: (c) => <span className={`badge ${c.niveau === 'debutant' ? 'badge-muted' : `badge-niveau-${c.niveau}`}`}>{LABELS_NIVEAU[c.niveau]}</span> },
     { key: 'kyc', filter: 'options', label: 'KYC', value: (c) => LABELS_STATUT_KYC[c.kyc_status ?? 'none'] ?? c.kyc_status, render: (c) => <StatutBadge statut={c.kyc_status ?? 'none'} label={LABELS_STATUT_KYC[c.kyc_status ?? 'none'] ?? String(c.kyc_status)} /> },
     { key: 'connexion', label: 'Dernière connexion', value: (c) => c.derniere_connexion ?? '', render: (c) => depuis(c.derniere_connexion) },
-    { key: 'actions', label: '', render: (c) => <VoirFicheButton onClick={() => ouvrir(c.id)} />, width: 150 },
+    { key: 'actions', label: '', render: (c) => <VoirFicheButton onClick={() => ouvrir(c.id)} />, width: 100 },
   ];
 
   if (error) return <p className="page-error">{error}</p>;
@@ -188,16 +185,56 @@ function SignalementsTab() {
   );
 }
 
-function LitigesTab() {
-  const [items, setItems] = useState<Litige[] | null>(null);
+function LitigeResolutionModal({ litige, onClose, onDone }: { litige: Litige; onClose: () => void; onDone: () => void }) {
+  const [motif, setMotif] = useState('');
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  async function confirmer() {
+    const m = motif.trim();
+    if (!m) { setError('Le motif est obligatoire.'); return; }
+    setBusy(true);
+    setError(null);
+    const { error: rpcError } = await supabase.rpc('admin_resoudre_litige_remboursement', { p_demande_id: litige.id, p_motif: m });
+    setBusy(false);
+    if (rpcError) { setError(rpcError.message); return; }
+    onDone();
+  }
+
+  return (
+    <Modal onClose={onClose}>
+      <h2 className="modal-title">Rembourser l'expéditeur</h2>
+      <div className="modal-body">
+        <p className="hint">Colis : {litige.description_colis} · {Number(litige.montant_total).toFixed(2)} €</p>
+        <p className="hint">Le transport sera annulé et le remboursement Stripe traité automatiquement dans l'heure, via le circuit habituel. À utiliser quand un accord a été trouvé entre les deux parties (ex. via le support) mais que la résolution automatique dans l'app ne s'est pas déclenchée.</p>
+        <div className="action-group motif-form">
+          <label htmlFor="motif-litige">Motif de la résolution manuelle</label>
+          <textarea id="motif-litige" autoFocus value={motif} onChange={(e) => setMotif(e.target.value)} placeholder="Ex. accord trouvé entre les deux parties via le support, le 26/09." />
+        </div>
+        {error && <p className="page-error">{error}</p>}
+        <div className="action-row" style={{ justifyContent: 'flex-end' }}>
+          <button className="btn" disabled={busy} onClick={onClose}>Annuler</button>
+          <button className="btn btn-danger" disabled={busy} onClick={confirmer}>Confirmer le remboursement</button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+function LitigesTab() {
+  const { role } = useAuth();
+  const [items, setItems] = useState<Litige[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [aRembourser, setARembourser] = useState<Litige | null>(null);
+
+  function charger() {
     supabase.rpc('admin_lister_litiges', { p_limite: 500, p_offset: 0 }).then(({ data, error: rpcError }) => {
       if (rpcError) { setError(rpcError.message); return; }
       setItems((data ?? []) as Litige[]);
     });
-  }, []);
+  }
+
+  useEffect(charger, []);
   const { ouvrir, modal } = useFicheCompte();
 
   const columns: Column<Litige>[] = [
@@ -214,6 +251,11 @@ function LitigesTab() {
         </div>
       ),
     },
+    ...(peutVoirRevenus(role) ? [{
+      key: 'resoudre', label: '', render: (l: Litige) => (
+        <button className="btn btn-danger-outline btn-sm" onClick={() => setARembourser(l)}>Rembourser</button>
+      ), width: 130,
+    }] : []),
   ];
 
   if (error) return <p className="page-error">{error}</p>;
@@ -222,6 +264,13 @@ function LitigesTab() {
     <>
       <DataTable rows={items} columns={columns} rowKey={(l) => l.id} initialSort={{ key: 'conteste', dir: 'desc' }} emptyText="Aucun litige en cours." />
       {modal}
+      {aRembourser && (
+        <LitigeResolutionModal
+          litige={aRembourser}
+          onClose={() => setARembourser(null)}
+          onDone={() => { setARembourser(null); charger(); }}
+        />
+      )}
     </>
   );
 }

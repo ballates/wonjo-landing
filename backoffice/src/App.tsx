@@ -1,4 +1,4 @@
-import { HashRouter, Route, Routes } from 'react-router-dom';
+import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import { LoginPage } from './auth/LoginPage';
 import { MfaEnrollPage } from './auth/MfaEnrollPage';
@@ -6,12 +6,12 @@ import { MfaChallengePage } from './auth/MfaChallengePage';
 import { Layout } from './components/Layout';
 import { DashboardPage } from './pages/DashboardPage';
 import { ModerationPage } from './pages/ModerationPage';
+import { TransactionsPage } from './pages/TransactionsPage';
 import { KycPage } from './pages/KycPage';
 import { AdminsPage } from './pages/AdminsPage';
 import { JournalPage } from './pages/JournalPage';
 import { EmailsPage } from './pages/EmailsPage';
 import { CommissionsPage } from './pages/CommissionsPage';
-import { AFairePage } from './pages/AFairePage';
 
 function Gate() {
   const { status } = useAuth();
@@ -42,12 +42,13 @@ function Gate() {
             <Route element={<Layout />}>
               <Route index element={<DashboardPage />} />
               <Route path="moderation" element={<ModerationPage />} />
+              <Route path="transactions" element={<TransactionsPage />} />
               <Route path="kyc" element={<KycPage />} />
               <Route path="admins" element={<AdminsPage />} />
               <Route path="journal" element={<JournalPage />} />
               <Route path="emails" element={<EmailsPage />} />
               <Route path="commissions" element={<CommissionsPage />} />
-              <Route path="a-faire" element={<AFairePage />} />
+              <Route path="a-faire" element={<Navigate to="/" replace state={{ tab: 'afaire' }} />} />
             </Route>
           </Routes>
         </HashRouter>

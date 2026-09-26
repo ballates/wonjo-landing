@@ -1,6 +1,5 @@
-import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { useAFaire, type ElementAFaire } from '../lib/aFaire';
+import type { ElementAFaire } from '../lib/aFaire';
 
 const GROUPES: { priorite: ElementAFaire['priorite']; titre: string; sous: string }[] = [
   { priorite: 'urgent', titre: 'Urgent', sous: 'Bloque des membres ou de l\'argent' },
@@ -8,15 +7,10 @@ const GROUPES: { priorite: ElementAFaire['priorite']; titre: string; sous: strin
   { priorite: 'info', titre: 'Pour information', sous: 'À garder à l\'œil' },
 ];
 
-export function CarteAFaire({ item, index = 0 }: { item: ElementAFaire; index?: number }) {
+export function CarteAFaire({ item }: { item: ElementAFaire; index?: number }) {
   const navigate = useNavigate();
   return (
-    <motion.div
-      className={`todo-card todo-${item.priorite}`}
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.05, ease: 'easeOut' }}
-    >
+    <div className={`todo-card todo-${item.priorite}`}>
       <span className="todo-count">{item.nb}</span>
       <div className="todo-text">
         <strong>{item.titre}</strong>
@@ -25,21 +19,13 @@ export function CarteAFaire({ item, index = 0 }: { item: ElementAFaire; index?: 
       <button className="btn btn-soft btn-sm" onClick={() => navigate(item.lien, { state: item.onglet ? { tab: item.onglet } : undefined })}>
         {item.action}
       </button>
-    </motion.div>
+    </div>
   );
 }
 
-export function AFairePage() {
-  const { items, error } = useAFaire();
-
+export function ListeAFaire({ items, error }: { items: ElementAFaire[] | null; error: string | null }) {
   return (
     <div>
-      <div className="page-head">
-        <div>
-          <h1>À faire</h1>
-          <p className="page-sub">Ce qui attend une action de votre part, calculé en direct sur les données de l'app.</p>
-        </div>
-      </div>
       {error && <p className="page-error">{error}</p>}
       {!items && !error && <p className="loading-state">Chargement…</p>}
       {items && items.length === 0 && (

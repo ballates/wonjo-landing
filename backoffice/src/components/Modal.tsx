@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { IconClose } from './Icons';
 
 // Coquille commune : fond flou, fermeture par la croix, Echap ou clic dehors.
-export function Modal({ onClose, children, closeOnSurface = false }: { onClose: () => void; children: ReactNode; closeOnSurface?: boolean }) {
+export function Modal({ onClose, children, closeOnSurface = false, wide = false }: { onClose: () => void; children: ReactNode; closeOnSurface?: boolean; wide?: boolean }) {
   useEffect(() => {
     function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose(); }
     window.addEventListener('keydown', onKey);
@@ -13,7 +13,7 @@ export function Modal({ onClose, children, closeOnSurface = false }: { onClose: 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <motion.div
-        className="modal"
+        className={`modal ${wide ? 'modal--wide' : ''}`}
         role="dialog"
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}

@@ -21,8 +21,8 @@ export function LoginPage() {
   return (
     <AuthShell>
         <form className="auth-card" onSubmit={handleSubmit}>
-          <h1>Connexion au back-office</h1>
-          <p>Identifiez-vous avec votre compte administrateur.</p>
+          <h1>Connexion à votre compte Wonjo</h1>
+          <p>Identifiez-vous pour vous connecter à votre compte Wonjo.</p>
           <label>
             Email
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus />

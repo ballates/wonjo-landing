@@ -30,7 +30,7 @@ export function KycPage() {
     { key: 'motif', filter: 'options', label: 'Motif du rejet', value: (k) => k.kyc_reject_reason, render: (k) => k.kyc_reject_reason ?? '-' },
     { key: 'tentatives', label: 'Tentatives', value: (k) => k.kyc_attempts ?? 0 },
     { key: 'inscrit', label: 'Inscrit le', value: (k) => k.created_at, render: (k) => new Date(k.created_at).toLocaleDateString('fr-FR') },
-    { key: 'actions', label: '', render: (k) => <VoirFicheButton onClick={() => ouvrir(k.id)} />, width: 150 },
+    { key: 'actions', label: '', render: (k) => <VoirFicheButton onClick={() => ouvrir(k.id)} />, width: 100 },
   ];
 
   return (

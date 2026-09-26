@@ -26,7 +26,7 @@ const cle = (v: unknown) => (v == null || v === '' ? VIDE : String(v));
 
 export function DataTable<T>({
   rows, columns, rowKey, emptyText = 'Aucun résultat.', searchPlaceholder = 'Rechercher…',
-  initialSort, toolbar, selected, onSelectedChange, pageSize = 10, limiteSansRecherche,
+  initialSort, title, toolbar, selected, onSelectedChange, pageSize = 10, limiteSansRecherche,
 }: {
   rows: T[];
   columns: Column<T>[];
@@ -34,6 +34,8 @@ export function DataTable<T>({
   emptyText?: string;
   searchPlaceholder?: string;
   initialSort?: { key: string; dir: 'asc' | 'desc' };
+  // Titre affiche sur la meme ligne que la barre de recherche, a sa gauche.
+  title?: ReactNode;
   toolbar?: ReactNode;
   // Selection multiple (cases a cocher) : absente = pas de colonne de selection.
   selected?: Set<string>;
@@ -121,7 +123,8 @@ export function DataTable<T>({
 
   return (
     <div>
-      <div className="dt-toolbar">
+      <div className={`dt-toolbar ${title ? 'dt-toolbar--titled' : ''}`}>
+        {title && <h3 className="dt-title">{title}</h3>}
         {toolbar}
         <div className="dt-search">
           <IconSearch />

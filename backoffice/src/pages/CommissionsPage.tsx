@@ -5,6 +5,7 @@ import { Select, type Option } from '../components/Select';
 import { Avatar } from '../components/Avatar';
 import { DataTable, type Column } from '../components/DataTable';
 import { dateHeure, nomComplet } from '../lib/labels';
+import { Kpi } from '../components/Kpi';
 import type { CompteRecherche } from '../lib/types';
 
 interface Parametres { actif: boolean; defaut: number; plafond: number; plancher: number; nb_super_admins: number; moi: string }
@@ -92,6 +93,7 @@ export function CommissionsPage() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [tab, setTab] = useState<'aValider' | 'reglages' | 'regles' | 'simulateur'>('reglages');
 
   const [defautSaisi, setDefautSaisi] = useState('');
 
@@ -284,6 +286,10 @@ export function CommissionsPage() {
     },
   ];
 
+  const nbEnAttente = changements.length + (regles ?? []).filter((r) => r.statut === 'en_attente').length;
+  useEffect(() => { if (nbEnAttente > 0) setTab('aValider'); }, [nbEnAttente === 0]); // eslint-disable-line react-hooks/exhaustive-deps
+  const nbEnVigueur = (regles ?? []).filter((r) => r.actif && r.statut === 'approuvee').length;
+
   if (!params) return error ? <p className="page-error">{error}</p> : <p className="loading-state">Chargement…</p>;
 
   return (
@@ -291,22 +297,43 @@ export function CommissionsPage() {
       <div className="page-head">
         <div>
           <h1>Commissions</h1>
-          <p className="page-sub">Réduire la commission payée par l'expéditeur, pour une personne, un groupe ou tout le monde, sur tous les trajets ou certains corridors. Le voyageur n'est jamais concerné. Le taux le plus bas l'emporte, sans jamais passer sous le plancher.</p>
+          <p className="page-sub">Réduire la commission payée par l'expéditeur, pour une personne, un groupe ou tout le monde, sur tous les trajets ou certains corridors. Le voyageur n'est jamais concerné.</p>
         </div>
+      </div>
+
+      <div className="cards">
+        <Kpi index={0} label="Taux personnalisés" value={params.actif ? 1 : 0} format={() => (params.actif ? 'Actives' : 'Inactives')} />
+        <Kpi index={1} label={`Taux par défaut (${pct(params.plancher)}–10 %)`} value={params.defaut * 100} format={(n) => `${n.toLocaleString('fr-FR')} %`} />
+        <Kpi index={2} label="Règles en vigueur" value={nbEnVigueur} />
+        <Kpi index={3} label="À valider" value={nbEnAttente} hint={nbEnAttente > 0 ? 'Aucun effet tant que non approuvé' : undefined} />
       </div>
 
       {params.nb_super_admins < 2 && (
         <div className="insight-banner warn">
           <div>
-            <strong>Double validation : un second super admin est nécessaire</strong>
-            <span>Toute baisse de commission doit être approuvée par un autre super admin que son auteur. Vous êtes actuellement le seul : invitez un second super admin depuis la page Administrateurs, sinon vos propositions resteront en attente.</span>
+            <p className="insight-oneline">
+              <strong>Double validation : </strong>
+              vous êtes seul super admin, invitez-en un second depuis Administrateurs, sinon vos baisses de commission resteront en attente.
+            </p>
           </div>
         </div>
       )}
 
-      {(changements.length > 0 || (regles ?? []).some((r) => r.statut === 'en_attente')) && (
+      {error && <p className="page-error" style={{ marginBottom: 16 }}>{error}</p>}
+      {message && <p className="success-text" style={{ marginBottom: 16 }}>{message}</p>}
+
+      <div className="tabs">
+        <button className={tab === 'aValider' ? 'active' : ''} onClick={() => setTab('aValider')}>
+          À valider{nbEnAttente > 0 && <span className="tab-badge">{nbEnAttente}</span>}
+        </button>
+        <button className={tab === 'reglages' ? 'active' : ''} onClick={() => setTab('reglages')}>Réglages</button>
+        <button className={tab === 'regles' ? 'active' : ''} onClick={() => setTab('regles')}>Règles ({(regles ?? []).length})</button>
+        <button className={tab === 'simulateur' ? 'active' : ''} onClick={() => setTab('simulateur')}>Simulateur</button>
+      </div>
+
+      {tab === 'aValider' && (
+        nbEnAttente === 0 ? <p className="empty-state">Rien à valider pour le moment.</p> : (
         <div className="panel pending-panel">
-          <h3>À valider</h3>
           <p className="chart-sub">Ces changements n'ont aucun effet tant qu'un autre super admin ne les a pas approuvés.</p>
           <ul className="pending-list">
             {changements.map((c) => (
@@ -348,165 +375,170 @@ export function CommissionsPage() {
             ))}
           </ul>
         </div>
+        )
       )}
 
-      {error && <p className="page-error" style={{ marginBottom: 16 }}>{error}</p>}
-      {message && <p className="success-text" style={{ marginBottom: 16 }}>{message}</p>}
-
-      <div className="grid-2">
-        <div className={`panel commission-switch ${params.actif ? 'on' : ''}`}>
-          <div>
-            <h3>Commissions personnalisées : {params.actif ? 'actives' : 'inactives'}</h3>
-            <p className="chart-sub">
-              {params.actif
-                ? 'Les règles ci-dessous s\'appliquent aux nouvelles demandes. Une demande garde toujours le taux calculé à sa création.'
-                : 'Toutes les nouvelles demandes sont à 10 %. Vous pouvez préparer vos règles dès maintenant : elles s\'appliqueront à l\'activation. Activez uniquement une fois la nouvelle version de l\'app publiée.'}
-            </p>
+      {tab === 'reglages' && (
+        <div className="grid-2">
+          <div className={`panel commission-switch ${params.actif ? 'on' : ''}`}>
+            <div>
+              <h3>Commissions personnalisées : {params.actif ? 'actives' : 'inactives'}</h3>
+              <p className="chart-sub">
+                {params.actif
+                  ? 'Les règles s\'appliquent aux nouvelles demandes. Une demande garde toujours le taux calculé à sa création.'
+                  : 'Toutes les demandes sont à 10 % tant que c\'est inactif. Préparez vos règles dès maintenant, mais n\'activez qu\'une fois la nouvelle version de l\'app publiée.'}
+              </p>
+            </div>
+            <button className={`btn ${params.actif ? 'btn-danger-outline' : 'btn-primary'}`} disabled={busy} onClick={basculer}>
+              {params.actif ? 'Désactiver' : 'Activer'}
+            </button>
           </div>
-          <button className={`btn ${params.actif ? 'btn-danger-outline' : 'btn-primary'}`} disabled={busy} onClick={basculer}>
-            {params.actif ? 'Désactiver' : 'Activer'}
-          </button>
-        </div>
 
+          <div className="panel">
+            <h3>Taux par défaut</h3>
+            <p className="chart-sub">S'applique par défaut à tout le monde (sauf règle plus avantageuse) ; une baisse doit être validée par un autre super admin, une hausse s'applique tout de suite.</p>
+            <div className="inline-form">
+              <div className="suffix-input">
+                <input type="text" inputMode="decimal" value={defautSaisi} onChange={(e) => setDefautSaisi(e.target.value)} aria-label="Taux par défaut" />
+                <span>%</span>
+              </div>
+              <button className="btn btn-primary" disabled={busy} onClick={enregistrerDefaut}>Enregistrer</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tab === 'regles' && (
+        <>
+          <div className="panel commission-form">
+            <h3>Nouvelle règle de réduction</h3>
+            <div className="field-row">
+              <label className="field">
+                <span>Nom de la règle</span>
+                <input type="text" value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Ex. Lancement Lyon → Dakar" />
+              </label>
+              <label className="field">
+                <span>Commission</span>
+                <div className="suffix-input">
+                  <input type="text" inputMode="decimal" value={taux} onChange={(e) => setTaux(e.target.value)} placeholder="Ex. 7" />
+                  <span>%</span>
+                </div>
+              </label>
+            </div>
+
+            <div className="field">
+              <span>Pour qui</span>
+              <div className="segmented">
+                <button className={cible === 'tous' ? 'on' : ''} onClick={() => setCible('tous')}><b>Tous les membres</b><span>Tout le monde en profite</span></button>
+                <button className={cible === 'selection' ? 'on' : ''} onClick={() => setCible('selection')}><b>Membres choisis</b><span>{membres.size ? `${membres.size} sélectionné(s)` : 'Une ou plusieurs personnes'}</span></button>
+              </div>
+            </div>
+
+            {cible === 'selection' && (
+              <div className="member-picker">
+                <input type="search" placeholder="Rechercher un membre…" value={rechercheMembre} onChange={(e) => setRechercheMembre(e.target.value)} />
+                <ul>
+                  {comptesFiltres.map((c) => (
+                    <li key={c.id}>
+                      <label>
+                        <input
+                          type="checkbox"
+                          className="dt-check"
+                          checked={membres.has(c.id)}
+                          onChange={() => setMembres((m) => { const n = new Set(m); if (n.has(c.id)) n.delete(c.id); else n.add(c.id); return n; })}
+                        />
+                        <Avatar src={c.photo_url} nom={nomComplet(c.prenom, c.nom)} size={28} />
+                        <span className="member-name">{nomComplet(c.prenom, c.nom) || c.email}</span>
+                        <span className="hint">{c.email}</span>
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="field-row">
+              <div className="field">
+                <span>Départ (facultatif)</span>
+                <div className="lieu-row">
+                  <Select ariaLabel="Pays de départ" value={depPays} onChange={setDepPays} options={paysOptions} />
+                  <input type="text" list="villes-dep" value={depVille} onChange={(e) => setDepVille(e.target.value)} placeholder="Toutes les villes" />
+                  <datalist id="villes-dep">{villesPour(depPays).map((v) => <option key={v} value={v} />)}</datalist>
+                </div>
+              </div>
+              <div className="field">
+                <span>Arrivée (facultatif)</span>
+                <div className="lieu-row">
+                  <Select ariaLabel="Pays d'arrivée" value={arrPays} onChange={setArrPays} options={paysOptions} />
+                  <input type="text" list="villes-arr" value={arrVille} onChange={(e) => setArrVille(e.target.value)} placeholder="Toutes les villes" />
+                  <datalist id="villes-arr">{villesPour(arrPays).map((v) => <option key={v} value={v} />)}</datalist>
+                </div>
+              </div>
+            </div>
+
+            <div className="field-row">
+              <label className="field">
+                <span>Début (facultatif)</span>
+                <input type="date" value={dateDebut} onChange={(e) => setDateDebut(e.target.value)} />
+              </label>
+              <label className="field">
+                <span>Fin (facultatif)</span>
+                <input type="date" value={dateFin} min={dateDebut || undefined} onChange={(e) => setDateFin(e.target.value)} />
+              </label>
+            </div>
+
+            {resume && <div className="insight-banner"><div><strong>Résumé</strong><span>{resume}</span></div></div>}
+            <div className="action-row" style={{ justifyContent: 'flex-end' }}>
+              <button className="btn btn-primary" disabled={busy} onClick={creerRegle}>Créer la règle</button>
+            </div>
+          </div>
+
+          <div className="panel">
+            <h3>Toutes les règles</h3>
+            <p className="chart-sub">Désactiver une règle ne change pas les demandes déjà créées, qui gardent leur taux.</p>
+            {!regles ? <p className="hint">Chargement…</p> : (
+              <DataTable rows={regles} columns={colonnes} rowKey={(r) => r.id} emptyText="Aucune règle pour l'instant." searchPlaceholder="Rechercher une règle…" />
+            )}
+          </div>
+        </>
+      )}
+
+      {tab === 'simulateur' && (
         <div className="panel">
-          <h3>Taux par défaut</h3>
-          <p className="chart-sub">Appliqué à tout le monde quand aucune règle plus avantageuse ne s'applique. Entre {pct(params.plancher)} (plancher, modifiable uniquement en base) et 10 % (plafond). Une baisse doit être validée par un autre super admin ; une hausse s'applique tout de suite.</p>
-          <div className="inline-form">
-            <div className="suffix-input">
-              <input type="text" inputMode="decimal" value={defautSaisi} onChange={(e) => setDefautSaisi(e.target.value)} aria-label="Taux par défaut" />
-              <span>%</span>
-            </div>
-            <button className="btn btn-primary" disabled={busy} onClick={enregistrerDefaut}>Enregistrer</button>
-          </div>
-        </div>
-      </div>
-
-      <div className="panel commission-form">
-        <h3>Nouvelle règle de réduction</h3>
-        <div className="field-row">
-          <label className="field">
-            <span>Nom de la règle</span>
-            <input type="text" value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Ex. Lancement Lyon → Dakar" />
-          </label>
-          <label className="field">
-            <span>Commission</span>
-            <div className="suffix-input">
-              <input type="text" inputMode="decimal" value={taux} onChange={(e) => setTaux(e.target.value)} placeholder="Ex. 7" />
-              <span>%</span>
-            </div>
-          </label>
-        </div>
-
-        <div className="field">
-          <span>Pour qui</span>
-          <div className="segmented">
-            <button className={cible === 'tous' ? 'on' : ''} onClick={() => setCible('tous')}><b>Tous les membres</b><span>Tout le monde en profite</span></button>
-            <button className={cible === 'selection' ? 'on' : ''} onClick={() => setCible('selection')}><b>Membres choisis</b><span>{membres.size ? `${membres.size} sélectionné(s)` : 'Une ou plusieurs personnes'}</span></button>
-          </div>
-        </div>
-
-        {cible === 'selection' && (
-          <div className="member-picker">
-            <input type="search" placeholder="Rechercher un membre…" value={rechercheMembre} onChange={(e) => setRechercheMembre(e.target.value)} />
-            <ul>
-              {comptesFiltres.map((c) => (
-                <li key={c.id}>
-                  <label>
-                    <input
-                      type="checkbox"
-                      className="dt-check"
-                      checked={membres.has(c.id)}
-                      onChange={() => setMembres((m) => { const n = new Set(m); if (n.has(c.id)) n.delete(c.id); else n.add(c.id); return n; })}
-                    />
-                    <Avatar src={c.photo_url} nom={nomComplet(c.prenom, c.nom)} size={28} />
-                    <span className="member-name">{nomComplet(c.prenom, c.nom) || c.email}</span>
-                    <span className="hint">{c.email}</span>
-                  </label>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        <div className="field-row">
-          <div className="field">
-            <span>Départ (facultatif)</span>
-            <div className="lieu-row">
-              <Select ariaLabel="Pays de départ" value={depPays} onChange={setDepPays} options={paysOptions} />
-              <input type="text" list="villes-dep" value={depVille} onChange={(e) => setDepVille(e.target.value)} placeholder="Toutes les villes" />
-              <datalist id="villes-dep">{villesPour(depPays).map((v) => <option key={v} value={v} />)}</datalist>
+          <p className="chart-sub">Quel taux paierait ce membre aujourd'hui sur ce trajet ?</p>
+          <div className="field-row">
+            <label className="field">
+              <span>Membre</span>
+              <Select
+                ariaLabel="Membre"
+                value={simUser}
+                onChange={setSimUser}
+                options={[{ value: '', label: 'Choisir un membre…' }, ...comptes.map((c) => ({ value: c.id, label: nomComplet(c.prenom, c.nom) || c.email, hint: c.email }))]}
+              />
+            </label>
+            <div className="field">
+              <span>Trajet</span>
+              <div className="lieu-row">
+                <input type="text" list="villes-dep" value={simDepVille} onChange={(e) => setSimDepVille(e.target.value)} placeholder="Ville de départ" />
+                <Select ariaLabel="Pays de départ" value={simDepPays} onChange={setSimDepPays} options={paysOptions} />
+              </div>
+              <div className="lieu-row" style={{ marginTop: 8 }}>
+                <input type="text" list="villes-arr" value={simArrVille} onChange={(e) => setSimArrVille(e.target.value)} placeholder="Ville d'arrivée" />
+                <Select ariaLabel="Pays d'arrivée" value={simArrPays} onChange={setSimArrPays} options={paysOptions} />
+              </div>
             </div>
           </div>
-          <div className="field">
-            <span>Arrivée (facultatif)</span>
-            <div className="lieu-row">
-              <Select ariaLabel="Pays d'arrivée" value={arrPays} onChange={setArrPays} options={paysOptions} />
-              <input type="text" list="villes-arr" value={arrVille} onChange={(e) => setArrVille(e.target.value)} placeholder="Toutes les villes" />
-              <datalist id="villes-arr">{villesPour(arrPays).map((v) => <option key={v} value={v} />)}</datalist>
-            </div>
+          <div className="action-row" style={{ alignItems: 'center' }}>
+            <button className="btn" onClick={simuler}>Simuler</button>
+            {simResultat !== null && (
+              <span className="sim-result">
+                Taux appliqué : <strong>{pct(simResultat)}</strong>
+                {!params.actif && ' (commissions personnalisées inactives : 10 % pour tous)'}
+              </span>
+            )}
           </div>
         </div>
-
-        <div className="field-row">
-          <label className="field">
-            <span>Début (facultatif)</span>
-            <input type="date" value={dateDebut} onChange={(e) => setDateDebut(e.target.value)} />
-          </label>
-          <label className="field">
-            <span>Fin (facultatif)</span>
-            <input type="date" value={dateFin} min={dateDebut || undefined} onChange={(e) => setDateFin(e.target.value)} />
-          </label>
-        </div>
-
-        {resume && <div className="insight-banner"><div><strong>Résumé</strong><span>{resume}</span></div></div>}
-        <div className="action-row" style={{ justifyContent: 'flex-end' }}>
-          <button className="btn btn-primary" disabled={busy} onClick={creerRegle}>Créer la règle</button>
-        </div>
-      </div>
-
-      <div className="panel">
-        <h3>Règles</h3>
-        <p className="chart-sub">Désactiver une règle ne change pas les demandes déjà créées, qui gardent leur taux.</p>
-        {!regles ? <p className="hint">Chargement…</p> : (
-          <DataTable rows={regles} columns={colonnes} rowKey={(r) => r.id} emptyText="Aucune règle pour l'instant." searchPlaceholder="Rechercher une règle…" />
-        )}
-      </div>
-
-      <div className="panel">
-        <h3>Simulateur</h3>
-        <p className="chart-sub">Quel taux paierait ce membre aujourd'hui sur ce trajet ?</p>
-        <div className="field-row">
-          <label className="field">
-            <span>Membre</span>
-            <Select
-              ariaLabel="Membre"
-              value={simUser}
-              onChange={setSimUser}
-              options={[{ value: '', label: 'Choisir un membre…' }, ...comptes.map((c) => ({ value: c.id, label: nomComplet(c.prenom, c.nom) || c.email, hint: c.email }))]}
-            />
-          </label>
-          <div className="field">
-            <span>Trajet</span>
-            <div className="lieu-row">
-              <input type="text" list="villes-dep" value={simDepVille} onChange={(e) => setSimDepVille(e.target.value)} placeholder="Ville de départ" />
-              <Select ariaLabel="Pays de départ" value={simDepPays} onChange={setSimDepPays} options={paysOptions} />
-            </div>
-            <div className="lieu-row" style={{ marginTop: 8 }}>
-              <input type="text" list="villes-arr" value={simArrVille} onChange={(e) => setSimArrVille(e.target.value)} placeholder="Ville d'arrivée" />
-              <Select ariaLabel="Pays d'arrivée" value={simArrPays} onChange={setSimArrPays} options={paysOptions} />
-            </div>
-          </div>
-        </div>
-        <div className="action-row" style={{ alignItems: 'center' }}>
-          <button className="btn" onClick={simuler}>Simuler</button>
-          {simResultat !== null && (
-            <span className="sim-result">
-              Taux appliqué : <strong>{pct(simResultat)}</strong>
-              {!params.actif && ' (commissions personnalisées inactives : 10 % pour tous)'}
-            </span>
-          )}
-        </div>
-      </div>
+      )}
     </div>
   );
 }

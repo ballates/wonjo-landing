@@ -5,6 +5,17 @@ export const LABELS_STATUT_KYC: Record<string, string> = {
   none: 'Non commencé',
 };
 
+export const LABELS_PAIEMENT: Record<string, string> = {
+  libere: 'Libéré', escrow: 'En séquestre', en_attente: 'En attente', rembourse: 'Remboursé',
+  autorise: 'Autorisé', autorisation_annulee: 'Autorisation annulée',
+};
+
+export const LABELS_STATUT_COLIS: Record<string, string> = {
+  en_attente: 'En attente', accepte: 'Accepté', en_transit: 'En transit',
+  arrive: 'Arrivé à destination', remis_porteur: 'Repris par le porteur', livre: 'Livré',
+  annule: 'Annulé', litige: 'En litige', restitution_en_cours: 'Restitution en cours',
+};
+
 export const LABELS_STATUT_SIGNALEMENT: Record<string, string> = {
   nouveau: 'Nouveau',
   en_cours: 'En cours',
@@ -33,6 +44,7 @@ export const LABELS_ACTIONS: Record<string, string> = {
   commission_approuvee: 'a approuvé un changement de commission',
   commission_rejetee: 'a rejeté un changement de commission',
   commission_regle_desactivee: 'a désactivé une règle de commission',
+  litige_rembourser: 'a résolu un litige (remboursement manuel)',
 };
 
 export function libelleAction(action: string): string {
@@ -71,8 +83,8 @@ export const LABELS_BADGES: Record<string, string> = {
   verified_phone: 'Téléphone vérifié',
   verified_id: 'Identité vérifiée',
   first_delivery: 'Première livraison',
-  ambassadeur_expediteur: 'Ambassadeur expéditeur',
-  ambassadeur_porteur: 'Ambassadeur porteur',
+  ambassadeur_expediteur: 'Ambassadeur',
+  ambassadeur_porteur: 'Ambassadeur',
   legende: 'Légende',
 };
 
@@ -99,5 +111,35 @@ export function nomComplet(prenom?: string | null, nom?: string | null): string 
 }
 
 export function dateHeure(iso: string): string {
-  return new Date(iso).toLocaleString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const d = new Date(iso);
+  const heure = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  return `${dateSeule(iso)}, ${heure}`;
 }
+
+export function dateSeule(iso: string): string {
+  const d = new Date(iso);
+  const jour = String(d.getDate()).padStart(2, '0');
+  const mois = String(d.getMonth() + 1).padStart(2, '0');
+  return `${jour}-${mois}-${d.getFullYear()}`;
+}
+
+export const LABELS_TYPE_ENVOI: Record<string, string> = {
+  colis: 'Colis', document: 'Document',
+};
+
+export const LABELS_CONSTAT: Record<string, string> = {
+  remise_expediteur: 'Remise photographiée par l\'expéditeur',
+  remise_porteur: 'Réception photographiée par le porteur',
+  livraison_porteur: 'Livraison photographiée par le porteur',
+  restitution_expediteur: 'Restitution photographiée par l\'expéditeur',
+  restitution_porteur: 'Restitution photographiée par le porteur',
+};
+
+// annonce_id defini = l'expediteur a demande une place sur le trajet publie
+// par le porteur (Flux 1) : c'est l'expediteur qui a cree la demande.
+// offre_colis_id defini = le porteur a propose de transporter le colis
+// publie par l'expediteur (Flux 2) : c'est le porteur qui a cree la demande.
+export const LABELS_ORIGINE: Record<string, string> = {
+  annonce: 'Créée par l\'expéditeur, en réponse au trajet publié par le porteur',
+  offre_colis: 'Créée par le porteur, en réponse au colis publié par l\'expéditeur',
+};

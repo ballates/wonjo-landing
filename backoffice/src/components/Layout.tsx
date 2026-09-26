@@ -4,13 +4,12 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { LABELS_ROLES, peutGererAdmins, peutModerer, peutVoirKyc } from '../lib/permissions';
 import { useTheme } from '../lib/theme';
-import { nbActions, useAFaire } from '../lib/aFaire';
 import { brandMark } from './Brand';
 import { Avatar } from './Avatar';
 import { ProfilModal } from './ProfilModal';
 import {
-  IconDashboard, IconHistory, IconId, IconLogout, IconMoon, IconPanelClose, IconPanelOpen,
-  IconChecklist, IconMail, IconPercent, IconShield, IconSun, IconUsers,
+  IconDashboard, IconExchange, IconHistory, IconId, IconLogout, IconMoon, IconPanelClose, IconPanelOpen,
+  IconMail, IconPercent, IconShield, IconSun, IconUsers,
 } from './Icons';
 
 const STORAGE_KEY = 'wonjo-backoffice-sidebar-collapsed';
@@ -20,9 +19,6 @@ export function Layout() {
   const { theme, toggle: toggleTheme } = useTheme();
   const location = useLocation();
   const [profilOuvert, setProfilOuvert] = useState(false);
-  // Rafraichi a chaque changement de page : le badge suit les actions traitees.
-  const { items: aFaire } = useAFaire(location.pathname);
-  const nbAFaire = nbActions(aFaire);
   const [collapsed, setCollapsed] = useState(() => {
     try { return localStorage.getItem(STORAGE_KEY) === '1'; } catch { return false; }
   });
@@ -38,13 +34,13 @@ export function Layout() {
   const nom = profil?.nom ?? email ?? '';
   const liens = [
     { to: '/', label: 'Tableau de bord', icon: <IconDashboard />, visible: true, end: true },
-    { to: '/a-faire', label: 'À faire', icon: <IconChecklist />, visible: true, badge: nbAFaire },
-    { to: '/moderation', label: 'Modération', icon: <IconShield />, visible: peutModerer(role) },
+    { to: '/moderation', label: 'Signalements & litiges', icon: <IconShield />, visible: peutModerer(role) },
+    { to: '/transactions', label: 'Transactions', icon: <IconExchange />, visible: peutModerer(role) },
     { to: '/kyc', label: 'KYC', icon: <IconId />, visible: peutVoirKyc(role) },
-    { to: '/admins', label: 'Administrateurs', icon: <IconUsers />, visible: peutGererAdmins(role) },
     { to: '/commissions', label: 'Commissions', icon: <IconPercent />, visible: peutGererAdmins(role) },
     { to: '/emails', label: 'Emails', icon: <IconMail />, visible: peutGererAdmins(role) },
     { to: '/journal', label: 'Journal des actions', icon: <IconHistory />, visible: peutGererAdmins(role) },
+    { to: '/admins', label: 'Admin', icon: <IconUsers />, visible: peutGererAdmins(role) },
   ];
 
   return (
@@ -70,12 +66,8 @@ export function Layout() {
         <div className="sidebar-nav">
           {liens.filter((l) => l.visible).map((l) => (
             <NavLink key={l.to} to={l.to} end={l.end} title={collapsed ? l.label : undefined} className="nav-link">
-              <span className="nav-icon">
-                {l.icon}
-                {collapsed && !!l.badge && <span className="nav-dot" />}
-              </span>
+              <span className="nav-icon">{l.icon}</span>
               {!collapsed && <span className="nav-label">{l.label}</span>}
-              {!collapsed && !!l.badge && <span className="nav-badge">{l.badge}</span>}
             </NavLink>
           ))}
         </div>

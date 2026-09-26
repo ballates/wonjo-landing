@@ -71,6 +71,98 @@ export interface Litige {
   resolutions_en_attente: number;
 }
 
+export interface TransactionListe {
+  id: string;
+  description_colis: string | null;
+  type_envoi: string | null;
+  montant_total: number;
+  poids_kg: number | null;
+  statut_colis: string;
+  statut_paiement: string;
+  expediteur_id: string;
+  expediteur_nom: string | null;
+  expediteur_prenom: string | null;
+  expediteur_photo: string | null;
+  porteur_id: string;
+  porteur_nom: string | null;
+  porteur_prenom: string | null;
+  porteur_photo: string | null;
+  created_at: string;
+  accepte_at: string | null;
+  livre_at: string | null;
+  lieu_remise_reception: string | null;
+  lieu_remise_livraison: string | null;
+  code_genere: boolean;
+  a_photo: boolean;
+}
+
+export interface PhotoConstat {
+  id: string;
+  type: string;
+  confirmed_by: string;
+  notes: string | null;
+  created_at: string;
+  inspection_certifiee: boolean;
+  url: string;
+}
+
+export interface EvenementTimeline {
+  type: string;
+  payload: Record<string, unknown> | null;
+  created_at: string;
+  role: 'expediteur' | 'porteur' | null;
+}
+
+export interface TransactionMessage {
+  id: string;
+  sender_id: string;
+  contenu: string;
+  created_at: string;
+  edited_at: string | null;
+}
+
+export interface FicheTransaction {
+  id: string;
+  description_colis: string | null;
+  nature_contenu: string | null;
+  poids_kg: number | null;
+  valeur_declaree: number | null;
+  fragile: boolean | null;
+  type_envoi: string | null;
+  origine: string | null;
+  montant_total: number;
+  service_fee: number | null;
+  taux_commission: number | null;
+  statut_colis: string;
+  statut_paiement: string;
+  statut_avant_litige: string | null;
+  created_at: string;
+  accepte_at: string | null;
+  arrive_at: string | null;
+  livre_at: string | null;
+  conteste_at: string | null;
+  date_depart: string | null;
+  date_arrivee: string | null;
+  lieu_remise_reception: string | null;
+  lieu_remise_livraison: string | null;
+  code_genere: boolean;
+  code_genere_at: string | null;
+  code_essais: number | null;
+  code_generations: number | null;
+  photo_colis_url: string | null;
+  expediteur_id: string;
+  expediteur_nom: string | null;
+  expediteur_photo: string | null;
+  expediteur_telephone_verifie: boolean | null;
+  expediteur_id_verifie: boolean | null;
+  porteur_id: string;
+  porteur_nom: string | null;
+  porteur_photo: string | null;
+  porteur_telephone_verifie: boolean | null;
+  porteur_id_verifie: boolean | null;
+  timeline: EvenementTimeline[];
+}
+
 export interface FicheKyc {
   id: string;
   prenom: string;

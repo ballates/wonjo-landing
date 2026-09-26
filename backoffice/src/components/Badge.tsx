@@ -8,6 +8,20 @@ const STATUT_TONES: Record<string, BadgeTone> = {
   pending: 'amber',
   approved: 'green',
   rejected: 'danger',
+  en_attente: 'amber',
+  accepte: 'teal',
+  en_transit: 'teal',
+  arrive: 'teal',
+  remis_porteur: 'teal',
+  livre: 'green',
+  annule: 'muted',
+  litige: 'danger',
+  restitution_en_cours: 'amber',
+  libere: 'green',
+  escrow: 'teal',
+  rembourse: 'muted',
+  autorise: 'teal',
+  autorisation_annulee: 'muted',
 };
 
 export function Badge({ children, tone }: { children: React.ReactNode; tone: BadgeTone }) {

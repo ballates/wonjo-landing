@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Select } from '../components/Select';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   ResponsiveContainer, AreaChart, Area, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, LabelList,
@@ -12,16 +11,18 @@ import { DataTable, type Column } from '../components/DataTable';
 import { useFicheCompte, VoirFicheButton } from '../components/FicheCompte';
 import { nomComplet } from '../lib/labels';
 import { Avatar } from '../components/Avatar';
-import { AnimatedNumber, Kpi, VizTooltip, euros } from '../components/Kpi';
+import { AnimatedNumber, Kpi, VizTooltip, euros, pourcent } from '../components/Kpi';
 import { useLocation } from 'react-router-dom';
 import { CommunauteTab } from './dashboard/CommunauteTab';
 import { MarcheTab } from './dashboard/MarcheTab';
+import { ListeAFaire } from './AFairePage';
+import { nbActions, useAFaire } from '../lib/aFaire';
 import type {
-  CompteActif, StatsActivite, StatsRevenusJour, StatsColisJour,
+  CompteActif, StatsRevenusJour, StatsColisJour,
   RepartitionTransaction, RepartitionTypeEnvoi,
 } from '../lib/types';
 
-type Tab = 'activite' | 'communaute' | 'marche' | 'colis' | 'finance';
+type Tab = 'activite' | 'communaute' | 'marche' | 'colis' | 'finance' | 'afaire';
 
 const TAB_LABELS: Record<Tab, string> = {
   activite: 'Activité',
@@ -29,6 +30,7 @@ const TAB_LABELS: Record<Tab, string> = {
   marche: 'Marché',
   colis: 'Colis',
   finance: 'Finance',
+  afaire: 'À faire',
 };
 
 function premierMot(v?: string | null): string {
@@ -41,25 +43,8 @@ function salutation(): string {
   return h >= 18 || h < 5 ? 'Bonsoir' : 'Bonjour';
 }
 
-function Accueil() {
-  const { profil, email } = useAuth();
-  const aujourdHui = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
-
-  return (
-    <motion.div className="welcome" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: 'easeOut' }}>
-      <div className="welcome-head">
-        <Avatar src={profil?.avatar_url} nom={profil?.nom ?? email} size={52} />
-        <div>
-          <p className="welcome-date">{aujourdHui}</p>
-          <h1>{salutation()} {premierMot(profil?.nom ?? email)}</h1>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
 export function DashboardPage() {
-  const { role } = useAuth();
+  const { role, profil, email } = useAuth();
   const location = useLocation();
   const ongletDemande = (location.state as { tab?: Tab } | null)?.tab ?? null;
   const voitActivite = peutVoirActivite(role);
@@ -67,68 +52,86 @@ export function DashboardPage() {
   const onglets: Tab[] = [
     ...(voitActivite ? (['activite', 'communaute', 'marche', 'colis'] as Tab[]) : []),
     ...(voitRevenus ? (['finance'] as Tab[]) : []),
+    'afaire',
   ];
   const [tab, setTab] = useState<Tab | null>(ongletDemande);
   useEffect(() => { if (ongletDemande) setTab(ongletDemande); }, [ongletDemande, location.key]);
   const activeTab = tab && onglets.includes(tab) ? tab : onglets[0] ?? null;
+  // Un onglet deja visite reste monte (juste masque) : ses graphiques ne
+  // rejouent pas leur animation d'entree et ses donnees ne sont pas
+  // rechargees a chaque retour dessus.
+  const [visites, setVisites] = useState<Set<Tab>>(() => (activeTab ? new Set([activeTab]) : new Set()));
+  useEffect(() => {
+    if (activeTab && !visites.has(activeTab)) setVisites((v) => new Set(v).add(activeTab));
+  }, [activeTab, visites]);
+  const { items: aFaire, error: erreurAFaire } = useAFaire(activeTab);
+  const nbAFaire = nbActions(aFaire);
 
   return (
     <div>
-      <Accueil />
-      <h2 className="section-heading">Tableau de bord</h2>
-      {onglets.length === 0 && <p>Aucune donnée à afficher pour votre rôle.</p>}
-      {onglets.length > 0 && (
-        <>
-          <div className="tabs">
-            {onglets.map((t) => (
-              <button key={t} className={activeTab === t ? 'active' : ''} onClick={() => setTab(t)}>
-                {TAB_LABELS[t]}
-              </button>
-            ))}
-          </div>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              {activeTab === 'activite' && <ActiviteTab />}
-              {activeTab === 'communaute' && <CommunauteTab />}
-              {activeTab === 'marche' && <MarcheTab />}
-              {activeTab === 'colis' && <ColisTab />}
-              {activeTab === 'finance' && <FinanceTab />}
-            </motion.div>
-          </AnimatePresence>
-        </>
-      )}
+      <div className="greeting">
+        <h1>{salutation()} {premierMot(profil?.nom ?? email)}</h1>
+      </div>
+
+      <div className="tabs">
+        {onglets.map((t) => (
+          <button key={t} className={activeTab === t ? 'active' : ''} onClick={() => setTab(t)}>
+            {TAB_LABELS[t]}
+            {t === 'afaire' && nbAFaire > 0 && <span className="tab-badge">{nbAFaire}</span>}
+          </button>
+        ))}
+      </div>
+      <div style={{ position: 'relative' }}>
+      {[...visites].map((t) => (
+        <div
+          key={t}
+          style={activeTab === t
+            ? { position: 'static', visibility: 'visible' }
+            : { position: 'absolute', inset: 0, visibility: 'hidden', pointerEvents: 'none' }}
+        >
+          {t === 'activite' && <ActiviteTab />}
+          {t === 'communaute' && <CommunauteTab />}
+          {t === 'marche' && <MarcheTab />}
+          {t === 'colis' && <ColisTab />}
+          {t === 'finance' && <FinanceTab />}
+          {t === 'afaire' && <ListeAFaire items={aFaire} error={erreurAFaire} />}
+        </div>
+      ))}
+      </div>
     </div>
   );
 }
 
+interface StatsUtilisation {
+  membres: number;
+  maintenant: number;
+  aujourdhui: number;
+  semaine: number;
+  mois: number;
+  dau_moyen: number | null;
+  serie: { jour: string; actifs: number }[];
+}
+
 function ActiviteTab() {
   const { role } = useAuth();
-  const [stats, setStats] = useState<StatsActivite | null>(null);
+  const [u, setU] = useState<StatsUtilisation | null>(null);
   const [actifs, setActifs] = useState<CompteActif[]>([]);
   const [error, setError] = useState<string | null>(null);
   const { ouvrir, modal } = useFicheCompte();
 
   useEffect(() => {
-    async function load() {
-      const [statsRes, actifsRes] = await Promise.all([
-        supabase.rpc('admin_stats_activite').single(),
-        supabase.rpc('admin_comptes_plus_actifs', { p_limite: 5000 }),
-      ]);
-      if (statsRes.error) { setError(statsRes.error.message); return; }
-      setStats(statsRes.data as StatsActivite);
-      setActifs((actifsRes.data ?? []) as CompteActif[]);
-    }
-    load();
+    supabase.rpc('admin_stats_utilisation', { p_jours: 30 }).then(({ data, error: e }) => {
+      if (e) { setError(e.message); return; }
+      setU(data as StatsUtilisation);
+    });
+    supabase.rpc('admin_comptes_plus_actifs', { p_limite: 5000 }).then(({ data }) => setActifs((data ?? []) as CompteActif[]));
   }, []);
 
   if (error) return <p className="page-error">{error}</p>;
-  if (!stats) return <p className="loading-state">Chargement…</p>;
+  if (!u) return <p className="loading-state">Chargement…</p>;
+
+  const tauxUtilisation = u.membres ? (u.mois / u.membres) * 100 : 0;
+  const fidelite = u.mois ? (Number(u.dau_moyen ?? 0) / u.mois) * 100 : 0;
 
   const columns: Column<CompteActif>[] = [
     { key: 'avatar', label: 'Avatar', render: (c) => <Avatar src={c.photo_url} nom={nomComplet(c.prenom, c.nom)} size={36} />, width: 70 },
@@ -137,24 +140,42 @@ function ActiviteTab() {
     { key: 'livraisons', label: 'Livraisons', value: (c) => c.nombre_livraisons ?? 0 },
     { key: 'colis', label: 'Colis expédiés', value: (c) => c.nombre_colis_confies ?? 0 },
     { key: 'total', label: 'Total', value: (c) => (c.nombre_livraisons ?? 0) + (c.nombre_colis_confies ?? 0) },
-    ...(peutModerer(role) ? [{ key: 'actions', label: '', render: (c: CompteActif) => <VoirFicheButton onClick={() => ouvrir(c.id)} />, width: 150 }] : []),
+    ...(peutModerer(role) ? [{ key: 'actions', label: '', render: (c: CompteActif) => <VoirFicheButton onClick={() => ouvrir(c.id)} />, width: 100 }] : []),
   ];
 
   return (
-    <section>
+    <section className="viz-root">
       <div className="cards">
-        <Kpi index={0} label="Inscriptions (7j)" value={stats.inscriptions_7j} />
-        <Kpi index={1} label="Inscriptions (30j)" value={stats.inscriptions_30j} />
-        <Kpi index={2} label="Comptes bloqués" value={stats.comptes_bloques} />
-        <Kpi index={3} label="KYC en attente" value={stats.kyc_en_attente} />
-        <Kpi index={4} label="Litiges ouverts" value={stats.litiges_ouverts} />
-        <Kpi index={5} label="Signalements nouveaux" value={stats.signalements_nouveaux} />
+        <Kpi index={0} label="En ce moment" value={u.maintenant} hint="Actifs dans la dernière heure" />
+        <Kpi index={1} label="Aujourd'hui" value={u.aujourdhui} hint="Dernières 24 heures" />
+        <Kpi index={2} label="Cette semaine" value={u.semaine} hint="7 derniers jours" />
+        <Kpi index={3} label="Ce mois (MAU)" value={u.mois} hint="30 derniers jours" />
+        <Kpi index={4} label="Taux d'utilisation" value={tauxUtilisation} format={pourcent} hint={`${u.mois} membres actifs sur ${u.membres}`} />
+        <Kpi index={5} label="Fidélité" value={fidelite} format={pourcent} hint="Reviennent chaque jour" />
       </div>
 
       <div className="chart-card">
-        <h3>Comptes les plus actifs</h3>
-        <p className="chart-sub">Les 20 comptes les plus actifs (livraisons + colis expédiés). La recherche trouve aussi tous les autres.</p>
-        <DataTable rows={actifs} columns={columns} rowKey={(c) => c.id} initialSort={{ key: 'total', dir: 'desc' }} searchPlaceholder="Rechercher n'importe quel compte…" limiteSansRecherche={20} />
+        <h3>Membres actifs par jour</h3>
+        <p className="chart-sub">Un membre est compté actif un jour s'il a ouvert l'app ce jour-là.</p>
+        <ResponsiveContainer width="100%" height={220}>
+          <AreaChart data={u.serie} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+            <defs>
+              <linearGradient id="gradActifs" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="var(--teal)" stopOpacity={0.25} />
+                <stop offset="100%" stopColor="var(--teal)" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid stroke="var(--grid-line)" vertical={false} />
+            <XAxis dataKey="jour" tickFormatter={(v) => new Date(v).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })} tick={{ fontSize: 11, fill: 'var(--muted)' }} axisLine={{ stroke: 'var(--axis-line)' }} tickLine={false} minTickGap={24} />
+            <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: 'var(--muted)' }} axisLine={false} tickLine={false} width={40} />
+            <Tooltip content={<VizTooltip />} labelFormatter={(v) => new Date(v as string).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long' })} />
+            <Area type="monotone" dataKey="actifs" name="Membres actifs" stroke="var(--teal)" strokeWidth={2} fill="url(#gradActifs)" isAnimationActive={false} />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="chart-card">
+        <DataTable title="Comptes les plus actifs" rows={actifs} columns={columns} rowKey={(c) => c.id} initialSort={{ key: 'total', dir: 'desc' }} searchPlaceholder="Rechercher un compte…" limiteSansRecherche={10} pageSize={1000} />
       </div>
       {modal}
     </section>
@@ -223,8 +244,8 @@ function ColisTab() {
           />
         </div>
         <div className="stat-strip">
-          <div><span className="dot" style={{ background: 'var(--series-1)' }} /><strong><AnimatedNumber value={totalCrees} /></strong> créés</div>
-          <div><span className="dot" style={{ background: 'var(--series-2)' }} /><strong><AnimatedNumber value={totalLivres} /></strong> livrés</div>
+          <div><span className="dot" style={{ background: 'var(--teal)' }} /><strong><AnimatedNumber value={totalCrees} /></strong> créés</div>
+          <div><span className="dot" style={{ background: 'var(--brown)' }} /><strong><AnimatedNumber value={totalLivres} /></strong> livrés</div>
           <div><strong>{tauxLivraison === null ? '-' : `${tauxLivraison} %`}</strong> livrés / créés sur la période</div>
         </div>
         {!temporel ? <p className="loading-state">Chargement…</p> : (
@@ -232,20 +253,20 @@ function ColisTab() {
             <AreaChart data={temporel} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="gradCrees" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--series-1)" stopOpacity={0.25} />
-                  <stop offset="100%" stopColor="var(--series-1)" stopOpacity={0} />
+                  <stop offset="0%" stopColor="var(--teal)" stopOpacity={0.25} />
+                  <stop offset="100%" stopColor="var(--teal)" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="gradLivres" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--series-2)" stopOpacity={0.25} />
-                  <stop offset="100%" stopColor="var(--series-2)" stopOpacity={0} />
+                  <stop offset="0%" stopColor="var(--brown)" stopOpacity={0.25} />
+                  <stop offset="100%" stopColor="var(--brown)" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid stroke="var(--grid-line)" vertical={false} />
               <XAxis dataKey="jour" tickFormatter={(v) => new Date(v).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })} tick={{ fontSize: 11, fill: 'var(--muted)' }} axisLine={{ stroke: 'var(--axis-line)' }} tickLine={false} minTickGap={24} />
               <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: 'var(--muted)' }} axisLine={false} tickLine={false} width={40} />
               <Tooltip content={<VizTooltip />} labelFormatter={(v) => new Date(v as string).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long' })} />
-              <Area type="monotone" dataKey="colis_crees" name="Créés" stroke="var(--series-1)" strokeWidth={2} fill="url(#gradCrees)" />
-              <Area type="monotone" dataKey="colis_livres" name="Livrés" stroke="var(--series-2)" strokeWidth={2} fill="url(#gradLivres)" />
+              <Area type="monotone" dataKey="colis_crees" name="Créés" stroke="var(--teal)" strokeWidth={2} fill="url(#gradCrees)" isAnimationActive={false} />
+              <Area type="monotone" dataKey="colis_livres" name="Livrés" stroke="var(--brown)" strokeWidth={2} fill="url(#gradLivres)" isAnimationActive={false} />
             </AreaChart>
           </ResponsiveContainer>
         )}
@@ -261,7 +282,7 @@ function ColisTab() {
                 <XAxis type="number" hide allowDecimals={false} />
                 <YAxis dataKey="label" type="category" tick={{ fontSize: 12.5, fill: 'var(--text)' }} axisLine={false} tickLine={false} width={90} />
                 <Tooltip content={<VizTooltip />} cursor={{ fill: 'var(--hover)' }} />
-                <Bar dataKey="nb" name="Envois" fill="var(--series-1)" radius={[0, 4, 4, 0]} maxBarSize={22}>
+                <Bar dataKey="nb" name="Envois" fill="var(--teal)" radius={[0, 4, 4, 0]} maxBarSize={22} isAnimationActive={false}>
                   <LabelList dataKey="nb" position="right" style={{ fill: 'var(--text)', fontSize: 12, fontWeight: 700 }} />
                 </Bar>
               </BarChart>
@@ -277,7 +298,7 @@ function ColisTab() {
                 <XAxis type="number" hide allowDecimals={false} />
                 <YAxis dataKey="label" type="category" tick={{ fontSize: 12.5, fill: 'var(--text)' }} axisLine={false} tickLine={false} width={90} />
                 <Tooltip content={<VizTooltip />} cursor={{ fill: 'var(--hover)' }} />
-                <Bar dataKey="nb" name="Transports" fill="var(--series-1)" radius={[0, 4, 4, 0]} maxBarSize={20}>
+                <Bar dataKey="nb" name="Transports" fill="var(--teal)" radius={[0, 4, 4, 0]} maxBarSize={20} isAnimationActive={false}>
                   <LabelList dataKey="nb" position="right" style={{ fill: 'var(--text)', fontSize: 12, fontWeight: 700 }} />
                 </Bar>
               </BarChart>
@@ -334,7 +355,7 @@ function FinanceTab() {
         <Kpi index={1} label="Commission à venir" value={commissionAVenir} format={euros} hint="Encaissée à la livraison" />
         <Kpi index={2} label="Commission (30 jours)" value={commission30j} format={euros} hint="Transports terminés ce mois-ci" />
         <Kpi index={3} label="Transactions payées" value={payees} hint={`sur ${totalTransactions} demandes`} />
-        <Kpi index={4} label="Remboursé aux expéditeurs" value={val('rembourse', 'montant')} format={euros} hint={`${val('rembourse', 'nb')} transaction(s)`} />
+        <Kpi index={4} label="Remboursements" value={val('rembourse', 'montant')} format={euros} hint={`${val('rembourse', 'nb')} transaction(s)`} />
       </div>
 
       <div className="chart-card">
