@@ -35,7 +35,15 @@ export function TransactionsPage() {
   const filtrees = useMemo(() => (items ?? []).filter(filtreActif.test), [items, filtreActif]);
 
   const columns: Column<TransactionListe>[] = [
-    { key: 'type', filter: 'options', label: 'Type', value: (t) => LABELS_TYPE_ENVOI[t.type_envoi ?? ''] ?? t.type_envoi ?? '-' },
+    {
+      key: 'type', filter: 'options', label: 'Type', value: (t) => LABELS_TYPE_ENVOI[t.type_envoi ?? ''] ?? t.type_envoi ?? '-', render: (t) => {
+        if (t.type_envoi === 'document') {
+          const n = t.nb_enveloppes ?? 0;
+          return `${n} enveloppe${n > 1 ? 's' : ''}`;
+        }
+        return t.annonce_accepte_documents ? 'Colis + enveloppes' : 'Colis';
+      },
+    },
     { key: 'montant', label: 'Montant', value: (t) => Number(t.montant_total), render: (t) => `${Number(t.montant_total).toFixed(2)} €` },
     { key: 'statut_colis', filter: 'options', label: 'Statut', value: (t) => LABELS_STATUT_COLIS[t.statut_colis] ?? t.statut_colis, render: (t) => <StatutBadge statut={t.statut_colis} label={LABELS_STATUT_COLIS[t.statut_colis] ?? t.statut_colis} /> },
     { key: 'statut_paiement', filter: 'options', label: 'Paiement', value: (t) => LABELS_PAIEMENT[t.statut_paiement] ?? t.statut_paiement, render: (t) => <StatutBadge statut={t.statut_paiement} label={LABELS_PAIEMENT[t.statut_paiement] ?? t.statut_paiement} /> },

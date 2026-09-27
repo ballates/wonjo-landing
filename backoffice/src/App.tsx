@@ -7,6 +7,7 @@ import { Layout } from './components/Layout';
 import { DashboardPage } from './pages/DashboardPage';
 import { ModerationPage } from './pages/ModerationPage';
 import { TransactionsPage } from './pages/TransactionsPage';
+import { AvisPage } from './pages/AvisPage';
 import { KycPage } from './pages/KycPage';
 import { AdminsPage } from './pages/AdminsPage';
 import { JournalPage } from './pages/JournalPage';
@@ -43,6 +44,7 @@ function Gate() {
               <Route index element={<DashboardPage />} />
               <Route path="moderation" element={<ModerationPage />} />
               <Route path="transactions" element={<TransactionsPage />} />
+              <Route path="avis" element={<AvisPage />} />
               <Route path="kyc" element={<KycPage />} />
               <Route path="admins" element={<AdminsPage />} />
               <Route path="journal" element={<JournalPage />} />

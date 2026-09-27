@@ -111,8 +111,10 @@ function ComptesTab() {
 }
 
 function SignalementsTab() {
+  const location = useLocation();
+  const filtreDemande = (location.state as { filtre?: string } | null)?.filtre;
   const [items, setItems] = useState<Signalement[] | null>(null);
-  const [statut, setStatut] = useState<string>('nouveau');
+  const [statut, setStatut] = useState<string>(filtreDemande ?? 'nouveau');
   const [error, setError] = useState<string | null>(null);
 
   function load() {

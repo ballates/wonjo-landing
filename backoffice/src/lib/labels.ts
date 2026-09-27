@@ -127,19 +127,63 @@ export const LABELS_TYPE_ENVOI: Record<string, string> = {
   colis: 'Colis', document: 'Document',
 };
 
-export const LABELS_CONSTAT: Record<string, string> = {
-  remise_expediteur: 'Remise photographiée par l\'expéditeur',
-  remise_porteur: 'Réception photographiée par le porteur',
-  livraison_porteur: 'Livraison photographiée par le porteur',
-  restitution_expediteur: 'Restitution photographiée par l\'expéditeur',
-  restitution_porteur: 'Restitution photographiée par le porteur',
+export const LABELS_TYPE_DOCUMENT: Record<string, string> = {
+  passeport: 'Passeport', acte_naissance: 'Acte de naissance', diplome: 'Diplôme',
+  ordonnance: 'Ordonnance', autre: 'Autre',
 };
+
+export const LABELS_CONSTAT: Record<string, string> = {
+  remise_expediteur: 'Remise par l\'expéditeur',
+  remise_porteur: 'Réception par le porteur',
+  livraison_porteur: 'Livraison par le porteur',
+  restitution_expediteur: 'Restitution par l\'expéditeur',
+  restitution_porteur: 'Restitution par le porteur',
+};
+
+// Premier mot d'un nom complet ("Prenom Nom" -> "Prenom") : utilise pour
+// remplacer "l'expediteur"/"le porteur" par le prenom reel dans le suivi
+// d'une transaction (plus parlant qu'un role generique).
+export function premierPrenom(nomComplet: string | null | undefined, fallback: string): string {
+  const mot = (nomComplet ?? '').trim().split(/\s+/)[0];
+  return mot || fallback;
+}
+
+// Version de LABELS_CONSTAT/des jalons d'etape avec le prenom reel des deux
+// parties a la place de "l'expediteur"/"le porteur".
+export function libellesEvenement(prenomExpediteur: string, prenomPorteur: string): Record<string, string> {
+  return {
+    creee: 'Demande créée',
+    acceptee: `Acceptée par ${prenomPorteur}`,
+    code_genere: 'Code de livraison généré',
+    arrivee: 'Arrivée déclarée',
+    livree: 'Livrée',
+    contestee: 'Contestée (litige ouvert)',
+    declaration_expediteur: `Déclaration de ${prenomExpediteur}`,
+    acceptation_porteur: `Acceptation de ${prenomPorteur}`,
+    presomption_acceptation: 'Acceptation présumée (délai écoulé)',
+    contestation: 'Litige ouvert',
+    proposition_resolution: 'Proposition de résolution',
+    acceptation_resolution: 'Résolution acceptée',
+    refus_resolution: 'Résolution refusée',
+    remise_expediteur: `Remise par ${prenomExpediteur}`,
+    remise_porteur: `Réception par ${prenomPorteur}`,
+    livraison_porteur: `Livraison par ${prenomPorteur}`,
+    restitution_expediteur: `Restitution par ${prenomExpediteur}`,
+    restitution_porteur: `Restitution par ${prenomPorteur}`,
+  };
+}
 
 // annonce_id defini = l'expediteur a demande une place sur le trajet publie
 // par le porteur (Flux 1) : c'est l'expediteur qui a cree la demande.
 // offre_colis_id defini = le porteur a propose de transporter le colis
 // publie par l'expediteur (Flux 2) : c'est le porteur qui a cree la demande.
 export const LABELS_ORIGINE: Record<string, string> = {
-  annonce: 'Créée par l\'expéditeur, en réponse au trajet publié par le porteur',
-  offre_colis: 'Créée par le porteur, en réponse au colis publié par l\'expéditeur',
+  annonce: 'créée par l\'expéditeur, en réponse au trajet publié par le porteur',
+  offre_colis: 'créée par le porteur, en réponse au colis publié par l\'expéditeur',
+};
+
+// Cote avis : "porteur" est desigle "Voyageur" pour l'admin, plus parlant
+// que le terme interne utilise ailleurs dans le back-office.
+export const LABELS_ROLE_AVIS: Record<string, string> = {
+  expediteur: 'Expéditeur', porteur: 'Voyageur',
 };

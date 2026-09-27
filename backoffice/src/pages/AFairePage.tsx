@@ -16,7 +16,7 @@ export function CarteAFaire({ item }: { item: ElementAFaire; index?: number }) {
         <strong>{item.titre}</strong>
         <span>{item.detail}</span>
       </div>
-      <button className="btn btn-soft btn-sm" onClick={() => navigate(item.lien, { state: item.onglet ? { tab: item.onglet } : undefined })}>
+      <button className="btn btn-soft btn-sm" onClick={() => navigate(item.lien, { state: (item.onglet || item.filtre) ? { tab: item.onglet, filtre: item.filtre } : undefined })}>
         {item.action}
       </button>
     </div>

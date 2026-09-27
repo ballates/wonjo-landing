@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Select } from '../components/Select';
 import { supabase } from '../lib/supabase';
 import { StatutBadge } from '../components/Badge';
@@ -9,8 +10,10 @@ import { LABELS_STATUT_KYC, nomComplet } from '../lib/labels';
 import type { FicheKyc } from '../lib/types';
 
 export function KycPage() {
+  const location = useLocation();
+  const filtreDemande = (location.state as { filtre?: string } | null)?.filtre;
   const [items, setItems] = useState<FicheKyc[] | null>(null);
-  const [statut, setStatut] = useState('pending');
+  const [statut, setStatut] = useState(filtreDemande ?? 'pending');
   const [error, setError] = useState<string | null>(null);
 
   function load() {

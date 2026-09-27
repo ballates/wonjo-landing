@@ -10,6 +10,7 @@ export interface ElementAFaire {
   action: string;
   lien: string;
   onglet: string | null;
+  filtre?: string | null;
 }
 
 // Liste "A faire" calculee serveur (admin_a_faire, migration 224), deja

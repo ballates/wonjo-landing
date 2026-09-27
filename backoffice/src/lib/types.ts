@@ -75,6 +75,10 @@ export interface TransactionListe {
   id: string;
   description_colis: string | null;
   type_envoi: string | null;
+  nature_contenu: string | null;
+  nb_enveloppes: number | null;
+  type_document: string | null;
+  annonce_accepte_documents: boolean | null;
   montant_total: number;
   poids_kg: number | null;
   statut_colis: string;
@@ -113,18 +117,53 @@ export interface EvenementTimeline {
   role: 'expediteur' | 'porteur' | null;
 }
 
-export interface TransactionMessage {
+export interface AvisApercu {
   id: string;
-  sender_id: string;
-  contenu: string;
+  note: number;
+  commentaire: string | null;
   created_at: string;
-  edited_at: string | null;
+  demande_id: string;
+  auteur_id: string;
+  auteur_nom: string;
+  role_auteur: 'expediteur' | 'porteur';
+  destinataire_id: string;
+  destinataire_nom: string;
+  role_destinataire: 'expediteur' | 'porteur';
+  lieu_remise_reception: string | null;
+  lieu_remise_livraison: string | null;
+  statut_colis: string;
+}
+
+export interface AvisDashboard {
+  distribution: Record<string, number>;
+  negatifs: AvisApercu[];
+  positifs: AvisApercu[];
+  intermediaires: AvisApercu[];
+}
+
+export interface AvisListe {
+  id: string;
+  created_at: string;
+  note: number;
+  commentaire: string | null;
+  demande_id: string;
+  statut_colis: string;
+  auteur_id: string;
+  auteur_nom: string;
+  auteur_prenom: string | null;
+  role_auteur: 'expediteur' | 'porteur';
+  destinataire_id: string;
+  destinataire_nom: string;
+  destinataire_prenom: string | null;
+  role_destinataire: 'expediteur' | 'porteur';
 }
 
 export interface FicheTransaction {
   id: string;
   description_colis: string | null;
   nature_contenu: string | null;
+  nb_enveloppes: number | null;
+  type_document: string | null;
   poids_kg: number | null;
   valeur_declaree: number | null;
   fragile: boolean | null;

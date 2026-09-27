@@ -71,6 +71,7 @@ export function MfaEnrollPage() {
         <label>
           Code à 6 chiffres
           <input
+            type="tel"
             inputMode="numeric"
             pattern="[0-9]{6}"
             maxLength={6}
