@@ -141,6 +141,16 @@ export function CorridorsSection() {
     setVilles(villesOriginal);
   }
 
+  // Un pays decoche en haut (meme pas encore Valide) ferme aussitot son
+  // encart de villes en bas : pas de sens a choisir des villes dans un pays
+  // qui n'est de toute facon pas autorise. Si son popover etait ouvert au
+  // moment ou le pays est decoche, on le referme.
+  const paysActifParCode = new Map((pays ?? []).map((p) => [p.code, p.actif]));
+  useEffect(() => {
+    if (paysOuvert && paysActifParCode.get(paysOuvert) === false) setPaysOuvert(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pays, paysOuvert]);
+
   // Meme principe que les pays : modification purement locale, un seul
   // bouton Enregistrer (sur la ligne du titre) applique tous les tarifs
   // changes d'un coup, au lieu d'un bouton par carte.
@@ -218,7 +228,10 @@ export function CorridorsSection() {
     <div className="corridors-section">
       <div className="chart-card">
         <div className="chart-head">
-          <h3>Pays autorisés</h3>
+          <div className="chart-head-titre">
+            <h3>Pays autorisés</h3>
+            <span className="badge badge-muted">{nbActifs}/{pays.length}</span>
+          </div>
           {paysModifies.length > 0 && (
             <div className="action-row">
               <button type="button" className="btn btn-sm" disabled={paysBusy} onClick={annulerPays}>Annuler</button>
@@ -228,9 +241,7 @@ export function CorridorsSection() {
             </div>
           )}
         </div>
-        <p className="chart-sub">
-          Cochez, puis Valider. {nbActifs} / {pays.length} pays ouverts.
-        </p>
+        <p className="chart-sub">Cochez, puis Valider.</p>
         <div className="corridors-regions-compact">
           {parRegion.map((g) => (
             <div key={g.region} className="corridors-region-ligne">
@@ -251,7 +262,10 @@ export function CorridorsSection() {
 
       <div className="chart-card">
         <div className="chart-head">
-          <h3>Tarifs des colis, par corridor</h3>
+          <div className="chart-head-titre">
+            <h3>Tarifs des colis, par corridor</h3>
+            <span className="badge badge-muted">{prixCorridors.filter((c) => c.actif).length}/{prixCorridors.length}</span>
+          </div>
           {prixCorridorsModifies.length > 0 && (
             <div className="action-row">
               <button type="button" className="btn btn-sm" disabled={prixBusy} onClick={annulerPrixCorridors}>Annuler</button>
@@ -279,7 +293,10 @@ export function CorridorsSection() {
 
       <div className="chart-card">
         <div className="chart-head">
-          <h3>Tarifs des enveloppes, par zone</h3>
+          <div className="chart-head-titre">
+            <h3>Tarifs des enveloppes, par zone</h3>
+            <span className="badge badge-muted">{prixEnveloppes.length} zone{prixEnveloppes.length > 1 ? 's' : ''}</span>
+          </div>
           {prixEnveloppesModifies.length > 0 && (
             <div className="action-row">
               <button type="button" className="btn btn-sm" disabled={prixEnveloppesBusy} onClick={annulerPrixEnveloppes}>Annuler</button>
@@ -299,7 +316,12 @@ export function CorridorsSection() {
 
       <div className="chart-card">
         <div className="chart-head">
-          <h3>Villes desservies</h3>
+          <div className="chart-head-titre">
+            <h3>Villes desservies</h3>
+            <span className="badge badge-muted">
+              {villes.filter((v) => v.actif && (paysActifParCode.get(v.pays_code) ?? true)).length}/{villes.length}
+            </span>
+          </div>
           {villesModifiees.length > 0 && (
             <div className="action-row">
               <button type="button" className="btn btn-sm" disabled={villesBusy} onClick={annulerVilles}>Annuler</button>
@@ -310,7 +332,7 @@ export function CorridorsSection() {
           )}
         </div>
         <p className="chart-sub">
-          Ferme une ville précise sans fermer tout le pays. France non gérée ici (trop de villes).
+          Ferme une ville précise sans fermer tout le pays.
         </p>
         {(() => {
           const parPays = Object.entries(
@@ -324,11 +346,13 @@ export function CorridorsSection() {
             <div className="corridors-villes-grille">
               {parPays.map(([code, liste]) => {
                 const nbActivesPays = liste.filter((v) => v.actif).length;
+                const paysActif = paysActifParCode.get(code) ?? true;
                 return (
                   <VilleBoutonEtPopover
                     key={code}
                     liste={liste}
                     nbActivesPays={nbActivesPays}
+                    paysActif={paysActif}
                     ouvert={paysOuvert === code}
                     onOuvrir={() => setPaysOuvert((o) => (o === code ? null : code))}
                     onFermer={() => setPaysOuvert(null)}
@@ -432,10 +456,11 @@ function LignePrixCorridor({
 // villes, au lieu d'un panneau unique loin en bas de toute la grille : on
 // voit tout de suite quel pays on a ouvert, meme dans une grille de 60+.
 function VilleBoutonEtPopover({
-  liste, nbActivesPays, ouvert, onOuvrir, onFermer, onToggleVille, disabled,
+  liste, nbActivesPays, paysActif, ouvert, onOuvrir, onFermer, onToggleVille, disabled,
 }: {
   liste: VilleCorridor[];
   nbActivesPays: number;
+  paysActif: boolean;
   ouvert: boolean;
   onOuvrir: () => void;
   onFermer: () => void;
@@ -485,10 +510,12 @@ function VilleBoutonEtPopover({
         ref={btnRef}
         type="button"
         className={`corridors-ville-pays-bouton ${ouvert ? 'is-ouvert' : ''} ${nbActivesPays < liste.length ? 'has-fermees' : ''}`}
+        disabled={!paysActif}
+        title={paysActif ? undefined : 'Pays non autorisé : ouvrez-le d\'abord dans "Pays autorisés"'}
         onClick={toggleOuvert}
       >
         <span className="corridors-ville-pays-nom">{liste[0].pays_nom}</span>
-        <span className="hint">{nbActivesPays}/{liste.length}</span>
+        <span className="hint">{paysActif ? `${nbActivesPays}/${liste.length}` : 'fermé'}</span>
       </button>
       {ouvert && createPortal(
         <div ref={popRef} className="corridors-villes-panneau" style={{ top: pos.top, left: pos.left }}>

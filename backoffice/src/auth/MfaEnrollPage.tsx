@@ -62,30 +62,38 @@ export function MfaEnrollPage() {
   return (
     <AuthShell>
       <form
-        className="auth-card"
+        className="auth-card mfa-enroll"
         onSubmit={handleVerify}
       >
         <h1>Activer la double authentification</h1>
         <p>Obligatoire pour tout accès au back-office. Scanne ce code avec Google Authenticator, 1Password ou équivalent.</p>
-        {qrSvg && <div className="mfa-qr"><img src={qrSvg} alt="QR code à scanner avec ton authenticator" /></div>}
-        <label>
-          Code à 6 chiffres
-          <input
-            type="tel"
-            inputMode="numeric"
-            pattern="[0-9]{6}"
-            maxLength={6}
-            value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-            required
-            autoFocus
-          />
-        </label>
-        {error && <p className="auth-error">{error}</p>}
-        <button type="submit" disabled={verifying || code.length !== 6}>
-          {verifying ? 'Vérification…' : 'Confirmer'}
-        </button>
-        <button type="button" className="auth-secondary" onClick={() => signOut()}>Annuler</button>
+        {/* QR a gauche, saisie a droite : carte en largeur plutot qu'en hauteur. */}
+        <div className="mfa-enroll-body">
+          <div className="mfa-qr">
+            {qrSvg ? <img src={qrSvg} alt="QR code à scanner avec ton authenticator" /> : <span className="mfa-qr-placeholder" />}
+          </div>
+          <div className="mfa-enroll-side">
+            <label>
+              Code à 6 chiffres
+              <input
+                type="tel"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                pattern="[0-9]{6}"
+                maxLength={6}
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                required
+                autoFocus
+              />
+            </label>
+            {error && <p className="auth-error">{error}</p>}
+            <button type="submit" disabled={verifying || code.length !== 6}>
+              {verifying ? 'Vérification…' : 'Confirmer'}
+            </button>
+            <button type="button" className="auth-secondary" onClick={() => signOut()}>Annuler</button>
+          </div>
+        </div>
       </form>
     </AuthShell>
   );

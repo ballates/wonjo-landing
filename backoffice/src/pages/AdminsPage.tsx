@@ -11,7 +11,7 @@ import type { AdminRole } from '../auth/AuthContext';
 
 const ROLES: AdminRole[] = ['super_admin', 'moderation', 'finance', 'commercial', 'data', 'stagiaire', 'lecture_seule'];
 const HINTS_ROLES: Record<AdminRole, string> = {
-  super_admin: 'Tout, y compris gérer les administrateurs (max 5)',
+  super_admin: 'Tout, y compris gérer les collaborateurs (max 5)',
   moderation: 'Comptes, signalements, litiges, KYC',
   finance: 'Chiffres, revenus, commissions',
   commercial: 'Envoi d\'emails et modèles (Wmail)',
@@ -134,7 +134,7 @@ function AdminsPageComplete() {
   }
 
   const columns: Column<AdminRow>[] = [
-    { key: 'nom', label: 'Administrateur', value: (a) => a.nom_affiche ?? a.email, render: (a) => <Person src={a.avatar_url} nom={a.nom_affiche ?? a.email} sub={a.email} /> },
+    { key: 'nom', label: 'Collaborateur', value: (a) => a.nom_affiche ?? a.email, render: (a) => <Person src={a.avatar_url} nom={a.nom_affiche ?? a.email} sub={a.email} /> },
     {
       key: 'roles', label: 'Rôles', value: (a) => a.roles.map((r) => LABELS_ROLES[r]).join(', '), render: (a) => (
         a.user_id === profil?.user_id ? (
@@ -152,7 +152,7 @@ function AdminsPageComplete() {
       ) : a.user_id === profil?.user_id ? (
         <span className="hint">{a.peut_inviter ? 'Oui' : 'Non'}</span>
       ) : (
-        <label className="role-checkbox" title="Peut inviter de nouveaux administrateurs, hors rôle Admin">
+        <label className="role-checkbox" title="Peut inviter de nouveaux collaborateurs, hors rôle Admin">
           <input type="checkbox" className="dt-check" checked={a.peut_inviter} onChange={() => togglePeutInviter(a)} />
         </label>
       ),
@@ -182,7 +182,7 @@ function AdminsPageComplete() {
       </div>
       {error && <p className="page-error">{error}</p>}
       {!admins ? <p className="loading-state">Chargement…</p> : (
-        <DataTable rows={admins} columns={columns} rowKey={(a) => a.user_id} searchPlaceholder="Rechercher un administrateur…" pageSize={20} />
+        <DataTable rows={admins} columns={columns} rowKey={(a) => a.user_id} searchPlaceholder="Rechercher un collaborateur…" pageSize={20} />
       )}
       <InviteForm rolesAutorises={ROLES} onInvited={load} />
     </div>
@@ -200,7 +200,7 @@ function FormulaireInvitationSeul() {
       <div className="page-head">
         <div>
           <h1>Administration</h1>
-          <p className="page-sub">Vous pouvez inviter de nouveaux administrateurs (hors rôle super_admin).</p>
+          <p className="page-sub">Vous pouvez inviter de nouveaux collaborateurs (hors rôle super_admin).</p>
         </div>
       </div>
       <InviteForm rolesAutorises={rolesAutorises} onInvited={() => {}} />
@@ -244,18 +244,18 @@ function InviteForm({ rolesAutorises, onInvited }: { rolesAutorises: AdminRole[]
 
   return (
     <form className="panel invite-form" onSubmit={handleSubmit}>
-      <h3>Inviter un administrateur</h3>
+      <h3>Inviter un collaborateur</h3>
       <p className="chart-sub">La personne reçoit un email pour choisir son mot de passe, puis active la double authentification. Un ou plusieurs rôles peuvent être cochés.</p>
       <div className="invite-row">
         <input type="email" placeholder="email@exemple.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
       </div>
-      <div className="role-checkboxes" style={{ marginTop: 10 }}>
+      <div className="role-checkboxes invite-roles-row" style={{ marginTop: 10 }}>
         {rolesAutorises.map((r) => (
           <RolePill key={r} role={r} checked={roles.has(r)} onToggle={() => toggleRole(r)} />
         ))}
-      </div>
-      <div className="action-row" style={{ marginTop: 12 }}>
-        <button className="btn btn-primary" type="submit" disabled={loading}>{loading ? 'Envoi…' : 'Envoyer l\'invitation'}</button>
+        <button className="btn btn-primary" type="submit" disabled={loading} style={{ marginLeft: 'auto' }}>
+          {loading ? 'Envoi…' : 'Envoyer l\'invitation'}
+        </button>
       </div>
       {error && <p className="page-error" style={{ marginTop: 10 }}>{error}</p>}
       {success && <p className="invite-success">Invitation envoyée.</p>}

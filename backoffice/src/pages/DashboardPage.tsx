@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../auth/AuthContext';
-import { peutModerer, peutVoirActivite, peutVoirRevenus } from '../lib/permissions';
+import { peutModerer, peutVoirActivite, peutVoirAlertes, peutVoirColis, peutVoirRevenus } from '../lib/permissions';
 import { DataTable, type Column } from '../components/DataTable';
 import { useFicheCompte, VoirFicheButton } from '../components/FicheCompte';
 import { LABELS_TYPE_ENVOI, casserNom, casserPrenom, nomComplet } from '../lib/labels';
@@ -50,10 +50,12 @@ export function DashboardPage() {
   const ongletDemande = (location.state as { tab?: Tab } | null)?.tab ?? null;
   const voitActivite = peutVoirActivite(roles);
   const voitRevenus = peutVoirRevenus(roles);
+  const voitAlertes = peutVoirAlertes(roles);
   const onglets: Tab[] = [
-    ...(voitActivite ? (['activite', 'communaute', 'marche', 'colis'] as Tab[]) : []),
+    ...(voitActivite ? (['activite', 'communaute', 'marche'] as Tab[]) : []),
+    ...(peutVoirColis(roles) ? (['colis'] as Tab[]) : []),
     ...(voitRevenus ? (['finance'] as Tab[]) : []),
-    'afaire',
+    ...(voitAlertes ? (['afaire'] as Tab[]) : []),
   ];
   const [tab, setTab] = useState<Tab | null>(ongletDemande);
   useEffect(() => { if (ongletDemande) setTab(ongletDemande); }, [ongletDemande, location.key]);
@@ -65,7 +67,7 @@ export function DashboardPage() {
   useEffect(() => {
     if (activeTab && !visites.has(activeTab)) setVisites((v) => new Set(v).add(activeTab));
   }, [activeTab, visites]);
-  const { items: aFaire, error: erreurAFaire } = useAFaire(activeTab);
+  const { items: aFaire, error: erreurAFaire } = useAFaire(activeTab, voitAlertes);
   const nbAFaire = nbActions(aFaire);
 
   return (
@@ -74,6 +76,9 @@ export function DashboardPage() {
         <h1>{salutation()} {profil?.nom_affiche || premierMot(profil?.nom ?? email)}</h1>
       </div>
 
+      {onglets.length === 0 && (
+        <p className="hint">Aucun indicateur n'est ouvert à vos rôles. Utilisez le menu pour accéder à vos pages.</p>
+      )}
       <div className="tabs">
         {onglets.map((t) => (
           <button key={t} className={activeTab === t ? 'active' : ''} onClick={() => setTab(t)}>
@@ -192,7 +197,7 @@ function ActiviteTab() {
         </ResponsiveContainer>
       </div>
 
-      <div className="chart-card">
+      <div className="chart-card comptes-actifs-table">
         <DataTable title="Comptes les plus actifs" rows={actifs} columns={columns} rowKey={(c) => c.id} initialSort={{ key: 'total', dir: 'desc' }} searchPlaceholder="Rechercher un compte…" limiteSansRecherche={10} pageSize={1000} />
       </div>
       {modal}
@@ -439,7 +444,7 @@ function FinanceTab() {
           <div className="dt-wrap" style={{ marginTop: 14 }}>
             <table>
               <thead>
-                <tr><th>Compte</th><th>Annulations après charge</th><th>Montant concerné</th><th></th></tr>
+                <tr><th>Compte</th><th>Annulations après charge</th><th>Montant concerné</th>{peutModerer(roles) && <th></th>}</tr>
               </thead>
               <tbody>
                 {topAnnulateurs.map((a) => (
@@ -447,7 +452,7 @@ function FinanceTab() {
                     <td>{nomComplet(a.prenom, a.nom) || a.email || 'Compte supprimé'}</td>
                     <td>{a.nb}</td>
                     <td>{euros(a.montant)}</td>
-                    <td><VoirFicheButton onClick={() => ouvrir(a.user_id)} /></td>
+                    {peutModerer(roles) && <td><VoirFicheButton onClick={() => ouvrir(a.user_id)} /></td>}
                   </tr>
                 ))}
               </tbody>

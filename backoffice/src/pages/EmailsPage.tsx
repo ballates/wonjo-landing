@@ -5,6 +5,8 @@ import { Select, type Option } from '../components/Select';
 import { Avatar, Person } from '../components/Avatar';
 import { DataTable, type Column } from '../components/DataTable';
 import { dateHeure, nomComplet } from '../lib/labels';
+import { useAuth } from '../auth/AuthContext';
+import { peutEnvoyerInformation } from '../lib/permissions';
 import type { CompteRecherche } from '../lib/types';
 import logo from '../assets/wonjo-logo.png';
 import { IconChevronLeft, IconRestore, IconSend, IconSquarePencil, IconTrash } from '../components/Icons';
@@ -73,6 +75,9 @@ interface Campagne {
 
 export function EmailsPage() {
   const location = useLocation();
+  const { roles, profil } = useAuth();
+  // Emails "Information" (ignorent les desinscriptions) : super_admin seul.
+  const peutInformation = peutEnvoyerInformation(roles);
   // Pre-remplissage depuis Moderation (comptes coches) ou Commissions
   // ("Prevenir par email" d'une regle).
   const etat = (location.state ?? null) as {
@@ -83,7 +88,7 @@ export function EmailsPage() {
   // arriere-plan) : ceux passes par Moderation/Commissions via location.state.
   const nomsInitiaux = useMemo(() => new Map((selectionInitiale?.ids ?? []).map((id, i) => [id, selectionInitiale?.noms[i]])), []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const [type, setType] = useState<TypeEmail>(etat?.type ?? 'service');
+  const [type, setType] = useState<TypeEmail>(peutInformation ? (etat?.type ?? 'service') : 'promotion');
   const [segment, setSegment] = useState(selectionInitiale ? 'selection' : etat?.segment ?? 'non_verifies');
   const [membres, setMembres] = useState<Set<string>>(new Set(selectionInitiale?.ids ?? []));
   const [rechercheMembre, setRechercheMembre] = useState('');
@@ -202,7 +207,8 @@ export function EmailsPage() {
     if (!test) { chargerCampagnes(); if (r.echecs === 0) setComposerOuvert(false); }
   }
 
-  const apercu = message.split('{prenom}').join('Ben');
+  const prenomApercu = (profil?.nom_affiche || profil?.nom || 'Prénom').trim().split(/\s+/)[0];
+  const apercu = message.split('{prenom}').join(prenomApercu);
 
   const [modeleForm, setModeleForm] = useState<{ id: string | null; categorie: string; nom: string; sujet: string; corps: string } | null>(null);
   const [busyModele, setBusyModele] = useState(false);
@@ -233,6 +239,18 @@ export function EmailsPage() {
     chargerModeles();
   }
 
+  // Actions groupees : une erreur (droits, reseau) ne doit pas passer pour
+  // un succes silencieux.
+  async function toutes(appels: PromiseLike<{ error: { message: string } | null }>[]): Promise<boolean> {
+    const res = await Promise.all(appels);
+    const echecs = res.filter((r) => r.error);
+    if (echecs.length) {
+      setRetour({ ok: false, texte: `${echecs.length} action(s) sur ${res.length} ont échoué : ${echecs[0].error!.message}` });
+      return false;
+    }
+    return true;
+  }
+
   function toggleSelection(set: Set<string>, id: string): Set<string> {
     const n = new Set(set);
     if (n.has(id)) n.delete(id); else n.add(id);
@@ -246,13 +264,13 @@ export function EmailsPage() {
 
   async function mettreModelesCorbeille(ids: string[]) {
     if (ids.length === 0) return;
-    await Promise.all(ids.map((id) => supabase.rpc('admin_deplacer_modele_corbeille', { p_id: id, p_corbeille: true })));
+    await toutes(ids.map((id) => supabase.rpc('admin_deplacer_modele_corbeille', { p_id: id, p_corbeille: true })));
     setSelectionModeles(null);
     chargerModeles();
   }
   async function restaurerModeles(ids: string[]) {
     if (ids.length === 0) return;
-    await Promise.all(ids.map((id) => supabase.rpc('admin_deplacer_modele_corbeille', { p_id: id, p_corbeille: false })));
+    await toutes(ids.map((id) => supabase.rpc('admin_deplacer_modele_corbeille', { p_id: id, p_corbeille: false })));
     setSelectionModelesCorbeille(new Set());
     chargerCorbeille();
     chargerModeles();
@@ -260,20 +278,20 @@ export function EmailsPage() {
   async function supprimerModelesDefinitivement(ids: string[]) {
     if (ids.length === 0) return;
     if (!window.confirm(`Supprimer définitivement ${ids.length} modèle(s) ? Impossible à annuler.`)) return;
-    await Promise.all(ids.map((id) => supabase.rpc('admin_supprimer_modele', { p_id: id })));
+    await toutes(ids.map((id) => supabase.rpc('admin_supprimer_modele', { p_id: id })));
     setSelectionModelesCorbeille(new Set());
     chargerCorbeille();
   }
 
   async function mettreCampagnesCorbeille(ids: string[]) {
     if (ids.length === 0) return;
-    await Promise.all(ids.map((id) => supabase.rpc('admin_deplacer_campagne_corbeille', { p_id: id, p_corbeille: true })));
+    await toutes(ids.map((id) => supabase.rpc('admin_deplacer_campagne_corbeille', { p_id: id, p_corbeille: true })));
     setSelectionCampagnes(null);
     chargerCampagnes();
   }
   async function restaurerCampagnes(ids: string[]) {
     if (ids.length === 0) return;
-    await Promise.all(ids.map((id) => supabase.rpc('admin_deplacer_campagne_corbeille', { p_id: id, p_corbeille: false })));
+    await toutes(ids.map((id) => supabase.rpc('admin_deplacer_campagne_corbeille', { p_id: id, p_corbeille: false })));
     setSelectionCampagnesCorbeille(new Set());
     chargerCorbeille();
     chargerCampagnes();
@@ -281,7 +299,7 @@ export function EmailsPage() {
   async function supprimerCampagnesDefinitivement(ids: string[]) {
     if (ids.length === 0) return;
     if (!window.confirm(`Supprimer définitivement ${ids.length} envoi(s) de l'historique ? Impossible à annuler.`)) return;
-    await Promise.all(ids.map((id) => supabase.rpc('admin_supprimer_campagne', { p_id: id })));
+    await toutes(ids.map((id) => supabase.rpc('admin_supprimer_campagne', { p_id: id })));
     setSelectionCampagnesCorbeille(new Set());
     chargerCorbeille();
   }
@@ -330,6 +348,7 @@ export function EmailsPage() {
         <button className={sousOnglet === 'desinscrits' ? 'active' : ''} onClick={() => setSousOnglet('desinscrits')}>Désinscrits{nbDesinscrits ? ` (${nbDesinscrits})` : ''}</button>
         <button className={sousOnglet === 'corbeille' ? 'active' : ''} onClick={() => setSousOnglet('corbeille')}><IconTrash /> Corbeille</button>
       </div>
+      {retour && !retour.ok && !composerOuvert && <p className="page-error">{retour.texte}</p>}
 
       {sousOnglet === 'modeles' ? (
         <div className="panel">
@@ -594,9 +613,11 @@ export function EmailsPage() {
       <div className="email-layout">
         <div className="panel email-form">
           <div className="segmented" role="radiogroup" aria-label="Type d'email">
-            <button role="radio" aria-checked={type === 'service'} className={type === 'service' ? 'on' : ''} onClick={() => setType('service')}>
-              <b>Information</b><span>Lié au compte : vérification, reconnexion, nouveauté</span>
-            </button>
+            {peutInformation && (
+              <button role="radio" aria-checked={type === 'service'} className={type === 'service' ? 'on' : ''} onClick={() => setType('service')}>
+                <b>Information</b><span>Lié au compte : vérification, reconnexion, nouveauté</span>
+              </button>
+            )}
             <button role="radio" aria-checked={type === 'promotion'} className={type === 'promotion' ? 'on' : ''} onClick={() => setType('promotion')}>
               <b>Promotion</b><span>Offre commerciale, avec lien de désinscription</span>
             </button>

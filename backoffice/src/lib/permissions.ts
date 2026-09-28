@@ -8,8 +8,28 @@ function a(roles: AdminRole[], ...accepte: AdminRole[]): boolean {
   return roles.some((r) => accepte.includes(r));
 }
 
+// Onglets Activite / Communaute / Marche : admin_stats_utilisation,
+// admin_stats_communaute, admin_stats_marche. data (migration 284) et
+// stagiaire (migration 285) corriges : ces roles existaient sans acceder a
+// rien, alors que leurs libelles le promettaient.
 export function peutVoirActivite(roles: AdminRole[]): boolean {
   return a(roles, 'super_admin', 'moderation', 'lecture_seule', 'data', 'stagiaire');
+}
+
+// Onglet Colis : admin_stats_colis_temporel / admin_repartition_type_envoi.
+export function peutVoirColis(roles: AdminRole[]): boolean {
+  return a(roles, 'super_admin', 'moderation');
+}
+
+// Onglet Alertes : admin_a_faire.
+export function peutVoirAlertes(roles: AdminRole[]): boolean {
+  return a(roles, 'super_admin', 'moderation');
+}
+
+// Emails "Information" (ignorent les desinscriptions) : super_admin seul,
+// verifie aussi dans admin-envoyer-email.
+export function peutEnvoyerInformation(roles: AdminRole[]): boolean {
+  return a(roles, 'super_admin');
 }
 
 export function peutVoirRevenus(roles: AdminRole[]): boolean {

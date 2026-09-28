@@ -8,6 +8,17 @@
     <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!-- Anti-clickjacking : GitHub Pages ne permet ni X-Frame-Options ni
+         CSP frame-ancestors. La page reste masquee tant qu'on n'a pas verifie
+         qu'elle n'est pas affichee dans une iframe d'un autre site. -->
+    <style id="anti-clickjack">body { display: none !important; }</style>
+    <script>
+      if (window.self === window.top) {
+        document.getElementById('anti-clickjack').remove();
+      } else {
+        window.top.location = window.self.location;
+      }
+    </script>
     <script>
       try {
         var t = localStorage.getItem('wonjo-backoffice-theme');

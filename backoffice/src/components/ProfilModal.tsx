@@ -60,7 +60,7 @@ export function ProfilModal({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <Modal onClose={onClose} closeOnSurface>
+    <Modal onClose={onClose} closeOnSurface narrow>
       <h2 className="modal-title">Mon profil</h2>
       <div className="modal-body">
         <div className="avatar-edit">
@@ -84,8 +84,8 @@ export function ProfilModal({ onClose }: { onClose: () => void }) {
 
         <div className="form-grid">
           <label>
-            Nom affiché
-            <input type="text" value={nomAffiche} placeholder={profil?.nom ?? 'Ex. Ben'} onChange={(e) => setNomAffiche(e.target.value)} />
+            Pseudo
+            <input type="text" value={nomAffiche} placeholder={profil?.nom ?? 'Ex. Ben'} style={{ maxWidth: 220 }} onChange={(e) => setNomAffiche(e.target.value)} />
           </label>
           <p className="hint">Email : {email} · Rôle{roles.length > 1 ? 's' : ''} : {roles.map((r) => LABELS_ROLES[r]).join(', ')}</p>
         </div>

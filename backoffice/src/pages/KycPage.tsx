@@ -17,8 +17,10 @@ export function KycPage() {
   const [error, setError] = useState<string | null>(null);
 
   function load() {
+    setError(null);
     supabase.rpc('admin_file_kyc', { p_statut: statut || null }).then(({ data, error: rpcError }) => {
-      if (rpcError) { setError(rpcError.message); return; }
+      // En erreur, liste vide plutot que "Chargement…" affiche indefiniment.
+      if (rpcError) { setError(rpcError.message); setItems([]); return; }
       setItems((data ?? []) as FicheKyc[]);
     });
   }
@@ -32,6 +34,7 @@ export function KycPage() {
     { key: 'statut', filter: 'options', label: 'Statut', value: (k) => LABELS_STATUT_KYC[k.kyc_status ?? 'none'] ?? k.kyc_status, render: (k) => <StatutBadge statut={k.kyc_status ?? 'none'} label={LABELS_STATUT_KYC[k.kyc_status ?? 'none'] ?? String(k.kyc_status)} /> },
     { key: 'motif', filter: 'options', label: 'Motif du rejet', value: (k) => k.kyc_reject_reason, render: (k) => k.kyc_reject_reason ?? '-' },
     { key: 'tentatives', label: 'Tentatives', value: (k) => k.kyc_attempts ?? 0 },
+    { key: 'expiration', label: 'Pièce expire le', value: (k) => k.kyc_doc_expiration_date, filter: 'date', render: (k) => k.kyc_doc_expiration_date ? new Date(k.kyc_doc_expiration_date).toLocaleDateString('fr-FR') : '-' },
     { key: 'inscrit', label: 'Inscrit le', value: (k) => k.created_at, filter: 'date', render: (k) => new Date(k.created_at).toLocaleDateString('fr-FR') },
     { key: 'actions', label: '', render: (k) => <VoirFicheButton onClick={() => ouvrir(k.id)} />, width: 100 },
   ];
@@ -62,6 +65,7 @@ export function KycPage() {
                 { value: 'pending', label: 'En attente' },
                 { value: 'rejected', label: 'Rejetés' },
                 { value: 'approved', label: 'Approuvés' },
+                { value: 'expire_bientot', label: 'Pièce expire sous 14 jours' },
                 { value: '', label: 'Tous les dossiers' },
               ]}
             />

@@ -50,7 +50,8 @@ function HBar({ data, height }: { data: { label: string; nb: number; pct?: numbe
   );
 }
 
-const COULEUR_NOTE = (n: number) => (n <= 2 ? 'var(--badge-danger-fg)' : n === 5 ? 'var(--badge-green-fg)' : 'var(--badge-amber-fg)');
+// Alignee sur categoriesAvis : negatif = 1-2, intermediaire = 3, positif = 4-5.
+const COULEUR_NOTE = (n: number) => (n <= 2 ? 'var(--badge-danger-fg)' : n === 3 ? 'var(--badge-amber-fg)' : 'var(--badge-green-fg)');
 
 export function CommunauteTab() {
   const navigate = useNavigate();
@@ -96,9 +97,9 @@ export function CommunauteTab() {
   const dist = avis?.distribution ?? {};
   const compterNotes = (notes: number[]) => notes.reduce((total, n) => total + (dist[String(n)] ?? 0), 0);
   const categoriesAvis = [
-    { cle: 'negatif', icone: '🔴', nb: compterNotes([1, 2]) },
-    { cle: 'intermediaire', icone: '🟠', nb: compterNotes([3]) },
-    { cle: 'positif', icone: '🟢', nb: compterNotes([4, 5]) },
+    { cle: 'negatif', tone: 'danger', nb: compterNotes([1, 2]) },
+    { cle: 'intermediaire', tone: 'amber', nb: compterNotes([3]) },
+    { cle: 'positif', tone: 'green', nb: compterNotes([4, 5]) },
   ];
 
   return (
@@ -137,10 +138,10 @@ export function CommunauteTab() {
                 <button
                   key={c.cle}
                   type="button"
-                  className="btn btn-soft btn-sm"
+                  className={`btn btn-sm avis-filtre-${c.tone}`}
                   onClick={() => navigate('/avis', { state: { categorie: c.cle } })}
                 >
-                  {c.icone} {LABELS_CATEGORIE_AVIS[c.cle]} ({c.nb}) <IconChevronRight />
+                  {LABELS_CATEGORIE_AVIS[c.cle]} ({c.nb}) <IconChevronRight />
                 </button>
               ))}
             </div>

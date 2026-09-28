@@ -301,7 +301,8 @@ select:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px r
 .champ-mot-de-passe-bascule:hover { color: var(--text); }
 /* Uniquement les boutons directs du formulaire (soumission) - pas les
    boutons imbriques comme celui qui affiche/masque le mot de passe. */
-.auth-card > button {
+.auth-card > button,
+.mfa-enroll-side > button {
   height: 48px;
   border-radius: 12px;
   border: none;
@@ -313,13 +314,28 @@ select:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px r
   box-shadow: var(--cta-shadow);
   transition: filter 0.2s ease, transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
 }
-.auth-card > button:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); box-shadow: var(--cta-shadow-hover); }
-.auth-card > button:disabled { opacity: 0.6; cursor: not-allowed; }
+.auth-card > button:hover:not(:disabled),
+.mfa-enroll-side > button:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); box-shadow: var(--cta-shadow-hover); }
+.auth-card > button:disabled,
+.mfa-enroll-side > button:disabled { opacity: 0.6; cursor: not-allowed; }
 .auth-card .auth-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); box-shadow: none; }
 .auth-card .auth-secondary:hover:not(:disabled) { background: var(--hover); transform: none; box-shadow: none; }
 .auth-error { color: var(--badge-danger-fg); background: var(--badge-danger-bg); padding: 9px 12px; border-radius: 10px; font-size: 13px; margin: 0; }
 .mfa-qr { display: flex; justify-content: center; padding: 12px; background: #fff; border-radius: 14px; border: 1px solid var(--border); }
 .mfa-qr img { width: 180px; height: 180px; }
+
+/* Enrolement MFA : carte en largeur (QR a gauche, saisie a droite). */
+.auth-form-wrap:has(.mfa-enroll) { max-width: 640px; }
+.mfa-enroll { padding: 28px 32px; }
+.mfa-enroll-body { display: grid; grid-template-columns: auto 1fr; gap: 24px; align-items: center; }
+.mfa-enroll .mfa-qr { padding: 10px; }
+.mfa-enroll .mfa-qr img, .mfa-qr-placeholder { display: block; width: 168px; height: 168px; }
+.mfa-enroll-side { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.mfa-enroll-side input { width: 100%; letter-spacing: 0.3em; font-variant-numeric: tabular-nums; }
+@media (max-width: 560px) {
+  .mfa-enroll-body { grid-template-columns: 1fr; justify-items: center; }
+  .mfa-enroll-side { width: 100%; }
+}
 
 /* ============ Layout & sidebar ============ */
 .layout { display: flex; min-height: 100vh; }
@@ -643,6 +659,11 @@ select:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px r
 .corridors-ville-pays-bouton:hover { border-color: var(--teal); }
 .corridors-ville-pays-bouton.is-ouvert { border-color: var(--teal); background: var(--accent-soft); }
 .corridors-ville-pays-bouton.has-fermees .hint { color: var(--badge-amber-fg); font-weight: 700; }
+.corridors-ville-pays-bouton:not(.has-fermees):not(:disabled) .corridors-ville-pays-nom,
+.corridors-ville-pays-bouton:not(.has-fermees):not(:disabled) .hint { color: var(--brown); }
+.chart-head-titre { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.corridors-ville-pays-bouton:disabled { opacity: 0.45; cursor: not-allowed; }
+.corridors-ville-pays-bouton:disabled:hover { border-color: var(--border); }
 .corridors-villes-panneau {
   position: fixed; z-index: 200; width: max-content; max-width: 320px;
   padding: 12px 14px; border-radius: 14px;
@@ -710,6 +731,7 @@ select:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px r
 .dt-count { font-size: 12.5px; color: var(--muted); margin-left: auto; }
 .dt-title { margin: 0; font-size: 15px; }
 .dt-toolbar--titled .dt-search { flex: 0 1 260px; margin-left: auto; }
+.comptes-actifs-table .dt-search { flex-basis: 200px; max-width: 200px; }
 .dt-toolbar--titled .dt-count { margin-left: 12px; }
 .dt-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); box-shadow: var(--shadow-sm); }
 .dt-truncate { display: block; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -762,16 +784,23 @@ td.dt-empty { text-align: center; color: var(--muted); padding: 32px; }
 .btn-soft:hover:not(:disabled) { border-color: var(--teal); }
 .btn-success { background: #1D9E75; color: #fff; border-color: transparent; }
 .btn-success:hover:not(:disabled) { background: #178a66; border-color: transparent; }
+.btn-soft-success { background: var(--badge-green-bg); color: var(--badge-green-fg); border-color: transparent; }
+.btn-soft-success:hover:not(:disabled) { border-color: var(--badge-green-fg); }
 .btn-danger { background: var(--danger); color: #fff; border-color: transparent; }
 .btn-danger:hover:not(:disabled) { background: #cf3a3f; border-color: transparent; }
 .btn-danger-outline { color: var(--badge-danger-fg); border-color: rgba(229,72,77,0.45); }
 .btn-danger-outline:hover:not(:disabled) { background: var(--badge-danger-bg); border-color: var(--danger); }
 
+.avis-filtre-danger { background: var(--badge-danger-bg); color: var(--badge-danger-fg); border-color: transparent; }
+.avis-filtre-amber { background: var(--badge-amber-bg); color: var(--badge-amber-fg); border-color: transparent; }
+.avis-filtre-green { background: var(--badge-green-bg); color: var(--badge-green-fg); border-color: transparent; }
+.avis-filtre-danger:hover:not(:disabled), .avis-filtre-amber:hover:not(:disabled), .avis-filtre-green:hover:not(:disabled) { filter: brightness(0.95); }
+
 /* ============ Tabs ============ */
 .tabs { display: inline-flex; gap: 4px; margin-bottom: 18px; padding: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-sm); }
 .tabs button { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 9px; border: none; background: transparent; cursor: pointer; font-weight: 700; font-size: 13px; color: var(--muted); transition: all 0.15s ease; }
 .tabs button:hover { color: var(--ink); }
-.tabs button.active { background: var(--brand-gradient); color: #fff; box-shadow: var(--cta-shadow); }
+.tabs button.active { background: var(--accent-soft); color: var(--accent-ink); }
 
 /* ============ Badges / states ============ */
 .badge {
@@ -826,6 +855,7 @@ td.dt-empty { text-align: center; color: var(--muted); padding: 32px; }
   overflow: hidden;
 }
 .modal.modal--wide { width: 720px; }
+.modal.modal--narrow { width: 420px; }
 .modal-close {
   position: absolute;
   top: 14px;
@@ -900,17 +930,20 @@ td.dt-empty { text-align: center; color: var(--muted); padding: 32px; }
 .confirmation-suppression label { font-size: 12.5px; font-weight: 700; color: var(--ink); }
 .confirmation-suppression label strong { color: var(--badge-danger-fg); letter-spacing: 0.5px; }
 .confirmation-suppression input {
-  height: 44px;
-  padding: 0 14px;
-  font-size: 15px;
+  height: 38px;
+  padding: 0 12px;
+  font-size: 13px;
   font-weight: 700;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
   border: 1.5px solid rgba(229,72,77,0.4);
 }
 .confirmation-suppression input:focus {
   border-color: var(--danger);
   box-shadow: 0 0 0 3px var(--badge-danger-bg);
 }
+
+.motif-form textarea.has-erreur { border-color: var(--danger); box-shadow: 0 0 0 3px var(--badge-danger-bg); }
+.motif-form .page-error { font-size: 12.5px; padding: 8px 12px; }
 
 .timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .timeline li { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }

@@ -54,7 +54,8 @@ function ComptesTab() {
   // seule cette page-la est jamais en memoire.
   const [recherche, setRecherche] = useState('');
   const rechercheDebattue = useDebounce(recherche);
-  const [statut, setStatut] = useState<string[]>([]);
+  const [statut, setStatut] = useState<string[]>(filtreDemande === 'bloque' ? ['bloque'] : []);
+  useEffect(() => { if (filtreDemande === 'bloque') setStatut(['bloque']); }, [filtreDemande, location.key]);
   const [kyc, setKyc] = useState<string[]>([]);
   const [verif, setVerif] = useState<string[]>([]);
   const [niveau, setNiveau] = useState<string[]>([]);
@@ -257,7 +258,7 @@ function SignalementsTab() {
           {s.statut !== 'clos_sans_suite' && s.statut !== 'clos_action_prise' && (
             <>
               <button className="btn btn-sm btn-soft" onClick={() => traiter(s.id, 'clos_sans_suite')}>Clore sans suite</button>
-              <button className="btn btn-sm btn-success" onClick={() => traiter(s.id, 'clos_action_prise')}>Clore - action prise</button>
+              <button className="btn btn-sm btn-soft-success" onClick={() => traiter(s.id, 'clos_action_prise')}>Clore - action prise</button>
             </>
           )}
         </div>

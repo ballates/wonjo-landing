@@ -52,7 +52,12 @@ export const IconChevronRight = () => <Svg size={14}><polyline points="9 6 15 12
 export const IconChevronLeft = () => <Svg size={14}><polyline points="15 6 9 12 15 18" /></Svg>;
 export const IconSend = () => <Svg size={16}><path d="m22 2-20 8 9 3 3 9z" /><path d="M22 2 11 13" /></Svg>;
 export const IconGlobe = () => <Svg><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15 15 0 0 1 0 20a15 15 0 0 1 0-20z" /></Svg>;
-export const IconTag = () => <Svg><path d="M12.6 2H4a2 2 0 0 0-2 2v8.6a2 2 0 0 0 .59 1.41l9.4 9.4a2 2 0 0 0 2.82 0l7.6-7.6a2 2 0 0 0 0-2.82l-9.4-9.4A2 2 0 0 0 12.6 2z" /><circle cx="7.5" cy="7.5" r="1.5" /></Svg>;
+export const IconTag = () => (
+  <Svg>
+    <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+    <circle cx="7.5" cy="7.5" r="1" fill="currentColor" stroke="none" />
+  </Svg>
+);
 export const IconSquarePencil = () => (
   <Svg size={16}>
     <path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5" />

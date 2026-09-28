@@ -238,6 +238,7 @@ export interface FicheKyc {
   kyc_reject_reason: string | null;
   kyc_attempts: number | null;
   kyc_completed_at: string | null;
+  kyc_doc_expiration_date: string | null;
   created_at: string;
 }
 

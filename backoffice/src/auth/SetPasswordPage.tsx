@@ -24,8 +24,9 @@ export function SetPasswordPage() {
       setError('Prénom et nom sont obligatoires.');
       return;
     }
-    if (password.length < 8) {
-      setError('8 caractères minimum.');
+    // Compte a privileges (acces a toutes les donnees membres) : 12 minimum.
+    if (password.length < 12) {
+      setError('12 caractères minimum.');
       return;
     }
     if (password !== confirmation) {
@@ -66,9 +67,10 @@ export function SetPasswordPage() {
           Mot de passe
           <input
             type="password"
+            autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            minLength={8}
+            minLength={12}
             required
           />
         </label>
@@ -76,9 +78,10 @@ export function SetPasswordPage() {
           Confirmer le mot de passe
           <input
             type="password"
+            autoComplete="new-password"
             value={confirmation}
             onChange={(e) => setConfirmation(e.target.value)}
-            minLength={8}
+            minLength={12}
             required
           />
         </label>

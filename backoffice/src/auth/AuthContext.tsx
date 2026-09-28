@@ -67,6 +67,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Compte de l'app sans acces admin : refuse ici, avant tout ecran MFA -
+    // sinon n'importe quel membre pouvait activer une 2FA sur son compte
+    // depuis le back-office avant d'etre refuse (284).
+    const { data: eligible, error: eligibleError } = await supabase.rpc('admin_compte_eligible');
+    if (eligibleError || !eligible) {
+      setStatus('unauthorized');
+      setRoles([]);
+      setProfil(null);
+      return;
+    }
+
     const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
     if (aal?.currentLevel === 'aal2') {
       setStatus('checking');

@@ -24,7 +24,7 @@ const DUREES_BLOCAGE: { value: string; label: string }[] = [
 const SAISIES: Record<Exclude<Saisie, null>, { titre: string; obligatoire: boolean; bouton: string; classe: string }> = {
   bloquer: { titre: 'Motif du blocage', obligatoire: true, bouton: 'Confirmer le blocage', classe: 'btn-danger' },
   debloquer: { titre: 'Motif du déblocage (facultatif)', obligatoire: false, bouton: 'Confirmer le déblocage', classe: 'btn-success' },
-  approuver_kyc: { titre: 'Motif de l\'approbation (facultatif)', obligatoire: false, bouton: 'Confirmer l\'approbation', classe: 'btn-success' },
+  approuver_kyc: { titre: 'Motif de l\'approbation manuelle', obligatoire: true, bouton: 'Confirmer l\'approbation', classe: 'btn-success' },
   rejeter_kyc: { titre: 'Motif du rejet de la vérification', obligatoire: true, bouton: 'Confirmer le rejet', classe: 'btn-danger' },
   reinitialiser_kyc: { titre: 'Motif de la réinitialisation (facultatif)', obligatoire: false, bouton: 'Réinitialiser les tentatives', classe: 'btn-primary' },
   supprimer: { titre: 'Motif de la suppression', obligatoire: true, bouton: 'Confirmer la suppression', classe: 'btn-danger' },
@@ -70,11 +70,11 @@ export function CompteModal({ fiche, onClose, onChanged }: { fiche: FicheCompte;
     if (SAISIES[saisie].obligatoire && !m) { setError('Le motif est obligatoire.'); return; }
     if (saisie === 'bloquer') executer(() => supabase.rpc('admin_bloquer_compte', { p_user_id: fiche.id, p_motif: m, p_duree_minutes: duree === 'permanent' ? null : Number(duree) }));
     if (saisie === 'debloquer') executer(() => supabase.rpc('admin_debloquer_compte', { p_user_id: fiche.id, p_motif: m || null }));
-    if (saisie === 'approuver_kyc') executer(() => supabase.rpc('admin_valider_kyc', { p_user_id: fiche.id, p_motif: m || null }));
+    if (saisie === 'approuver_kyc') executer(() => supabase.rpc('admin_valider_kyc', { p_user_id: fiche.id, p_motif: m }));
     if (saisie === 'rejeter_kyc') executer(() => supabase.rpc('admin_rejeter_kyc', { p_user_id: fiche.id, p_motif: m }));
     if (saisie === 'reinitialiser_kyc') executer(() => supabase.rpc('admin_reinitialiser_tentatives_kyc', { p_user_id: fiche.id, p_motif: m || null }));
     if (saisie === 'supprimer') {
-      if (confirmationSuppression !== 'SUPPRIMER') { setError('Tapez SUPPRIMER en majuscules pour confirmer.'); return; }
+      if (confirmationSuppression.trim().toUpperCase() !== 'SUPPRIMER') { setError('Tapez SUPPRIMER pour confirmer.'); return; }
       executer(
         () => supabase.rpc('admin_supprimer_compte', { p_user_id: fiche.id, p_motif: m }),
         () => { onChanged(); onClose(); },
@@ -213,7 +213,14 @@ export function CompteModal({ fiche, onClose, onChanged }: { fiche: FicheCompte;
               </div>
             )}
             <label htmlFor="motif">{SAISIES[saisie].titre}</label>
-            <textarea id="motif" autoFocus value={motif} onChange={(e) => setMotif(e.target.value)} placeholder="Précisez la raison, elle sera enregistrée dans l'historique." />
+            <textarea
+              id="motif"
+              autoFocus
+              className={error === 'Le motif est obligatoire.' ? 'has-erreur' : ''}
+              value={motif}
+              onChange={(e) => { setMotif(e.target.value); if (error === 'Le motif est obligatoire.') setError(null); }}
+              placeholder="Précisez la raison, elle sera enregistrée dans l'historique."
+            />
             {saisie === 'supprimer' && (
               <div className="confirmation-suppression">
                 <label htmlFor="confirmation-suppression">Tapez <strong>SUPPRIMER</strong> pour confirmer</label>
@@ -222,16 +229,17 @@ export function CompteModal({ fiche, onClose, onChanged }: { fiche: FicheCompte;
                   type="text"
                   autoComplete="off"
                   value={confirmationSuppression}
-                  onChange={(e) => setConfirmationSuppression(e.target.value)}
+                  onChange={(e) => { setConfirmationSuppression(e.target.value); if (error) setError(null); }}
                   placeholder="SUPPRIMER"
                 />
               </div>
             )}
+            {error && error !== 'Le motif est obligatoire.' && <p className="page-error">{error}</p>}
             <div className="action-row" style={{ justifyContent: 'flex-end' }}>
               <button className="btn" disabled={busy} onClick={() => ouvrirSaisie(null)}>Annuler</button>
               <button
                 className={`btn ${SAISIES[saisie].classe}`}
-                disabled={busy || (saisie === 'supprimer' && confirmationSuppression !== 'SUPPRIMER')}
+                disabled={busy || (saisie === 'supprimer' && confirmationSuppression.trim().toUpperCase() !== 'SUPPRIMER')}
                 onClick={confirmerSaisie}
               >
                 {SAISIES[saisie].bouton}
@@ -239,7 +247,6 @@ export function CompteModal({ fiche, onClose, onChanged }: { fiche: FicheCompte;
             </div>
           </div>
         )}
-        {error && <p className="page-error">{error}</p>}
       </div>
     </Modal>
   );

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { motion } from 'framer-motion';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
@@ -103,7 +103,9 @@ export function Layout() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, ease: 'easeOut' }}
         >
-          <Outlet />
+          <Suspense fallback={<p className="loading-state">Chargement…</p>}>
+            <Outlet />
+          </Suspense>
         </motion.div>
       </main>
 
