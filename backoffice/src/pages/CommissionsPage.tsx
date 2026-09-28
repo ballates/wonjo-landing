@@ -171,7 +171,7 @@ export function CommissionsPage() {
     if (!params) return;
     const texte = params.actif
       ? 'Désactiver les commissions personnalisées ? Toutes les nouvelles demandes repasseront à 10 %.'
-      : 'Activer les commissions personnalisées ?\n\nÀ faire uniquement une fois la nouvelle version de l\'app publiée : les anciennes versions affichent toujours 10 % (le montant débité sera plus bas que celui affiché chez ces utilisateurs).';
+      : 'Activer les commissions personnalisées ?\n\nL\'app récupère déjà le taux réel auprès du serveur (pas de 10 % figé côté client) : le nouveau taux s\'affiche à l\'app dans les 5 minutes, sans republication. Seules des versions très anciennes de l\'app (antérieures à ce mécanisme) afficheraient encore 10 % à tort.';
     if (!window.confirm(texte)) return;
     executer(
       () => supabase.rpc('admin_commission_activer', { p_actif: !params.actif }),
@@ -301,23 +301,23 @@ export function CommissionsPage() {
         </div>
       </div>
 
+      {params.nb_super_admins < 2 && (
+        <div className="insight-banner warn">
+          <div>
+            <p className="insight-oneline">
+              <strong>Double validation : </strong>
+              vous êtes seul super admin, invitez-en un second depuis Administration, sinon vos baisses de commission resteront en attente.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="cards">
         <Kpi index={0} label="Taux personnalisés" value={params.actif ? 1 : 0} format={() => (params.actif ? 'Actives' : 'Inactives')} />
         <Kpi index={1} label={`Taux par défaut (${pct(params.plancher)}–10 %)`} value={params.defaut * 100} format={(n) => `${n.toLocaleString('fr-FR')} %`} />
         <Kpi index={2} label="Règles en vigueur" value={nbEnVigueur} />
         <Kpi index={3} label="À valider" value={nbEnAttente} hint={nbEnAttente > 0 ? 'Aucun effet tant que non approuvé' : undefined} />
       </div>
-
-      {params.nb_super_admins < 2 && (
-        <div className="insight-banner warn">
-          <div>
-            <p className="insight-oneline">
-              <strong>Double validation : </strong>
-              vous êtes seul super admin, invitez-en un second depuis Administrateurs, sinon vos baisses de commission resteront en attente.
-            </p>
-          </div>
-        </div>
-      )}
 
       {error && <p className="page-error" style={{ marginBottom: 16 }}>{error}</p>}
       {message && <p className="success-text" style={{ marginBottom: 16 }}>{message}</p>}
@@ -386,7 +386,7 @@ export function CommissionsPage() {
               <p className="chart-sub">
                 {params.actif
                   ? 'Les règles s\'appliquent aux nouvelles demandes. Une demande garde toujours le taux calculé à sa création.'
-                  : 'Toutes les demandes sont à 10 % tant que c\'est inactif. Préparez vos règles dès maintenant, mais n\'activez qu\'une fois la nouvelle version de l\'app publiée.'}
+                  : <>Toutes les demandes sont à 10 % tant que c'est inactif.<br />L'app affiche déjà le taux réel dès l'activation, sans republication (sauf versions très anciennes de l'app).</>}
               </p>
             </div>
             <button className={`btn ${params.actif ? 'btn-danger-outline' : 'btn-primary'}`} disabled={busy} onClick={basculer}>

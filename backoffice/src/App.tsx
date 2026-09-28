@@ -1,6 +1,7 @@
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import { LoginPage } from './auth/LoginPage';
+import { SetPasswordPage } from './auth/SetPasswordPage';
 import { MfaEnrollPage } from './auth/MfaEnrollPage';
 import { MfaChallengePage } from './auth/MfaChallengePage';
 import { Layout } from './components/Layout';
@@ -23,6 +24,8 @@ function Gate() {
       return <div className="auth-screen"><span className="spinner" role="status" aria-label="Chargement" /></div>;
     case 'signed_out':
       return <LoginPage />;
+    case 'need_password_set':
+      return <SetPasswordPage />;
     case 'need_mfa_enroll':
       return <MfaEnrollPage />;
     case 'need_mfa_challenge':

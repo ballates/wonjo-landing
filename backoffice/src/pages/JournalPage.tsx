@@ -45,7 +45,7 @@ export function JournalPage() {
     <div>
       <div className="page-head">
         <div>
-          <h1>Journal des actions</h1>
+          <h1>Actions</h1>
           <p className="page-sub">Toutes les actions d'administration, avec leur auteur. Ce journal ne peut être ni modifié ni effacé.</p>
         </div>
       </div>

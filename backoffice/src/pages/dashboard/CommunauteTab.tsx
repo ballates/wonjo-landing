@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ResponsiveContainer, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, LabelList } from 'recharts';
 import { supabase } from '../../lib/supabase';
 import { Kpi, VizTooltip, pourcent } from '../../components/Kpi';
-import { LABELS_BADGES, LABELS_ROLE_AVIS, LABELS_STATUT_KYC, dateHeure } from '../../lib/labels';
-import { TransactionModal } from '../../components/TransactionModal';
-import type { AvisApercu, AvisDashboard } from '../../lib/types';
+import { IconChevronRight } from '../../components/Icons';
+import { LABELS_BADGES, LABELS_CATEGORIE_AVIS, LABELS_STATUT_KYC } from '../../lib/labels';
+import type { AvisDashboard } from '../../lib/types';
 
 interface StatsCommunaute {
   total: number;
@@ -52,10 +53,10 @@ function HBar({ data, height }: { data: { label: string; nb: number; pct?: numbe
 const COULEUR_NOTE = (n: number) => (n <= 2 ? 'var(--badge-danger-fg)' : n === 5 ? 'var(--series-3)' : 'var(--amber)');
 
 export function CommunauteTab() {
+  const navigate = useNavigate();
   const [s, setS] = useState<StatsCommunaute | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [avis, setAvis] = useState<AvisDashboard | null>(null);
-  const [ouverte, setOuverte] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.rpc('admin_stats_communaute').then(({ data, error: e }) => {
@@ -92,6 +93,13 @@ export function CommunauteTab() {
   );
   const kyc = ['approved', 'pending', 'rejected', 'none'].map((k) => ({ label: LABELS_STATUT_KYC[k] ?? k, nb: s.kyc[k] ?? 0 }));
   const distributionNotes = [5, 4, 3, 2, 1].map((n) => ({ label: `${n} ★`, note: n, nb: avis?.distribution[String(n)] ?? 0 }));
+  const dist = avis?.distribution ?? {};
+  const compterNotes = (notes: number[]) => notes.reduce((total, n) => total + (dist[String(n)] ?? 0), 0);
+  const categoriesAvis = [
+    { cle: 'negatif', icone: '🔴', nb: compterNotes([1, 2]) },
+    { cle: 'intermediaire', icone: '🟠', nb: compterNotes([3]) },
+    { cle: 'positif', icone: '🟢', nb: compterNotes([4, 5]) },
+  ];
 
   return (
     <section>
@@ -115,6 +123,41 @@ export function CommunauteTab() {
             <div key={l.langue}><strong>{l.nb}</strong><span>{l.langue === 'fr' ? 'français' : l.langue === 'en' ? 'anglais' : l.langue}</span></div>
           ))}
         </div>
+      </div>
+
+      <div className="chart-card">
+        <div className="chart-head">
+          <div>
+            <h3>Avis à surveiller</h3>
+            <p className="chart-sub">Répartition des notes. Cliquez une catégorie pour voir le détail dans Avis.</p>
+          </div>
+          {avis && (
+            <div className="action-row">
+              {categoriesAvis.map((c) => (
+                <button
+                  key={c.cle}
+                  type="button"
+                  className="btn btn-soft btn-sm"
+                  onClick={() => navigate('/avis', { state: { categorie: c.cle } })}
+                >
+                  {c.icone} {LABELS_CATEGORIE_AVIS[c.cle]} ({c.nb}) <IconChevronRight />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <ResponsiveContainer width="100%" height={180}>
+          <BarChart data={distributionNotes} layout="vertical" margin={{ top: 4, right: 40, left: 8, bottom: 4 }}>
+            <CartesianGrid stroke="var(--grid-line)" horizontal={false} />
+            <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: 'var(--muted)' }} axisLine={false} tickLine={false} />
+            <YAxis dataKey="label" type="category" tick={{ fontSize: 12.5, fill: 'var(--text)' }} axisLine={false} tickLine={false} width={40} />
+            <Tooltip content={<VizTooltip />} cursor={{ fill: 'var(--hover)' }} />
+            <Bar dataKey="nb" name="Avis" radius={[0, 4, 4, 0]} maxBarSize={18} isAnimationActive={false}>
+              {distributionNotes.map((d) => <Cell key={d.note} fill={COULEUR_NOTE(d.note)} />)}
+              <LabelList dataKey="nb" position="right" style={{ fill: 'var(--text)', fontSize: 12, fontWeight: 700 }} />
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
       </div>
 
       <div className="grid-2">
@@ -147,48 +190,6 @@ export function CommunauteTab() {
           <HBar data={kyc} />
         </div>
       </div>
-
-      <div className="chart-card">
-        <h3>Avis à surveiller</h3>
-        <p className="chart-sub">Répartition des notes, puis les 5 transactions les plus notables dans chaque catégorie. Cliquez une ligne pour ouvrir la transaction.</p>
-        <ResponsiveContainer width="100%" height={180}>
-          <BarChart data={distributionNotes} layout="vertical" margin={{ top: 4, right: 40, left: 8, bottom: 4 }}>
-            <CartesianGrid stroke="var(--grid-line)" horizontal={false} />
-            <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: 'var(--muted)' }} axisLine={false} tickLine={false} />
-            <YAxis dataKey="label" type="category" tick={{ fontSize: 12.5, fill: 'var(--text)' }} axisLine={false} tickLine={false} width={40} />
-            <Tooltip content={<VizTooltip />} cursor={{ fill: 'var(--hover)' }} />
-            <Bar dataKey="nb" name="Avis" radius={[0, 4, 4, 0]} maxBarSize={18} isAnimationActive={false}>
-              {distributionNotes.map((d) => <Cell key={d.note} fill={COULEUR_NOTE(d.note)} />)}
-              <LabelList dataKey="nb" position="right" style={{ fill: 'var(--text)', fontSize: 12, fontWeight: 700 }} />
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-
-        {avis && (
-          <div className="avis-colonnes">
-            <AvisColonne titre="🔴 Négatifs" items={avis.negatifs} onOuvrir={setOuverte} />
-            <AvisColonne titre="🟠 Intermédiaires" items={avis.intermediaires} onOuvrir={setOuverte} />
-            <AvisColonne titre="🟢 Positifs" items={avis.positifs} onOuvrir={setOuverte} />
-          </div>
-        )}
-      </div>
-      {ouverte && <TransactionModal demandeId={ouverte} onClose={() => setOuverte(null)} />}
     </section>
-  );
-}
-
-function AvisColonne({ titre, items, onOuvrir }: { titre: string; items: AvisApercu[]; onOuvrir: (demandeId: string) => void }) {
-  return (
-    <div className="avis-colonne">
-      <p className="avis-colonne-titre">{titre}</p>
-      {items.length === 0 && <p className="hint">Aucun avis.</p>}
-      {items.map((a) => (
-        <button key={a.id} type="button" className="avis-mini-carte" onClick={() => onOuvrir(a.demande_id)}>
-          <span className="avis-mini-note">⭐ {a.note}/5</span>
-          <span className="avis-mini-parties">{a.auteur_nom} ({LABELS_ROLE_AVIS[a.role_auteur]}) → {a.destinataire_nom} ({LABELS_ROLE_AVIS[a.role_destinataire]})</span>
-          <span className="timeline-meta">{a.lieu_remise_reception ?? '?'} → {a.lieu_remise_livraison ?? '?'} · {dateHeure(a.created_at)}</span>
-        </button>
-      ))}
-    </div>
   );
 }

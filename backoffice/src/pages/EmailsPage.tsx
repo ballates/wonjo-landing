@@ -2,12 +2,36 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Select, type Option } from '../components/Select';
-import { Person } from '../components/Avatar';
+import { Avatar, Person } from '../components/Avatar';
 import { DataTable, type Column } from '../components/DataTable';
-import { dateHeure } from '../lib/labels';
+import { dateHeure, nomComplet } from '../lib/labels';
+import type { CompteRecherche } from '../lib/types';
 import logo from '../assets/wonjo-logo.png';
+import { IconChevronLeft, IconSend, IconSquarePencil } from '../components/Icons';
 
 type TypeEmail = 'service' | 'promotion';
+type SousOnglet = 'envoyer' | 'modeles' | 'desinscrits';
+
+interface Modele {
+  id: string;
+  categorie: string;
+  nom: string;
+  sujet: string;
+  corps: string;
+  created_at: string;
+  updated_at: string;
+  cree_par_nom: string | null;
+}
+
+const CATEGORIES_MODELE: Option<string>[] = [
+  { value: 'bienvenue', label: 'Bienvenue' },
+  { value: 'verification', label: 'Vérification' },
+  { value: 'relance', label: 'Relance' },
+  { value: 'promotion', label: 'Promotion' },
+  { value: 'support', label: 'Support' },
+  { value: 'autre', label: 'Autre' },
+];
+const LABELS_CATEGORIE_MODELE = Object.fromEntries(CATEGORIES_MODELE.map((c) => [c.value, c.label]));
 
 const SEGMENTS: Option<string>[] = [
   { value: 'tous', label: 'Tous les membres', hint: 'Comptes actifs non supprimés' },
@@ -22,6 +46,14 @@ const SEGMENTS: Option<string>[] = [
 ];
 
 const LABELS_SEGMENT: Record<string, string> = Object.fromEntries([...SEGMENTS.map((s) => [s.value, s.label]), ['selection', 'Sélection manuelle']]);
+
+interface Desinscrit {
+  user_id: string;
+  prenom: string | null;
+  nom: string | null;
+  email: string | null;
+  desinscrit_le: string;
+}
 
 interface Campagne {
   id: string;
@@ -44,10 +76,16 @@ export function EmailsPage() {
     ids?: string[]; noms?: string[]; segment?: string; type?: TypeEmail; sujet?: string; message?: string;
   } | null;
   const selectionInitiale = etat?.ids && etat.ids.length ? { ids: etat.ids, noms: etat.noms ?? [] } : null;
+  // Noms connus avant meme le chargement de l'annuaire (comptes charge en
+  // arriere-plan) : ceux passes par Moderation/Commissions via location.state.
+  const nomsInitiaux = useMemo(() => new Map((selectionInitiale?.ids ?? []).map((id, i) => [id, selectionInitiale?.noms[i]])), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [type, setType] = useState<TypeEmail>(etat?.type ?? 'service');
   const [segment, setSegment] = useState(selectionInitiale ? 'selection' : etat?.segment ?? 'non_verifies');
-  const [ids] = useState<string[]>(selectionInitiale?.ids ?? []);
+  const [membres, setMembres] = useState<Set<string>>(new Set(selectionInitiale?.ids ?? []));
+  const [rechercheMembre, setRechercheMembre] = useState('');
+  const [comptes, setComptes] = useState<CompteRecherche[]>([]);
+  const ids = useMemo(() => [...membres], [membres]);
   const [sujet, setSujet] = useState(etat?.sujet ?? '');
   const [message, setMessage] = useState(etat?.message ?? '');
   const [ctaLabel, setCtaLabel] = useState('');
@@ -56,16 +94,60 @@ export function EmailsPage() {
   const [busy, setBusy] = useState(false);
   const [retour, setRetour] = useState<{ ok: boolean; texte: string } | null>(null);
   const [campagnes, setCampagnes] = useState<Campagne[] | null>(null);
+  const [sousOnglet, setSousOnglet] = useState<SousOnglet>('envoyer');
+  const [composerOuvert, setComposerOuvert] = useState(false);
+  const [modeles, setModeles] = useState<Modele[] | null>(null);
+  const [modeleChoisi, setModeleChoisi] = useState('');
+  const [nbDesinscrits, setNbDesinscrits] = useState<number | null>(null);
+  const [desinscrits, setDesinscrits] = useState<Desinscrit[] | null>(null);
+
+  useEffect(() => {
+    supabase.rpc('admin_nb_desinscrits').then(({ data }) => setNbDesinscrits(Number(data ?? 0)));
+  }, []);
+
+  useEffect(() => {
+    if (sousOnglet === 'desinscrits' && !desinscrits) {
+      supabase.rpc('admin_lister_desinscrits').then(({ data }) => setDesinscrits((data ?? []) as Desinscrit[]));
+    }
+  }, [sousOnglet, desinscrits]);
+
+  function chargerModeles() {
+    supabase.rpc('admin_lister_modeles').then(({ data }) => setModeles((data ?? []) as Modele[]));
+  }
+  useEffect(chargerModeles, []);
+
+  function chargerModeleDansFormulaire(id: string) {
+    setModeleChoisi(id);
+    const m = modeles?.find((x) => x.id === id);
+    if (!m) return;
+    setSujet(m.sujet);
+    setMessage(m.corps);
+  }
 
   const segmentOptions = useMemo(
-    () => (selectionInitiale ? [{ value: 'selection', label: `Sélection manuelle (${ids.length})`, hint: 'Comptes cochés dans Modération' }, ...SEGMENTS] : SEGMENTS),
-    [selectionInitiale, ids.length],
+    () => [{ value: 'selection', label: `Sélection manuelle${ids.length ? ` (${ids.length})` : ''}`, hint: 'Une ou plusieurs personnes précises' }, ...SEGMENTS],
+    [ids.length],
   );
 
   function chargerCampagnes() {
     supabase.rpc('admin_lister_campagnes').then(({ data }) => setCampagnes((data ?? []) as Campagne[]));
   }
   useEffect(chargerCampagnes, []);
+  useEffect(() => {
+    supabase.rpc('admin_rechercher_comptes', { p_recherche: '', p_limite: 2000 }).then(({ data }) => setComptes((data ?? []) as CompteRecherche[]));
+  }, []);
+
+  const comptesFiltres = useMemo(() => {
+    const q = rechercheMembre.trim().toLowerCase();
+    if (!q) return [];
+    return comptes.filter((c) => `${c.prenom} ${c.nom} ${c.email}`.toLowerCase().includes(q)).slice(0, 60);
+  }, [comptes, rechercheMembre]);
+
+  const compteParId = useMemo(() => new Map(comptes.map((c) => [c.id, c])), [comptes]);
+  const nomAffiche = (id: string) => {
+    const c = compteParId.get(id);
+    return c ? (nomComplet(c.prenom, c.nom) || c.email) : (nomsInitiaux.get(id) ?? id);
+  };
 
   useEffect(() => {
     setCompte(null);
@@ -103,10 +185,45 @@ export function EmailsPage() {
       ok: r.echecs === 0,
       texte: test ? 'Email de test envoyé sur votre adresse.' : `${r.envoyes} email(s) envoyé(s) sur ${r.destinataires}${r.echecs ? `, ${r.echecs} échec(s)` : ''}.`,
     });
-    if (!test) chargerCampagnes();
+    if (!test) { chargerCampagnes(); if (r.echecs === 0) setComposerOuvert(false); }
   }
 
-  const apercu = message.split('{prenom}').join('Aïcha');
+  const apercu = message.split('{prenom}').join('Ben');
+
+  const [modeleForm, setModeleForm] = useState<{ id: string | null; categorie: string; nom: string; sujet: string; corps: string } | null>(null);
+  const [busyModele, setBusyModele] = useState(false);
+
+  function ouvrirNouveauModele(depuisFormulaire: boolean) {
+    setModeleForm({
+      id: null,
+      categorie: 'autre',
+      nom: '',
+      sujet: depuisFormulaire ? sujet : '',
+      corps: depuisFormulaire ? message : '',
+    });
+  }
+
+  function ouvrirEditionModele(m: Modele) {
+    setModeleForm({ id: m.id, categorie: m.categorie, nom: m.nom, sujet: m.sujet, corps: m.corps });
+  }
+
+  async function enregistrerModele() {
+    if (!modeleForm) return;
+    setBusyModele(true);
+    const { error } = await supabase.rpc('admin_enregistrer_modele', {
+      p_id: modeleForm.id, p_categorie: modeleForm.categorie, p_nom: modeleForm.nom, p_sujet: modeleForm.sujet, p_corps: modeleForm.corps,
+    });
+    setBusyModele(false);
+    if (error) { setRetour({ ok: false, texte: error.message }); return; }
+    setModeleForm(null);
+    chargerModeles();
+  }
+
+  async function supprimerModele(id: string) {
+    if (!window.confirm('Supprimer ce modèle ?')) return;
+    await supabase.rpc('admin_supprimer_modele', { p_id: id });
+    chargerModeles();
+  }
 
   const colonnes: Column<Campagne>[] = [
     { key: 'date', label: 'Date', value: (c) => c.created_at, render: (c) => dateHeure(c.created_at), width: 170 },
@@ -117,15 +234,159 @@ export function EmailsPage() {
     { key: 'envoyes', label: 'Envoyés', value: (c) => c.nb_envoyes, render: (c) => `${c.nb_envoyes} / ${c.nb_destinataires}${c.nb_echecs ? ` (${c.nb_echecs} échecs)` : ''}` },
   ];
 
+  const colonnesDesinscrits: Column<Desinscrit>[] = [
+    { key: 'nom', label: 'Membre', value: (d) => `${d.prenom ?? ''} ${d.nom ?? ''}`, render: (d) => nomComplet(d.prenom, d.nom) || d.email || '-' },
+    { key: 'email', label: 'Email', value: (d) => d.email },
+    { key: 'date', label: 'Désinscrit le', value: (d) => d.desinscrit_le, render: (d) => dateHeure(d.desinscrit_le), width: 170 },
+  ];
+
   return (
     <div>
       <div className="page-head">
-        <div>
-          <h1>Emails</h1>
-          <p className="page-sub">Écrire à un membre, à une sélection ou à un groupe. Chaque envoi est tracé dans le journal.</p>
+        <div className="wmail-title">
+          <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true" className="wmail-logo">
+            <defs>
+              <linearGradient id="wmail-grad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+                <stop offset="0" stopColor="#4A8896" />
+                <stop offset="1" stopColor="#7D4E2E" />
+              </linearGradient>
+              <linearGradient id="wmail-glass" x1="0" y1="0" x2="0" y2="40" gradientUnits="userSpaceOnUse">
+                <stop offset="0" stopColor="#fff" stopOpacity="0.85" />
+                <stop offset="0.45" stopColor="#fff" stopOpacity="0.05" />
+                <stop offset="1" stopColor="#fff" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            <path d="M6,10 L13,30 L20,14 L27,30 L34,10" fill="none" stroke="url(#wmail-grad)" strokeWidth="5.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M6,10 L13,30 L20,14 L27,30 L34,10" fill="none" stroke="url(#wmail-glass)" strokeWidth="5.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <h1>Wmail</h1>
         </div>
       </div>
 
+      <div className="tabs">
+        <button className={sousOnglet === 'envoyer' ? 'active' : ''} onClick={() => setSousOnglet('envoyer')}><IconSend /> Messages envoyés</button>
+        <button className={sousOnglet === 'modeles' ? 'active' : ''} onClick={() => setSousOnglet('modeles')}>Modèles{modeles?.length ? ` (${modeles.length})` : ''}</button>
+        <button className={sousOnglet === 'desinscrits' ? 'active' : ''} onClick={() => setSousOnglet('desinscrits')}>Désinscrits{nbDesinscrits ? ` (${nbDesinscrits})` : ''}</button>
+      </div>
+
+      {sousOnglet === 'modeles' ? (
+        <div className="panel">
+          <div className="page-head" style={{ marginBottom: 12 }}>
+            <p className="chart-sub" style={{ margin: 0 }}>Des sujets/messages prêts à réutiliser, classés par catégorie. Chargez-en un depuis l'onglet Composer, modifiez-le si besoin, puis envoyez.</p>
+            <button className="btn btn-primary btn-sm" onClick={() => ouvrirNouveauModele(false)}><IconSquarePencil /> Nouveau modèle</button>
+          </div>
+          {!modeles ? <p className="hint">Chargement…</p> : modeles.length === 0 ? <p className="hint">Aucun modèle enregistré pour l'instant.</p> : (
+            <div className="dt-wrap">
+              <table>
+                <thead><tr><th>Catégorie</th><th>Nom</th><th>Objet</th><th>Dernière modif.</th><th></th></tr></thead>
+                <tbody>
+                  {modeles.map((m) => (
+                    <tr key={m.id}>
+                      <td><span className="badge badge-teal">{LABELS_CATEGORIE_MODELE[m.categorie] ?? m.categorie}</span></td>
+                      <td>{m.nom}</td>
+                      <td>{m.sujet}</td>
+                      <td className="hint">{dateHeure(m.updated_at)}{m.cree_par_nom ? ` · ${m.cree_par_nom}` : ''}</td>
+                      <td>
+                        <div className="action-row">
+                          <button className="btn btn-soft btn-sm" onClick={() => ouvrirEditionModele(m)}>Modifier</button>
+                          <button className="btn btn-danger-outline btn-sm" onClick={() => supprimerModele(m.id)}>Supprimer</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {modeleForm && (
+            <div className="email-layout" style={{ marginTop: 16 }}>
+              <div className="panel email-form">
+                <label className="field">
+                  <span>Catégorie</span>
+                  <Select ariaLabel="Catégorie" value={modeleForm.categorie} onChange={(v) => setModeleForm((f) => f && { ...f, categorie: v })} options={CATEGORIES_MODELE} />
+                </label>
+                <label className="field">
+                  <span>Nom du modèle</span>
+                  <input type="text" value={modeleForm.nom} onChange={(e) => setModeleForm((f) => f && { ...f, nom: e.target.value })} placeholder="Ex. Relance KYC rejeté" />
+                </label>
+                <label className="field">
+                  <span>Objet</span>
+                  <input type="text" value={modeleForm.sujet} onChange={(e) => setModeleForm((f) => f && { ...f, sujet: e.target.value })} />
+                </label>
+                <label className="field">
+                  <span>Message</span>
+                  <textarea rows={8} value={modeleForm.corps} onChange={(e) => setModeleForm((f) => f && { ...f, corps: e.target.value })} placeholder={'Écrivez le corps du modèle (sans "Bonjour", déjà ajouté automatiquement).\n\nL\'en-tête et le pied de page (logo, mentions) sont ajoutés automatiquement à l\'envoi, inutile de les écrire ici.'} />
+                </label>
+                <div className="action-row" style={{ justifyContent: 'flex-end' }}>
+                  <button className="btn" disabled={busyModele} onClick={() => setModeleForm(null)}>Annuler</button>
+                  <button className="btn btn-primary" disabled={busyModele || !modeleForm.nom.trim() || !modeleForm.sujet.trim() || !modeleForm.corps.trim()} onClick={enregistrerModele}>
+                    {busyModele ? 'Enregistrement…' : 'Enregistrer'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="email-preview-wrap">
+                <p className="section-title">Aperçu</p>
+                <div className="email-preview">
+                  <div className="email-preview-head">
+                    <img className="email-preview-logo" src={logo} alt="" width={81} height={44} />
+                    <span className="email-preview-title">WONJO</span>
+                    <span className="email-preview-slogan">Le colis qui nous lie</span>
+                  </div>
+                  <div className="email-preview-body">
+                    <h4>Bonjour Ben</h4>
+                    {(modeleForm.corps.split('{prenom}').join('Ben') || 'Le corps du modèle apparaîtra ici.').split(/\n{2,}/).map((p, i) => (
+                      <p key={i}>{p.split('\n').map((l, j) => <span key={j}>{l}{j < p.split('\n').length - 1 && <br />}</span>)}</p>
+                    ))}
+                  </div>
+                  <div className="email-preview-foot">
+                    © 2026 <b>Wonjo</b> · <u>Nous contacter</u><br />
+                    Email automatique, merci de ne pas y répondre.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : sousOnglet === 'desinscrits' ? (
+        <div className="panel">
+          <div className="page-head" style={{ marginBottom: 12 }}>
+            <div>
+              <h3 style={{ margin: 0 }}>Désinscrits des promotions</h3>
+              <p className="chart-sub">Exclus automatiquement de tous les prochains envois de type Promotion. Ils reçoivent toujours les emails d'information liés à leur compte.</p>
+            </div>
+          </div>
+          {!desinscrits ? <p className="hint">Chargement…</p> : (
+            <DataTable
+              rows={desinscrits}
+              columns={colonnesDesinscrits}
+              rowKey={(d) => d.user_id}
+              initialSort={{ key: 'date', dir: 'desc' }}
+              emptyText="Personne ne s'est désinscrit pour l'instant."
+            />
+          )}
+        </div>
+      ) : !composerOuvert ? (
+        <div>
+          <div className="panel">
+            <div className="page-head" style={{ marginBottom: 12 }}>
+              <p className="chart-sub" style={{ margin: 0 }}>Chaque envoi est tracé ci-dessous.</p>
+              <button className="btn btn-primary btn-sm" onClick={() => setComposerOuvert(true)}><IconSquarePencil /> Nouveau message</button>
+            </div>
+            <h3>Historique des envois</h3>
+            {!campagnes ? <p className="hint">Chargement…</p> : (
+              <DataTable rows={campagnes} columns={colonnes} rowKey={(c) => c.id} initialSort={{ key: 'date', dir: 'desc' }} emptyText="Aucun envoi pour l'instant." />
+            )}
+          </div>
+        </div>
+      ) : (
+      <>
+      <div className="action-row" style={{ marginBottom: 12 }}>
+        <button className="btn btn-sm" onClick={() => setComposerOuvert(false)}>
+          <span className="icon-circle"><IconChevronLeft /></span> Retour à l'historique
+        </button>
+      </div>
       <div className="email-layout">
         <div className="panel email-form">
           <div className="segmented" role="radiogroup" aria-label="Type d'email">
@@ -141,10 +402,42 @@ export function EmailsPage() {
             <span>Destinataires</span>
             <Select ariaLabel="Destinataires" value={segment} onChange={setSegment} options={segmentOptions} />
           </label>
-          {segment === 'selection' && selectionInitiale && (
-            <div className="chips">
-              {selectionInitiale.noms.slice(0, 12).map((n, i) => <span key={i} className="chip">{n}</span>)}
-              {selectionInitiale.noms.length > 12 && <span className="chip">+{selectionInitiale.noms.length - 12}</span>}
+          {segment === 'selection' && (
+            <div className="member-picker">
+              <input type="search" placeholder="Rechercher un membre par nom ou email…" value={rechercheMembre} onChange={(e) => setRechercheMembre(e.target.value)} />
+              {membres.size > 0 && (
+                <div className="chips">
+                  {[...membres].map((id) => (
+                    <span key={id} className="chip">
+                      {nomAffiche(id)}
+                      <button type="button" aria-label={`Retirer ${nomAffiche(id)}`} onClick={() => setMembres((m) => { const n = new Set(m); n.delete(id); return n; })}>×</button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              {rechercheMembre.trim() === '' ? (
+                <p className="hint" style={{ margin: '8px 0 0' }}>Tapez un nom ou un email pour rechercher…</p>
+              ) : comptesFiltres.length === 0 ? (
+                <p className="hint" style={{ margin: '8px 0 0' }}>Aucun membre trouvé.</p>
+              ) : (
+              <ul>
+                {comptesFiltres.map((c) => (
+                  <li key={c.id}>
+                    <label>
+                      <input
+                        type="checkbox"
+                        className="dt-check"
+                        checked={membres.has(c.id)}
+                        onChange={() => setMembres((m) => { const n = new Set(m); if (n.has(c.id)) n.delete(c.id); else n.add(c.id); return n; })}
+                      />
+                      <Avatar src={c.photo_url} nom={nomComplet(c.prenom, c.nom)} size={28} />
+                      <span className="member-name">{nomComplet(c.prenom, c.nom) || c.email}</span>
+                      <span className="hint">{c.email}</span>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+              )}
             </div>
           )}
           <p className="hint">
@@ -153,13 +446,25 @@ export function EmailsPage() {
             {type === 'promotion' && ' · comptes bloqués exclus'}
           </p>
 
+          {modeles && modeles.length > 0 && (
+            <label className="field">
+              <span>Charger un modèle (facultatif)</span>
+              <Select
+                ariaLabel="Charger un modèle"
+                value={modeleChoisi}
+                onChange={chargerModeleDansFormulaire}
+                options={[{ value: '', label: 'Aucun - écrire librement' }, ...modeles.map((m) => ({ value: m.id, label: `${LABELS_CATEGORIE_MODELE[m.categorie] ?? m.categorie} · ${m.nom}` }))]}
+              />
+            </label>
+          )}
+
           <label className="field">
             <span>Objet</span>
             <input type="text" maxLength={150} value={sujet} onChange={(e) => setSujet(e.target.value)} placeholder="Ex. Finalisez votre vérification en 2 minutes" />
           </label>
           <label className="field">
             <span>Message</span>
-            <textarea rows={8} maxLength={5000} value={message} onChange={(e) => setMessage(e.target.value)} placeholder={'Écrivez votre message.\n\nAstuce : {prenom} est remplacé par le prénom de chaque destinataire.'} />
+            <textarea rows={8} maxLength={5000} value={message} onChange={(e) => setMessage(e.target.value)} placeholder={'Écrivez votre message (sans "Bonjour", déjà ajouté automatiquement).\n\nAstuce : {prenom} est remplacé par le prénom de chaque destinataire.'} />
           </label>
           <div className="field-row">
             <label className="field">
@@ -174,6 +479,7 @@ export function EmailsPage() {
 
           {retour && <p className={retour.ok ? 'success-text' : 'page-error'}>{retour.texte}</p>}
           <div className="action-row" style={{ justifyContent: 'flex-end' }}>
+            <button className="btn" disabled={!sujet.trim() || !message.trim()} onClick={() => { ouvrirNouveauModele(true); setSousOnglet('modeles'); }}>Enregistrer comme modèle</button>
             <button className="btn" disabled={!pret || busy} onClick={() => envoyer(true)}>M'envoyer un test</button>
             <button className="btn btn-primary" disabled={!pret || busy || !compte?.destinataires} onClick={() => envoyer(false)}>
               {busy ? 'Envoi…' : `Envoyer à ${compte?.destinataires ?? '…'} destinataire(s)`}
@@ -190,12 +496,12 @@ export function EmailsPage() {
               <span className="email-preview-slogan">Le colis qui nous lie</span>
             </div>
             <div className="email-preview-body">
-              <h4>Bonjour Aïcha</h4>
+              <h4>Bonjour Ben</h4>
               {(apercu || 'Votre message apparaîtra ici.').split(/\n{2,}/).map((p, i) => (
                 <p key={i}>{p.split('\n').map((l, j) => <span key={j}>{l}{j < p.split('\n').length - 1 && <br />}</span>)}</p>
               ))}
               {ctaLabel && <span className="email-preview-cta">{ctaLabel}</span>}
-              {type === 'promotion' && <small>Vous recevez cet email car vous avez un compte Wonjo. Ne plus recevoir nos offres</small>}
+              {type === 'promotion' && <small>Vous recevez cet email car vous avez un compte Wonjo.<br />Ne plus recevoir nos offres</small>}
             </div>
             {/* Meme pied que emailFooter() (_shared/email-layout.ts) des emails de l'app. */}
             <div className="email-preview-foot">
@@ -205,14 +511,8 @@ export function EmailsPage() {
           </div>
         </div>
       </div>
-
-      <div className="panel" style={{ marginTop: 20 }}>
-        <h3>Historique des envois</h3>
-        <p className="chart-sub">Les emails de test ne sont pas enregistrés ici.</p>
-        {!campagnes ? <p className="hint">Chargement…</p> : (
-          <DataTable rows={campagnes} columns={colonnes} rowKey={(c) => c.id} initialSort={{ key: 'date', dir: 'desc' }} emptyText="Aucun envoi pour l'instant." />
-        )}
-      </div>
+      </>
+      )}
     </div>
   );
 }

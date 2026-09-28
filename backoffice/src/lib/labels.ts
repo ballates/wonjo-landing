@@ -8,7 +8,17 @@ export const LABELS_STATUT_KYC: Record<string, string> = {
 export const LABELS_PAIEMENT: Record<string, string> = {
   libere: 'Libéré', escrow: 'En séquestre', en_attente: 'En attente', rembourse: 'Remboursé',
   autorise: 'Autorisé', autorisation_annulee: 'Autorisation annulée',
+  sans_paiement: 'Sans paiement',
 };
+
+// Colis annule avant qu'un voyageur ne l'accepte : aucun paiement n'a
+// jamais ete engage, statut_paiement reste a sa valeur de depart
+// "en_attente" - ce qui donne a tort l'impression d'un paiement en cours de
+// traitement. Cle d'affichage distincte pour ce seul cas, sans toucher a la
+// valeur reelle en base (qui reste correcte : rien n'a jamais demarre).
+export function clePaiementAffichee(statutPaiement: string, statutColis: string): string {
+  return statutColis === 'annule' && statutPaiement === 'en_attente' ? 'sans_paiement' : statutPaiement;
+}
 
 export const LABELS_STATUT_COLIS: Record<string, string> = {
   en_attente: 'En attente', accepte: 'Accepté', en_transit: 'En transit',
@@ -27,6 +37,7 @@ export const LABELS_STATUT_SIGNALEMENT: Record<string, string> = {
 export const LABELS_ACTIONS: Record<string, string> = {
   bloquer_compte: 'a bloqué le compte',
   debloquer_compte: 'a débloqué le compte',
+  supprimer_compte: 'a supprimé (anonymisé) le compte',
   valider_kyc: 'a approuvé la vérification d\'identité',
   rejeter_kyc: 'a rejeté la vérification d\'identité',
   traiter_signalement: 'a traité un signalement',
@@ -45,6 +56,7 @@ export const LABELS_ACTIONS: Record<string, string> = {
   commission_rejetee: 'a rejeté un changement de commission',
   commission_regle_desactivee: 'a désactivé une règle de commission',
   litige_rembourser: 'a résolu un litige (remboursement manuel)',
+  reinitialiser_tentatives_kyc: 'a réinitialisé les tentatives de vérification d\'identité',
 };
 
 export function libelleAction(action: string): string {
@@ -123,8 +135,10 @@ export function dateSeule(iso: string): string {
   return `${jour}-${mois}-${d.getFullYear()}`;
 }
 
+// Deux seules valeurs possibles en base (type_envoi IN ('colis','document')) :
+// meme libelle partout ou le type d'envoi est affiche (Colis, Finance, Transactions).
 export const LABELS_TYPE_ENVOI: Record<string, string> = {
-  colis: 'Colis', document: 'Document',
+  colis: 'Colis', document: 'Enveloppe', inconnu: 'Non renseigné',
 };
 
 export const LABELS_TYPE_DOCUMENT: Record<string, string> = {
@@ -140,12 +154,27 @@ export const LABELS_CONSTAT: Record<string, string> = {
   restitution_porteur: 'Restitution par le porteur',
 };
 
-// Premier mot d'un nom complet ("Prenom Nom" -> "Prenom") : utilise pour
-// remplacer "l'expediteur"/"le porteur" par le prenom reel dans le suivi
-// d'une transaction (plus parlant qu'un role generique).
-export function premierPrenom(nomComplet: string | null | undefined, fallback: string): string {
-  const mot = (nomComplet ?? '').trim().split(/\s+/)[0];
-  return mot || fallback;
+// Premier mot d'un prenom (compose ou non) : utilise dans les colonnes de
+// liste (Transactions, Avis) ou l'espace est compte - un prenom complet
+// ("Marthe Djininga") y serait tronque de toute facon, autant couper au
+// premier prenom plutot qu'au milieu du second.
+export function premierMot(texte: string | null | undefined): string | null {
+  const mot = (texte ?? '').trim().split(/\s+/)[0];
+  return mot || null;
+}
+
+// Casse d'affichage dans les colonnes des tables du back-office (Comptes,
+// KYC, Transactions, Avis) : uniforme quelle que soit la casse saisie par la
+// personne dans l'app. Ne change rien en base, purement cosmetique.
+export function casserPrenom(prenom: string | null | undefined): string {
+  const p = (prenom ?? '').trim();
+  if (!p) return '-';
+  return p.split(/\s+/).map((mot) => mot.charAt(0).toUpperCase() + mot.slice(1).toLowerCase()).join(' ');
+}
+
+export function casserNom(nom: string | null | undefined): string {
+  const n = (nom ?? '').trim();
+  return n ? n.toUpperCase() : '-';
 }
 
 // Version de LABELS_CONSTAT/des jalons d'etape avec le prenom reel des deux
@@ -177,13 +206,29 @@ export function libellesEvenement(prenomExpediteur: string, prenomPorteur: strin
 // par le porteur (Flux 1) : c'est l'expediteur qui a cree la demande.
 // offre_colis_id defini = le porteur a propose de transporter le colis
 // publie par l'expediteur (Flux 2) : c'est le porteur qui a cree la demande.
-export const LABELS_ORIGINE: Record<string, string> = {
-  annonce: 'créée par l\'expéditeur, en réponse au trajet publié par le porteur',
-  offre_colis: 'créée par le porteur, en réponse au colis publié par l\'expéditeur',
-};
+// Prenoms reels a la place de "l'expediteur"/"le porteur", comme
+// libellesEvenement ci-dessus.
+export function libellesOrigine(prenomExpediteur: string, prenomPorteur: string): Record<string, string> {
+  return {
+    annonce: `lancée par ${prenomExpediteur}, en réponse au trajet publié par ${prenomPorteur}`,
+    offre_colis: `lancée par ${prenomPorteur}, en réponse au colis publié par ${prenomExpediteur}`,
+  };
+}
 
 // Cote avis : "porteur" est desigle "Voyageur" pour l'admin, plus parlant
 // que le terme interne utilise ailleurs dans le back-office.
 export const LABELS_ROLE_AVIS: Record<string, string> = {
   expediteur: 'Expéditeur', porteur: 'Voyageur',
+};
+
+// Categorie d'un avis a partir de sa note (1-5), meme decoupage que
+// l'intuition "negatif / intermediaire / positif" du widget Communaute.
+export function categorieAvis(note: number): 'negatif' | 'intermediaire' | 'positif' {
+  if (note <= 2) return 'negatif';
+  if (note === 3) return 'intermediaire';
+  return 'positif';
+}
+
+export const LABELS_CATEGORIE_AVIS: Record<string, string> = {
+  negatif: 'Négatif', intermediaire: 'Intermédiaire', positif: 'Positif',
 };

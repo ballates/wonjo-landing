@@ -22,6 +22,10 @@ const STATUT_TONES: Record<string, BadgeTone> = {
   rembourse: 'muted',
   autorise: 'teal',
   autorisation_annulee: 'muted',
+  sans_paiement: 'muted',
+  negatif: 'danger',
+  intermediaire: 'amber',
+  positif: 'green',
 };
 
 export function Badge({ children, tone }: { children: React.ReactNode; tone: BadgeTone }) {

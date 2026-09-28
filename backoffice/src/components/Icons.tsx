@@ -15,13 +15,19 @@ export const IconUsers = () => <Svg><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0
 export const IconHistory = () => <Svg><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" /><path d="M12 7v5l3 2" /></Svg>;
 export const IconExchange = () => <Svg><path d="M17 3l4 4-4 4" /><path d="M3 7h18" /><path d="M7 21l-4-4 4-4" /><path d="M21 17H3" /></Svg>;
 export const IconSun = () => <Svg><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" /></Svg>;
-export const IconMoon = () => <Svg><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" /></Svg>;
+export const IconMoon = () => (
+  <Svg>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none" />
+  </Svg>
+);
 export const IconLogout = () => <Svg><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></Svg>;
 export const IconPanelClose = () => <Svg><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M9 3v18" /><path d="M16 15l-3-3 3-3" /></Svg>;
 export const IconPanelOpen = () => <Svg><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M9 3v18" /><path d="M14 9l3 3-3 3" /></Svg>;
 export const IconClose = () => <Svg size={18}><path d="M18 6 6 18M6 6l12 12" /></Svg>;
 export const IconSearch = () => <Svg size={16}><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></Svg>;
 export const IconEye = () => <Svg size={16}><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></Svg>;
+export const IconEyeOff = () => <Svg size={16}><path d="M2 12s3.5-7 10-7c1.7 0 3.2.4 4.5 1M22 12s-3.5 7-10 7c-1.7 0-3.2-.4-4.5-1" /><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" /><path d="M2 2l20 20" /></Svg>;
 export const IconFilter = () => <Svg size={16}><path d="M3 5h18l-7 8v6l-4 2v-8L3 5z" /></Svg>;
 export const IconFacebook = () => <Svg size={18}><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" /></Svg>;
 export const IconLinkedin = () => <Svg size={18}><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" /><rect width="4" height="12" x="2" y="9" /><circle cx="4" cy="4" r="2" /></Svg>;
@@ -32,6 +38,20 @@ export const IconSort = ({ dir }: { dir: 'asc' | 'desc' | null }) => (
   </svg>
 );
 export const IconMail = () => <Svg><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></Svg>;
+export const IconWmail = () => (
+  <svg width="18" height="18" viewBox="0 0 40 40" fill="none" stroke="currentColor" strokeWidth="5.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M6,10 L13,30 L20,14 L27,30 L34,10" />
+  </svg>
+);
 export const IconPercent = () => <Svg><line x1="19" y1="5" x2="5" y2="19" /><circle cx="6.5" cy="6.5" r="2.5" /><circle cx="17.5" cy="17.5" r="2.5" /></Svg>;
 export const IconChecklist = () => <Svg><path d="M9 6h11M9 12h11M9 18h11" /><path d="m3 6 1.5 1.5L7 5" /><path d="m3 12 1.5 1.5L7 11" /><path d="m3 18 1.5 1.5L7 17" /></Svg>;
 export const IconStar = () => <Svg><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 21 12 17.5 5.5 21 7 14.5 2 9.5 9 9 12 2" /></Svg>;
+export const IconChevronRight = () => <Svg size={14}><polyline points="9 6 15 12 9 18" /></Svg>;
+export const IconChevronLeft = () => <Svg size={14}><polyline points="15 6 9 12 15 18" /></Svg>;
+export const IconSend = () => <Svg size={16}><path d="m22 2-20 8 9 3 3 9z" /><path d="M22 2 11 13" /></Svg>;
+export const IconSquarePencil = () => (
+  <Svg size={16}>
+    <path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5" />
+    <path d="M18.4 2.6a2 2 0 0 1 2.8 2.8L11 15.6 7 17l1.4-4L18.4 2.6z" />
+  </Svg>
+);

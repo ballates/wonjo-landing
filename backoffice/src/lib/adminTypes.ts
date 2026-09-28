@@ -7,5 +7,6 @@ export interface AdminRow {
   avatar_url: string | null;
   role: AdminRole;
   actif: boolean;
+  invitation_confirmee: boolean;
   created_at: string;
 }

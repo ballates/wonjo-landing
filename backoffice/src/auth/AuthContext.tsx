@@ -3,6 +3,9 @@ import { supabase } from '../lib/supabase';
 
 // Etats du parcours de connexion admin :
 //  - signed_out         : pas de session
+//  - need_password_set  : session issue du lien d'invitation (admin-inviter),
+//                          invitation_confirmee = false - doit choisir son
+//                          mot de passe avant toute autre etape (242)
 //  - need_mfa_enroll     : mot de passe correct, mais aucun facteur TOTP verifie -
 //                          premiere connexion de cet admin, on l'enrole
 //  - need_mfa_challenge  : facteur TOTP deja enrole, code a saisir
@@ -10,7 +13,7 @@ import { supabase } from '../lib/supabase';
 //  - authorized          : session aal2 + present dans admin_users
 //  - unauthorized        : aal2 atteint mais pas admin (ou admin desactive)
 export type AuthStatus =
-  | 'loading' | 'signed_out' | 'need_mfa_enroll' | 'need_mfa_challenge'
+  | 'loading' | 'signed_out' | 'need_password_set' | 'need_mfa_enroll' | 'need_mfa_challenge'
   | 'checking' | 'authorized' | 'unauthorized';
 
 export type AdminRole = 'super_admin' | 'moderation' | 'finance' | 'lecture_seule';
@@ -50,6 +53,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!sessionData.session) {
       setStatus('signed_out');
       setRole(null);
+      return;
+    }
+
+    // Session d'invitation (admin-inviter) : la personne n'a pas encore
+    // choisi de mot de passe. A verifier avant l'aal, qu'elle n'atteindra
+    // jamais tant qu'elle n'a pas de facteur MFA de toute facon, pour lui
+    // presenter le bon ecran plutot que l'enrolement MFA en premier (242).
+    const { data: enAttente } = await supabase.rpc('admin_invitation_en_attente');
+    if (enAttente) {
+      setStatus('need_password_set');
       return;
     }
 

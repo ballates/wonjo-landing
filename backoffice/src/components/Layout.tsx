@@ -9,7 +9,7 @@ import { Avatar } from './Avatar';
 import { ProfilModal } from './ProfilModal';
 import {
   IconDashboard, IconExchange, IconHistory, IconId, IconLogout, IconMoon, IconPanelClose, IconPanelOpen,
-  IconMail, IconPercent, IconShield, IconStar, IconSun, IconUsers,
+  IconWmail, IconPercent, IconShield, IconStar, IconSun, IconUsers,
 } from './Icons';
 
 const STORAGE_KEY = 'wonjo-backoffice-sidebar-collapsed';
@@ -35,12 +35,12 @@ export function Layout() {
   const liens = [
     { to: '/', label: 'Tableau de bord', icon: <IconDashboard />, visible: true, end: true },
     { to: '/moderation', label: 'Confiance', icon: <IconShield />, visible: peutModerer(role) },
+    { to: '/kyc', label: 'KYC', icon: <IconId />, visible: peutVoirKyc(role) },
     { to: '/transactions', label: 'Transactions', icon: <IconExchange />, visible: peutModerer(role) },
     { to: '/avis', label: 'Avis', icon: <IconStar />, visible: peutModerer(role) },
-    { to: '/kyc', label: 'KYC', icon: <IconId />, visible: peutVoirKyc(role) },
     { to: '/commissions', label: 'Commissions', icon: <IconPercent />, visible: peutGererAdmins(role) },
-    { to: '/emails', label: 'Emails', icon: <IconMail />, visible: peutGererAdmins(role) },
-    { to: '/journal', label: 'Journal des actions', icon: <IconHistory />, visible: peutGererAdmins(role) },
+    { to: '/emails', label: 'Emails', icon: <IconWmail />, visible: peutGererAdmins(role) },
+    { to: '/journal', label: 'Actions', icon: <IconHistory />, visible: peutGererAdmins(role) },
     { to: '/admins', label: 'Admin', icon: <IconUsers />, visible: peutGererAdmins(role) },
   ];
 
@@ -75,11 +75,10 @@ export function Layout() {
 
         <div className="sidebar-foot">
           <div className="sidebar-tools">
-            <button className="icon-button tool-wide" onClick={toggleTheme} title={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}>
+            <button className="icon-button" onClick={toggleTheme} title={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'} aria-label={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}>
               {theme === 'dark' ? <IconSun /> : <IconMoon />}
-              {!collapsed && (theme === 'dark' ? 'Mode clair' : 'Mode sombre')}
             </button>
-            <button className="icon-button" onClick={() => signOut()} title="Se déconnecter" aria-label="Se déconnecter">
+            <button className="icon-button icon-button-danger" onClick={() => signOut()} title="Se déconnecter" aria-label="Se déconnecter">
               <IconLogout />
             </button>
           </div>

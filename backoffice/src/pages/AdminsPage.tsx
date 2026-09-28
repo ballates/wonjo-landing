@@ -60,10 +60,16 @@ export function AdminsPage() {
         />
       ),
     },
-    { key: 'statut', filter: 'options', label: 'Statut', value: (a) => (a.actif ? 'Actif' : 'Désactivé'), render: (a) => <span className={`badge ${a.actif ? 'badge-green' : 'badge-muted'}`}>{a.actif ? 'Actif' : 'Désactivé'}</span> },
+    {
+      key: 'statut', filter: 'options', label: 'Statut',
+      value: (a) => (!a.invitation_confirmee ? 'En attente' : a.actif ? 'Actif' : 'Désactivé'),
+      render: (a) => !a.invitation_confirmee
+        ? <span className="badge badge-amber">En attente</span>
+        : <span className={`badge ${a.actif ? 'badge-green' : 'badge-muted'}`}>{a.actif ? 'Actif' : 'Désactivé'}</span>,
+    },
     { key: 'depuis', label: 'Depuis', value: (a) => a.created_at, render: (a) => new Date(a.created_at).toLocaleDateString('fr-FR') },
     {
-      key: 'actions', label: '', render: (a) => (a.user_id === profil?.user_id ? <span className="hint">C'est vous</span> : (
+      key: 'actions', label: '', render: (a) => (a.user_id === profil?.user_id ? <span className="hint">Mon profil</span> : (
         <button className={`btn btn-sm ${a.actif ? 'btn-danger-outline' : 'btn-soft'}`} onClick={() => toggleActif(a)}>{a.actif ? 'Désactiver' : 'Réactiver'}</button>
       )),
     },
@@ -73,8 +79,8 @@ export function AdminsPage() {
     <div>
       <div className="page-head">
         <div>
-          <h1>Administrateurs</h1>
-          <p className="page-sub">Gérer les accès au back-office. Chaque action est tracée dans le journal.</p>
+          <h1>Administration</h1>
+          <p className="page-sub">Gérer les accès à Wonjo. Chaque action est tracée dans le journal.</p>
         </div>
       </div>
       {error && <p className="page-error">{error}</p>}

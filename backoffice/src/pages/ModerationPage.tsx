@@ -7,10 +7,14 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { peutGererAdmins, peutVoirRevenus } from '../lib/permissions';
 import { DataTable, type Column } from '../components/DataTable';
+import { ServerTable, type ServerColumn } from '../components/ServerTable';
 import { Modal } from '../components/Modal';
 import { useFicheCompte, VoirFicheButton } from '../components/FicheCompte';
-import { LABELS_NIVEAU, LABELS_PAIEMENT, LABELS_STATUT_KYC, LABELS_STATUT_SIGNALEMENT, dateHeure, depuis, nomComplet } from '../lib/labels';
+import { LABELS_NIVEAU, LABELS_PAIEMENT, LABELS_STATUT_KYC, LABELS_STATUT_SIGNALEMENT, casserNom, casserPrenom, dateHeure, depuis, nomComplet } from '../lib/labels';
+import { useDebounce } from '../lib/useDebounce';
 import type { CompteRecherche, Litige, Signalement } from '../lib/types';
+
+const PAGE_SIZE_COMPTES = 10;
 
 type Tab = 'comptes' | 'signalements' | 'litiges';
 
@@ -40,56 +44,162 @@ export function ModerationPage() {
 }
 
 function ComptesTab() {
+  const location = useLocation();
+  const filtreDemande = (location.state as { filtre?: string } | null)?.filtre;
+  const [filtreDoublons, setFiltreDoublons] = useState(filtreDemande === 'doublons_identite');
+  useEffect(() => { if (filtreDemande === 'doublons_identite') setFiltreDoublons(true); }, [filtreDemande, location.key]);
+
+  // Recherche/filtres/tri/page : chaque changement redemande une page au
+  // serveur (253) plutot que de tout retelecharger pour filtrer sur place -
+  // seule cette page-la est jamais en memoire.
+  const [recherche, setRecherche] = useState('');
+  const rechercheDebattue = useDebounce(recherche);
+  const [statut, setStatut] = useState<string[]>([]);
+  const [kyc, setKyc] = useState<string[]>([]);
+  const [verif, setVerif] = useState<string[]>([]);
+  const [niveau, setNiveau] = useState<string[]>([]);
+  const [tri, setTri] = useState<{ key: string; dir: 'asc' | 'desc' } | null>({ key: 'created_at', dir: 'desc' });
+  const [page, setPage] = useState(0);
+
   const [items, setItems] = useState<CompteRecherche[] | null>(null);
+  const [total, setTotal] = useState(0);
+  const [chargement, setChargement] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selection, setSelection] = useState<Set<string>>(new Set());
+  const [selectionInfo, setSelectionInfo] = useState<Map<string, CompteRecherche>>(new Map());
   const { role } = useAuth();
   const peutEnvoyer = peutGererAdmins(role);
   const navigate = useNavigate();
 
   function load() {
-    supabase.rpc('admin_rechercher_comptes', { p_recherche: '', p_limite: 2000 }).then(({ data, error: rpcError }) => {
+    setChargement(true);
+    const rpc = filtreDoublons ? 'admin_comptes_doublons_identite' : 'admin_rechercher_comptes';
+    const params = filtreDoublons ? {} : {
+      p_recherche: rechercheDebattue,
+      p_statut: statut.length ? statut : null,
+      p_kyc: kyc.length ? kyc : null,
+      p_verif: verif.length ? verif : null,
+      p_tri: tri?.key ?? 'created_at',
+      p_ordre: tri?.dir ?? 'desc',
+      p_limite: PAGE_SIZE_COMPTES,
+      p_offset: page * PAGE_SIZE_COMPTES,
+      p_niveau: niveau.length ? niveau : null,
+    };
+    supabase.rpc(rpc, params).then(({ data, error: rpcError }) => {
+      setChargement(false);
       if (rpcError) { setError(rpcError.message); return; }
-      setItems((data ?? []) as CompteRecherche[]);
+      const lignes = (data ?? []) as (CompteRecherche & { total_count?: number })[];
+      setItems(lignes);
+      setTotal(filtreDoublons ? lignes.length : (lignes[0]?.total_count ?? 0));
     });
   }
-  useEffect(load, []);
+  useEffect(load, [filtreDoublons, rechercheDebattue, statut, kyc, verif, niveau, tri, page]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setPage(0); }, [rechercheDebattue, statut, kyc, verif, niveau, filtreDoublons]);
   const { ouvrir, modal } = useFicheCompte(load);
 
-  const columns: Column<CompteRecherche>[] = [
-    { key: 'avatar', label: 'Avatar', render: (c) => <Avatar src={c.photo_url} nom={nomComplet(c.prenom, c.nom)} size={36} />, width: 70 },
-    { key: 'prenom', label: 'Prénom', value: (c) => c.prenom, render: (c) => <strong>{c.prenom || '-'}</strong> },
-    { key: 'nom', label: 'Nom', value: (c) => c.nom },
-    { key: 'email', label: 'Email', value: (c) => c.email },
-    { key: 'statut', filter: 'options', label: 'Statut', value: (c) => (c.bloque ? 'Bloqué' : 'Actif'), render: (c) => (c.bloque ? <span className="badge badge-danger">Bloqué</span> : <span className="badge badge-green">Actif</span>) },
+  function changerSelection(next: Set<string>) {
+    setSelection(next);
+    setSelectionInfo((prev) => {
+      const m = new Map(prev);
+      for (const id of m.keys()) if (!next.has(id)) m.delete(id);
+      for (const id of next) if (!m.has(id)) {
+        const trouve = items?.find((c) => c.id === id);
+        if (trouve) m.set(id, trouve);
+      }
+      return m;
+    });
+  }
+
+  const colonnesCommunes = [
+    { key: 'avatar', label: 'Avatar', render: (c: CompteRecherche) => <Avatar src={c.photo_url} nom={nomComplet(c.prenom, c.nom)} size={36} />, width: 70 },
+    { key: 'prenom', label: 'Prénom', render: (c: CompteRecherche) => <strong>{casserPrenom(c.prenom)}</strong> },
+    { key: 'nom', label: 'Nom', sortKey: 'nom', render: (c: CompteRecherche) => casserNom(c.nom) },
+    { key: 'email', label: 'Email', render: (c: CompteRecherche) => c.email },
     {
-      key: 'verif', filter: 'options', label: 'Vérifié', value: (c) => (c.id_verifie ? 'Identité' : c.telephone_verifie ? 'Téléphone' : 'Non vérifié'),
-      render: (c) => (c.id_verifie ? <span className="badge badge-green">Identité</span> : c.telephone_verifie ? <span className="badge badge-teal">Téléphone</span> : <span className="badge badge-muted">Non vérifié</span>),
+      key: 'statut', label: 'Statut', filterKey: 'statut',
+      filterOptions: [{ value: 'actif', label: 'Actif' }, { value: 'bloque', label: 'Bloqué' }],
+      render: (c: CompteRecherche) => (c.bloque ? <span className="badge badge-danger">Bloqué</span> : <span className="badge badge-green">Actif</span>),
     },
-    { key: 'niveau', filter: 'options', label: 'Niveau', value: (c) => LABELS_NIVEAU[c.niveau], render: (c) => <span className={`badge ${c.niveau === 'debutant' ? 'badge-muted' : `badge-niveau-${c.niveau}`}`}>{LABELS_NIVEAU[c.niveau]}</span> },
-    { key: 'kyc', filter: 'options', label: 'KYC', value: (c) => LABELS_STATUT_KYC[c.kyc_status ?? 'none'] ?? c.kyc_status, render: (c) => <StatutBadge statut={c.kyc_status ?? 'none'} label={LABELS_STATUT_KYC[c.kyc_status ?? 'none'] ?? String(c.kyc_status)} /> },
-    { key: 'connexion', label: 'Dernière connexion', value: (c) => c.derniere_connexion ?? '', render: (c) => depuis(c.derniere_connexion) },
-    { key: 'actions', label: '', render: (c) => <VoirFicheButton onClick={() => ouvrir(c.id)} />, width: 100 },
+    {
+      key: 'verif', label: 'Vérifié', filterKey: 'verif',
+      filterOptions: [
+        { value: 'identite', label: 'Identité vérifiée' },
+        { value: 'telephone', label: 'Téléphone vérifié' },
+        { value: 'aucun', label: 'Non vérifié' },
+      ],
+      render: (c: CompteRecherche) => (c.id_verifie ? <span className="badge badge-green">Identité</span> : c.telephone_verifie ? <span className="badge badge-teal">Téléphone</span> : <span className="badge badge-muted">Non vérifié</span>),
+    },
+    {
+      key: 'niveau', label: 'Niveau', filterKey: 'niveau',
+      filterOptions: Object.entries(LABELS_NIVEAU).map(([value, label]) => ({ value, label })),
+      render: (c: CompteRecherche) => <span className={`badge ${c.niveau === 'debutant' ? 'badge-muted' : `badge-niveau-${c.niveau}`}`}>{LABELS_NIVEAU[c.niveau]}</span>,
+    },
+    {
+      key: 'kyc', label: 'KYC', filterKey: 'kyc',
+      filterOptions: Object.entries(LABELS_STATUT_KYC).map(([value, label]) => ({ value, label })),
+      render: (c: CompteRecherche) => <StatutBadge statut={c.kyc_status ?? 'none'} label={LABELS_STATUT_KYC[c.kyc_status ?? 'none'] ?? String(c.kyc_status)} />,
+    },
+    { key: 'connexion', label: 'Dernière connexion', sortKey: 'derniere_connexion', render: (c: CompteRecherche) => depuis(c.derniere_connexion) },
   ];
 
   if (error) return <p className="page-error">{error}</p>;
-  if (!items) return <p className="loading-state">Chargement…</p>;
-  const choisis = items.filter((c) => selection.has(c.id));
+
+  if (filtreDoublons) {
+    const columnsDoublons: Column<CompteRecherche>[] = [
+      ...colonnesCommunes,
+      { key: 'actions', label: '', render: (c) => <VoirFicheButton onClick={() => ouvrir(c.id)} />, width: 100 },
+    ];
+    return (
+      <>
+        <p className="hint" style={{ marginBottom: 12 }}>
+          Filtré sur les identités (nom + prénom) portées par plusieurs comptes, dont au moins un déjà vérifié.{' '}
+          <button type="button" className="btn-link" onClick={() => { setItems(null); setFiltreDoublons(false); }}>Voir tous les comptes</button>
+        </p>
+        {!items ? <p className="loading-state">Chargement…</p> : (
+          <DataTable rows={items} columns={columnsDoublons} rowKey={(c) => c.id} searchPlaceholder="Rechercher un nom, un email…" emptyText="Aucun compte ne correspond." />
+        )}
+        {modal}
+      </>
+    );
+  }
+
+  const columns: ServerColumn<CompteRecherche>[] = [
+    ...colonnesCommunes,
+    { key: 'actions', label: '', render: (c) => <VoirFicheButton onClick={() => ouvrir(c.id)} />, width: 100 },
+  ];
+
+  const choisis = [...selectionInfo.values()];
   return (
     <>
-      <DataTable
-        rows={items}
+      <ServerTable
+        rows={items ?? []}
         columns={columns}
         rowKey={(c) => c.id}
+        loading={chargement}
+        search={recherche}
+        onSearchChange={setRecherche}
         searchPlaceholder="Rechercher un nom, un email…"
         emptyText="Aucun compte ne correspond."
-        {...(peutEnvoyer ? { selected: selection, onSelectedChange: setSelection } : {})}
+        total={total}
+        page={page}
+        pageSize={PAGE_SIZE_COMPTES}
+        onPageChange={setPage}
+        sort={tri}
+        onSortChange={setTri}
+        filtres={{ statut, kyc, verif, niveau }}
+        onFiltreChange={(cle, valeurs) => {
+          if (cle === 'statut') setStatut(valeurs);
+          else if (cle === 'kyc') setKyc(valeurs);
+          else if (cle === 'verif') setVerif(valeurs);
+          else if (cle === 'niveau') setNiveau(valeurs);
+        }}
+        {...(peutEnvoyer ? { selected: selection, onSelectedChange: changerSelection } : {})}
       />
       {peutEnvoyer && selection.size > 0 && (
         <div className="selection-bar">
           <span>{selection.size} compte(s) sélectionné(s)</span>
           <div className="action-row">
-            <button className="btn btn-sm" onClick={() => setSelection(new Set())}>Tout désélectionner</button>
+            <button className="btn btn-sm" onClick={() => { setSelection(new Set()); setSelectionInfo(new Map()); }}>Tout désélectionner</button>
             <button
               className="btn btn-sm"
               onClick={() => navigate('/commissions', { state: { ids: [...selection], noms: choisis.map((c) => nomComplet(c.prenom, c.nom) || c.email) } })}
@@ -146,8 +256,8 @@ function SignalementsTab() {
           {s.statut === 'nouveau' && <button className="btn btn-sm" onClick={() => traiter(s.id, 'en_cours')}>Prendre en charge</button>}
           {s.statut !== 'clos_sans_suite' && s.statut !== 'clos_action_prise' && (
             <>
-              <button className="btn btn-sm" onClick={() => traiter(s.id, 'clos_sans_suite')}>Clore sans suite</button>
-              <button className="btn btn-sm" onClick={() => traiter(s.id, 'clos_action_prise')}>Clore - action prise</button>
+              <button className="btn btn-sm btn-soft" onClick={() => traiter(s.id, 'clos_sans_suite')}>Clore sans suite</button>
+              <button className="btn btn-sm btn-success" onClick={() => traiter(s.id, 'clos_action_prise')}>Clore - action prise</button>
             </>
           )}
         </div>

@@ -2,14 +2,14 @@ import { useEffect, useState } from 'react';
 import { Select } from '../components/Select';
 import {
   ResponsiveContainer, AreaChart, Area, BarChart, Bar, XAxis, YAxis,
-  CartesianGrid, Tooltip, LabelList,
+  CartesianGrid, Tooltip, LabelList, PieChart, Pie, Cell, Legend,
 } from 'recharts';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../auth/AuthContext';
 import { peutModerer, peutVoirActivite, peutVoirRevenus } from '../lib/permissions';
 import { DataTable, type Column } from '../components/DataTable';
 import { useFicheCompte, VoirFicheButton } from '../components/FicheCompte';
-import { nomComplet } from '../lib/labels';
+import { LABELS_TYPE_ENVOI, casserNom, casserPrenom, nomComplet } from '../lib/labels';
 import { Avatar } from '../components/Avatar';
 import { AnimatedNumber, Kpi, VizTooltip, euros, pourcent } from '../components/Kpi';
 import { useLocation } from 'react-router-dom';
@@ -19,7 +19,8 @@ import { ListeAFaire } from './AFairePage';
 import { nbActions, useAFaire } from '../lib/aFaire';
 import type {
   CompteActif, StatsRevenusJour, StatsColisJour,
-  RepartitionTransaction, RepartitionTypeEnvoi,
+  RepartitionTransaction, RepartitionTypeEnvoi, RepartitionCommissionTypeEnvoi,
+  RepartitionAnnulations, TopAnnulateur,
 } from '../lib/types';
 
 type Tab = 'activite' | 'communaute' | 'marche' | 'colis' | 'finance' | 'afaire';
@@ -30,7 +31,7 @@ const TAB_LABELS: Record<Tab, string> = {
   marche: 'Marché',
   colis: 'Colis',
   finance: 'Finance',
-  afaire: 'À faire',
+  afaire: 'Alertes',
 };
 
 function premierMot(v?: string | null): string {
@@ -70,7 +71,7 @@ export function DashboardPage() {
   return (
     <div>
       <div className="greeting">
-        <h1>{salutation()} {premierMot(profil?.nom ?? email)}</h1>
+        <h1>{salutation()} {profil?.nom_affiche || premierMot(profil?.nom ?? email)}</h1>
       </div>
 
       <div className="tabs">
@@ -117,6 +118,7 @@ function ActiviteTab() {
   const [u, setU] = useState<StatsUtilisation | null>(null);
   const [actifs, setActifs] = useState<CompteActif[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [joursSerie, setJoursSerie] = useState(7);
   const { ouvrir, modal } = useFicheCompte();
 
   useEffect(() => {
@@ -132,11 +134,12 @@ function ActiviteTab() {
 
   const tauxUtilisation = u.membres ? (u.mois / u.membres) * 100 : 0;
   const fidelite = u.mois ? (Number(u.dau_moyen ?? 0) / u.mois) * 100 : 0;
+  const serieAffichee = u.serie.slice(-joursSerie);
 
   const columns: Column<CompteActif>[] = [
     { key: 'avatar', label: 'Avatar', render: (c) => <Avatar src={c.photo_url} nom={nomComplet(c.prenom, c.nom)} size={36} />, width: 70 },
-    { key: 'prenom', label: 'Prénom', value: (c) => c.prenom, render: (c) => <strong>{c.prenom || '-'}</strong> },
-    { key: 'nom', label: 'Nom', value: (c) => c.nom },
+    { key: 'prenom', label: 'Prénom', value: (c) => c.prenom, render: (c) => <strong>{casserPrenom(c.prenom)}</strong> },
+    { key: 'nom', label: 'Nom', value: (c) => c.nom, render: (c) => casserNom(c.nom) },
     { key: 'livraisons', label: 'Livraisons', value: (c) => c.nombre_livraisons ?? 0 },
     { key: 'colis', label: 'Colis expédiés', value: (c) => c.nombre_colis_confies ?? 0 },
     { key: 'total', label: 'Total', value: (c) => (c.nombre_livraisons ?? 0) + (c.nombre_colis_confies ?? 0) },
@@ -155,10 +158,25 @@ function ActiviteTab() {
       </div>
 
       <div className="chart-card">
-        <h3>Membres actifs par jour</h3>
-        <p className="chart-sub">Un membre est compté actif un jour s'il a ouvert l'app ce jour-là.</p>
+        <div className="chart-head">
+          <div>
+            <h3>Membres actifs par jour</h3>
+            <p className="chart-sub">Un membre est compté actif un jour s'il a ouvert l'app ce jour-là.</p>
+          </div>
+          <Select
+            ariaLabel="Période"
+            size="sm"
+            value={String(joursSerie)}
+            onChange={(v) => setJoursSerie(Number(v))}
+            minWidth={170}
+            options={[
+              { value: '7', label: '7 derniers jours' },
+              { value: '30', label: '30 derniers jours' },
+            ]}
+          />
+        </div>
         <ResponsiveContainer width="100%" height={220}>
-          <AreaChart data={u.serie} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+          <AreaChart data={serieAffichee} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="gradActifs" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="var(--teal)" stopOpacity={0.25} />
@@ -220,7 +238,6 @@ function ColisTab() {
   const totalCrees = temporel?.reduce((s, d) => s + d.colis_crees, 0) ?? 0;
   const totalLivres = temporel?.reduce((s, d) => s + d.colis_livres, 0) ?? 0;
   const tauxLivraison = totalCrees ? Math.round((totalLivres / totalCrees) * 100) : null;
-  const typeLabels: Record<string, string> = { colis: 'Colis', document: 'Documents' };
 
   return (
     <section className="viz-root">
@@ -278,7 +295,7 @@ function ColisTab() {
           <p className="chart-sub">Toutes périodes confondues</p>
           {!typeEnvoi ? <p className="hint">Chargement…</p> : (
             <ResponsiveContainer width="100%" height={Math.max(120, typeEnvoi.length * 48)}>
-              <BarChart data={typeEnvoi.map((t) => ({ ...t, label: typeLabels[t.type_envoi] ?? t.type_envoi }))} layout="vertical" margin={{ top: 0, right: 40, left: 8, bottom: 0 }}>
+              <BarChart data={typeEnvoi.map((t) => ({ ...t, label: LABELS_TYPE_ENVOI[t.type_envoi] ?? t.type_envoi }))} layout="vertical" margin={{ top: 0, right: 40, left: 8, bottom: 0 }}>
                 <XAxis type="number" hide allowDecimals={false} />
                 <YAxis dataKey="label" type="category" tick={{ fontSize: 12.5, fill: 'var(--text)' }} axisLine={false} tickLine={false} width={90} />
                 <Tooltip content={<VizTooltip />} cursor={{ fill: 'var(--hover)' }} />
@@ -319,10 +336,28 @@ const ETAPES_PAIEMENT: { statut: string; label: string; sens: string; couleur: s
   { statut: 'rembourse', label: 'Remboursé', sens: 'Argent rendu à l\'expéditeur, aucune commission gagnée.', couleur: 'var(--series-4)', commissionAcquise: false },
 ];
 
+const COULEURS_TYPE_ENVOI: Record<string, string> = { colis: 'var(--teal)', document: 'var(--brown)', inconnu: 'var(--muted)' };
+
 function FinanceTab() {
+  const { role } = useAuth();
   const [revenus, setRevenus] = useState<StatsRevenusJour[]>([]);
   const [repartition, setRepartition] = useState<RepartitionTransaction[] | null>(null);
+  const [repartitionType, setRepartitionType] = useState<RepartitionCommissionTypeEnvoi[]>([]);
+  const [annulations, setAnnulations] = useState<RepartitionAnnulations | null>(null);
+  const [topAnnulateurs, setTopAnnulateurs] = useState<TopAnnulateur[]>([]);
+  const [tauxTaxe, setTauxTaxe] = useState(0);
+  const [tauxTaxeSaisi, setTauxTaxeSaisi] = useState('');
+  const [busyTaxe, setBusyTaxe] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { ouvrir, modal } = useFicheCompte();
+
+  function chargerTaxe() {
+    supabase.rpc('admin_taux_taxe').then(({ data }) => {
+      const t = Number(data ?? 0);
+      setTauxTaxe(t);
+      setTauxTaxeSaisi(String(Math.round(t * 10000) / 100));
+    });
+  }
 
   useEffect(() => {
     supabase.rpc('admin_stats_revenus', { p_jours: 30 }).then(({ data, error: rpcError }) => {
@@ -333,7 +368,31 @@ function FinanceTab() {
       if (rpcError) { setError(rpcError.message); return; }
       setRepartition((data ?? []) as RepartitionTransaction[]);
     });
+    supabase.rpc('admin_repartition_commission_type_envoi').then(({ data, error: rpcError }) => {
+      if (rpcError) { setError(rpcError.message); return; }
+      setRepartitionType((data ?? []) as RepartitionCommissionTypeEnvoi[]);
+    });
+    supabase.rpc('admin_repartition_annulations').single().then(({ data, error: rpcError }) => {
+      if (rpcError) { setError(rpcError.message); return; }
+      setAnnulations(data as RepartitionAnnulations);
+    });
+    supabase.rpc('admin_top_annulateurs', { p_limite: 8 }).then(({ data, error: rpcError }) => {
+      if (rpcError) { setError(rpcError.message); return; }
+      setTopAnnulateurs((data ?? []) as TopAnnulateur[]);
+    });
+    chargerTaxe();
   }, []);
+
+  async function enregistrerTaxe() {
+    const v = Number(tauxTaxeSaisi.replace(',', '.'));
+    if (!Number.isFinite(v) || v < 0 || v > 100) { setError('Le taux de taxe doit être compris entre 0 et 100 %.'); return; }
+    setBusyTaxe(true);
+    setError(null);
+    const { error: rpcError } = await supabase.rpc('admin_definir_taux_taxe', { p_taux: v / 100 });
+    setBusyTaxe(false);
+    if (rpcError) { setError(rpcError.message); return; }
+    chargerTaxe();
+  }
 
   if (error) return <p className="page-error">{error}</p>;
   if (!repartition) return <p className="loading-state">Chargement…</p>;
@@ -347,6 +406,10 @@ function FinanceTab() {
   const payees = val('libere', 'nb') + val('escrow', 'nb');
   const totalMontant = repartition.reduce((s, r) => s + Number(r.montant), 0);
   const autres = repartition.filter((r) => !ETAPES_PAIEMENT.some((e) => e.statut === r.statut_paiement));
+  const commissionBrute = commissionEncaissee + commissionAVenir;
+  const montantTaxe = commissionBrute * tauxTaxe;
+  const commissionNette = commissionBrute - montantTaxe;
+  const totalCommissionType = repartitionType.reduce((s, r) => s + Number(r.commission), 0);
 
   return (
     <section className="viz-root">
@@ -356,6 +419,95 @@ function FinanceTab() {
         <Kpi index={2} label="Commission (30 jours)" value={commission30j} format={euros} hint="Transports terminés ce mois-ci" />
         <Kpi index={3} label="Transactions payées" value={payees} hint={`sur ${totalTransactions} demandes`} />
         <Kpi index={4} label="Remboursements" value={val('rembourse', 'montant')} format={euros} hint={`${val('rembourse', 'nb')} transaction(s)`} />
+      </div>
+
+      <div className="chart-card">
+        <h3>Annulations après acceptation</h3>
+        <p className="chart-sub">
+          Argent déjà prélevé puis remboursé : Stripe garde ses frais, donc perte réelle. À distinguer des annulations avant prélèvement, sans coût.
+        </p>
+        {annulations && (
+          <div className="stat-list stat-list--nowrap">
+            <div><strong>{annulations.nb_avant_charge}</strong><span>annulées avant charge (aucune perte)</span></div>
+            <div><strong>{annulations.nb_apres_charge}</strong><span>annulées après charge, remboursées</span></div>
+            <div><strong>{euros(annulations.montant_apres_charge)}</strong><span>montant remboursé</span></div>
+            <div><strong>{euros(annulations.commission_perdue)}</strong><span>commission perdue</span></div>
+          </div>
+        )}
+
+        {topAnnulateurs.length > 0 && (
+          <div className="dt-wrap" style={{ marginTop: 14 }}>
+            <table>
+              <thead>
+                <tr><th>Compte</th><th>Annulations après charge</th><th>Montant concerné</th><th></th></tr>
+              </thead>
+              <tbody>
+                {topAnnulateurs.map((a) => (
+                  <tr key={a.user_id}>
+                    <td>{nomComplet(a.prenom, a.nom) || a.email || 'Compte supprimé'}</td>
+                    <td>{a.nb}</td>
+                    <td>{euros(a.montant)}</td>
+                    <td><VoirFicheButton onClick={() => ouvrir(a.user_id)} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {modal}
+      </div>
+
+      <div className="grid-2">
+        <div className="chart-card">
+          <h3>D'où vient la commission</h3>
+          <p className="chart-sub">Répartition de la commission acquise ou engagée, par type d'envoi. Colis et Enveloppe sont les deux seuls types possibles.</p>
+          {totalCommissionType > 0 ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie
+                  data={repartitionType}
+                  dataKey="commission"
+                  nameKey="type_envoi"
+                  cx="38%"
+                  outerRadius={90}
+                  isAnimationActive={false}
+                  label={({ percent }) => `${Math.round((percent ?? 0) * 100)} %`}
+                  labelLine={false}
+                >
+                  {repartitionType.map((r) => (
+                    <Cell key={r.type_envoi} fill={COULEURS_TYPE_ENVOI[r.type_envoi] ?? 'var(--muted)'} />
+                  ))}
+                </Pie>
+                <Legend layout="vertical" verticalAlign="middle" align="right" formatter={(v: string) => LABELS_TYPE_ENVOI[v] ?? v} />
+                <Tooltip content={<VizTooltip />} formatter={(v, n) => [euros(Number(v)), LABELS_TYPE_ENVOI[String(n)] ?? String(n)]} />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : <p className="hint">Pas encore de commission acquise à répartir.</p>}
+          <p className="insight">
+            {repartitionType.map((r) => `${LABELS_TYPE_ENVOI[r.type_envoi] ?? r.type_envoi} : ${euros(Number(r.commission))} (${totalCommissionType ? Math.round((Number(r.commission) / totalCommissionType) * 100) : 0} %)`).join(' · ')}
+          </p>
+        </div>
+
+        <div className="chart-card">
+          <h3>Commission brute, taxe, net</h3>
+          <p className="chart-sub">
+            La société n'étant pas encore créée, le taux réel n'est pas connu : le taux ci-dessous reste à 0 % tant qu'il n'est pas renseigné, et ne change rien aux montants affichés ailleurs.
+          </p>
+          <div className="stat-list stat-list--nowrap">
+            <div><strong>{euros(commissionBrute)}</strong><span>Commission brute</span></div>
+            <div><strong>{euros(montantTaxe)}</strong><span>Taxe estimée ({(tauxTaxe * 100).toFixed(1)} %)</span></div>
+            <div><strong>{euros(commissionNette)}</strong><span>Net</span></div>
+          </div>
+          {role === 'super_admin' && (
+            <div className="inline-form" style={{ marginTop: 14 }}>
+              <div className="suffix-input">
+                <input type="text" inputMode="decimal" value={tauxTaxeSaisi} onChange={(e) => setTauxTaxeSaisi(e.target.value)} aria-label="Taux de taxe" />
+                <span>%</span>
+              </div>
+              <button className="btn btn-primary" disabled={busyTaxe} onClick={enregistrerTaxe}>Enregistrer</button>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="chart-card">

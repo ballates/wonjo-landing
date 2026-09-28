@@ -35,6 +35,29 @@ export interface RepartitionTypeEnvoi {
   nb: number;
 }
 
+export interface RepartitionCommissionTypeEnvoi {
+  type_envoi: string;
+  nb: number;
+  montant: number;
+  commission: number;
+}
+
+export interface RepartitionAnnulations {
+  nb_avant_charge: number;
+  nb_apres_charge: number;
+  montant_apres_charge: number;
+  commission_perdue: number;
+}
+
+export interface TopAnnulateur {
+  user_id: string;
+  prenom: string | null;
+  nom: string | null;
+  email: string | null;
+  nb: number;
+  montant: number;
+}
+
 export interface CompteActif {
   id: string;
   prenom: string;
@@ -191,12 +214,16 @@ export interface FicheTransaction {
   photo_colis_url: string | null;
   expediteur_id: string;
   expediteur_nom: string | null;
+  expediteur_prenom: string | null;
   expediteur_photo: string | null;
+  expediteur_telephone: string | null;
   expediteur_telephone_verifie: boolean | null;
   expediteur_id_verifie: boolean | null;
   porteur_id: string;
   porteur_nom: string | null;
+  porteur_prenom: string | null;
   porteur_photo: string | null;
+  porteur_telephone: string | null;
   porteur_telephone_verifie: boolean | null;
   porteur_id_verifie: boolean | null;
   timeline: EvenementTimeline[];
@@ -234,9 +261,12 @@ export interface FicheCompte {
   prenom: string;
   nom: string;
   email: string | null;
+  telephone: string | null;
   photo_url: string | null;
   bloque: boolean;
+  bloque_jusqu_a: string | null;
   kyc_status: string | null;
+  kyc_attempts: number | null;
   id_verifie: boolean | null;
   telephone_verifie: boolean | null;
   derniere_connexion: string | null;

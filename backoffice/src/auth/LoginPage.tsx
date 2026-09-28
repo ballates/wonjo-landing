@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from './AuthContext';
 import { AuthShell } from '../components/AuthShell';
+import { ChampMotDePasse } from '../components/ChampMotDePasse';
 
 export function LoginPage() {
   const { signIn, error } = useAuth();
@@ -29,7 +30,7 @@ export function LoginPage() {
           </label>
           <label>
             Mot de passe
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <ChampMotDePasse value={password} onChange={setPassword} required />
           </label>
           {error && <p className="auth-error">{error}</p>}
           <button type="submit" disabled={loading}>{loading ? 'Connexion…' : 'Se connecter'}</button>

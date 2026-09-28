@@ -1,23 +1,41 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../auth/AuthContext';
+import { peutSupprimerCompte } from '../lib/permissions';
 import { StatutBadge } from './Badge';
 import { Avatar } from './Avatar';
+import { NumeroTelephone } from './NumeroTelephone';
 import { Modal } from './Modal';
+import { Select } from './Select';
 import { LABELS_NIVEAU, LABELS_STATUT_KYC, dateHeure, depuis, libelleAction, libelleMotif, nomComplet, niveauReputation } from '../lib/labels';
 import type { ActionHistorique, FicheCompte } from '../lib/types';
 
-type Saisie = 'bloquer' | 'debloquer' | 'approuver_kyc' | 'rejeter_kyc' | null;
+type Saisie = 'bloquer' | 'debloquer' | 'approuver_kyc' | 'rejeter_kyc' | 'reinitialiser_kyc' | 'supprimer' | null;
+
+const DUREES_BLOCAGE: { value: string; label: string }[] = [
+  { value: 'permanent', label: 'Permanent' },
+  { value: '30', label: '30 minutes' },
+  { value: '60', label: '1 heure' },
+  { value: '1440', label: '1 jour' },
+  { value: '10080', label: '1 semaine' },
+  { value: '43200', label: '1 mois' },
+];
 
 const SAISIES: Record<Exclude<Saisie, null>, { titre: string; obligatoire: boolean; bouton: string; classe: string }> = {
   bloquer: { titre: 'Motif du blocage', obligatoire: true, bouton: 'Confirmer le blocage', classe: 'btn-danger' },
   debloquer: { titre: 'Motif du déblocage (facultatif)', obligatoire: false, bouton: 'Confirmer le déblocage', classe: 'btn-success' },
   approuver_kyc: { titre: 'Motif de l\'approbation (facultatif)', obligatoire: false, bouton: 'Confirmer l\'approbation', classe: 'btn-success' },
   rejeter_kyc: { titre: 'Motif du rejet de la vérification', obligatoire: true, bouton: 'Confirmer le rejet', classe: 'btn-danger' },
+  reinitialiser_kyc: { titre: 'Motif de la réinitialisation (facultatif)', obligatoire: false, bouton: 'Réinitialiser les tentatives', classe: 'btn-primary' },
+  supprimer: { titre: 'Motif de la suppression', obligatoire: true, bouton: 'Confirmer la suppression', classe: 'btn-danger' },
 };
 
 export function CompteModal({ fiche, onClose, onChanged }: { fiche: FicheCompte; onClose: () => void; onChanged: () => void }) {
+  const { role } = useAuth();
   const [saisie, setSaisie] = useState<Saisie>(null);
   const [motif, setMotif] = useState('');
+  const [duree, setDuree] = useState('permanent');
+  const [confirmationSuppression, setConfirmationSuppression] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [historique, setHistorique] = useState<ActionHistorique[] | null>(null);
@@ -30,16 +48,17 @@ export function CompteModal({ fiche, onClose, onChanged }: { fiche: FicheCompte;
 
   useEffect(chargerHistorique, [fiche.id]);
 
-  async function executer(action: () => PromiseLike<{ error: { message: string } | null }>) {
+  async function executer(action: () => PromiseLike<{ data?: unknown; error: { message: string } | null }>, apresSucces?: () => void) {
     setBusy(true);
     setError(null);
     try {
-      const { error: rpcError } = await action();
+      const { data, error: rpcError } = await action();
       if (rpcError) { setError(rpcError.message); return; }
+      const resultat = data as { success?: boolean; message?: string } | null;
+      if (resultat && resultat.success === false) { setError(resultat.message ?? 'Action refusée.'); return; }
       setSaisie(null);
       setMotif('');
-      onChanged();
-      chargerHistorique();
+      if (apresSucces) apresSucces(); else { onChanged(); chargerHistorique(); }
     } finally {
       setBusy(false);
     }
@@ -49,15 +68,25 @@ export function CompteModal({ fiche, onClose, onChanged }: { fiche: FicheCompte;
     if (!saisie) return;
     const m = motif.trim();
     if (SAISIES[saisie].obligatoire && !m) { setError('Le motif est obligatoire.'); return; }
-    if (saisie === 'bloquer') executer(() => supabase.rpc('admin_bloquer_compte', { p_user_id: fiche.id, p_motif: m }));
+    if (saisie === 'bloquer') executer(() => supabase.rpc('admin_bloquer_compte', { p_user_id: fiche.id, p_motif: m, p_duree_minutes: duree === 'permanent' ? null : Number(duree) }));
     if (saisie === 'debloquer') executer(() => supabase.rpc('admin_debloquer_compte', { p_user_id: fiche.id, p_motif: m || null }));
     if (saisie === 'approuver_kyc') executer(() => supabase.rpc('admin_valider_kyc', { p_user_id: fiche.id, p_motif: m || null }));
     if (saisie === 'rejeter_kyc') executer(() => supabase.rpc('admin_rejeter_kyc', { p_user_id: fiche.id, p_motif: m }));
+    if (saisie === 'reinitialiser_kyc') executer(() => supabase.rpc('admin_reinitialiser_tentatives_kyc', { p_user_id: fiche.id, p_motif: m || null }));
+    if (saisie === 'supprimer') {
+      if (confirmationSuppression !== 'SUPPRIMER') { setError('Tapez SUPPRIMER en majuscules pour confirmer.'); return; }
+      executer(
+        () => supabase.rpc('admin_supprimer_compte', { p_user_id: fiche.id, p_motif: m }),
+        () => { onChanged(); onClose(); },
+      );
+    }
   }
 
   function ouvrirSaisie(s: Saisie) {
     setSaisie(s);
     setMotif('');
+    setDuree('permanent');
+    setConfirmationSuppression('');
     setError(null);
   }
 
@@ -71,9 +100,11 @@ export function CompteModal({ fiche, onClose, onChanged }: { fiche: FicheCompte;
         <Avatar src={fiche.photo_url} nom={nom} size={72} />
         <div style={{ minWidth: 0 }}>
           <h2>{nom}</h2>
-          <p className="modal-email">{fiche.email ?? ''} · inscrit le {new Date(fiche.created_at).toLocaleDateString('fr-FR')}</p>
+          <p className="modal-email">{fiche.email ?? ''} · <NumeroTelephone numero={fiche.telephone} /> · inscrit le {new Date(fiche.created_at).toLocaleDateString('fr-FR')}</p>
           <div className="badges">
-            {fiche.bloque ? <span className="badge badge-danger">Compte bloqué</span> : <span className="badge badge-green">Compte actif</span>}
+            {fiche.bloque
+              ? <span className="badge badge-danger">Compte bloqué{fiche.bloque_jusqu_a ? ` jusqu'au ${dateHeure(fiche.bloque_jusqu_a)}` : ' (permanent)'}</span>
+              : <span className="badge badge-green">Compte actif</span>}
             <StatutBadge statut={kyc} label={`KYC : ${LABELS_STATUT_KYC[kyc] ?? kyc}`} />
             <span className={`badge ${niveau === 'debutant' ? 'badge-muted' : `badge-niveau-${niveau}`}`}>{LABELS_NIVEAU[niveau]}</span>
           </div>
@@ -121,7 +152,7 @@ export function CompteModal({ fiche, onClose, onChanged }: { fiche: FicheCompte;
                 </ul>
               )}
               {historique !== null && historique.length > 1 && (
-                <p className="hint">Historique complet dans Journal des actions.</p>
+                <p className="hint">Historique complet dans Actions.</p>
               )}
             </div>
           </div>
@@ -150,21 +181,61 @@ export function CompteModal({ fiche, onClose, onChanged }: { fiche: FicheCompte;
                     {kyc !== 'rejected' && (
                       <button className="btn btn-danger-outline btn-sm" disabled={busy} onClick={() => ouvrirSaisie('rejeter_kyc')}>Rejeter</button>
                     )}
+                    <button className="btn btn-soft btn-sm" disabled={busy || !fiche.kyc_attempts} onClick={() => ouvrirSaisie('reinitialiser_kyc')}>Réinitialiser les tentatives</button>
                   </div>
                 </div>
               </div>
 
+              {peutSupprimerCompte(role) && (
+                <div className="action-group">
+                  <div className="action-group-head">
+                    <strong>Zone dangereuse</strong>
+                    <button className="btn btn-danger btn-sm" disabled={busy} onClick={() => ouvrirSaisie('supprimer')}>Supprimer le compte</button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         {saisie && (
           <div className="action-group motif-form motif-form-wide">
+            {saisie === 'bloquer' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label>Durée du blocage</label>
+                <Select
+                  value={duree}
+                  onChange={setDuree}
+                  options={DUREES_BLOCAGE}
+                  ariaLabel="Durée du blocage"
+                  minWidth={180}
+                />
+              </div>
+            )}
             <label htmlFor="motif">{SAISIES[saisie].titre}</label>
             <textarea id="motif" autoFocus value={motif} onChange={(e) => setMotif(e.target.value)} placeholder="Précisez la raison, elle sera enregistrée dans l'historique." />
+            {saisie === 'supprimer' && (
+              <div className="confirmation-suppression">
+                <label htmlFor="confirmation-suppression">Tapez <strong>SUPPRIMER</strong> pour confirmer</label>
+                <input
+                  id="confirmation-suppression"
+                  type="text"
+                  autoComplete="off"
+                  value={confirmationSuppression}
+                  onChange={(e) => setConfirmationSuppression(e.target.value)}
+                  placeholder="SUPPRIMER"
+                />
+              </div>
+            )}
             <div className="action-row" style={{ justifyContent: 'flex-end' }}>
               <button className="btn" disabled={busy} onClick={() => ouvrirSaisie(null)}>Annuler</button>
-              <button className={`btn ${SAISIES[saisie].classe}`} disabled={busy} onClick={confirmerSaisie}>{SAISIES[saisie].bouton}</button>
+              <button
+                className={`btn ${SAISIES[saisie].classe}`}
+                disabled={busy || (saisie === 'supprimer' && confirmationSuppression !== 'SUPPRIMER')}
+                onClick={confirmerSaisie}
+              >
+                {SAISIES[saisie].bouton}
+              </button>
             </div>
           </div>
         )}

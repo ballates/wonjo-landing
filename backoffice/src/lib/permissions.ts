@@ -23,6 +23,12 @@ export function peutGererAdmins(role: AdminRole | null): boolean {
   return role === 'super_admin';
 }
 
+// Suppression (anonymisation) d'un compte : action irreversible, reservee au
+// super_admin - aucun autre role ne peut la mener, meme moderation.
+export function peutSupprimerCompte(role: AdminRole | null): boolean {
+  return role === 'super_admin';
+}
+
 export const LABELS_ROLES: Record<AdminRole, string> = {
   super_admin: 'Super admin',
   moderation: 'Confiance & sécurité',

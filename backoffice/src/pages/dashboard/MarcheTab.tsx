@@ -67,15 +67,6 @@ export function MarcheTab() {
 
   return (
     <section className="viz-root">
-      <div className="cards">
-        <Kpi index={0} label="Demandes" value={s.demandes} hint="de transport" />
-        <Kpi index={1} label="Taux de livraison" value={tauxLivraison} format={pourcent} hint={`${s.livrees} livrées`} />
-        <Kpi index={2} label="Taux d'annulation" value={tauxAnnulation} format={pourcent} hint={`${s.annulees} annulées`} />
-        <Kpi index={3} label="Délai moyen" value={Number(s.delai_moyen_jours ?? 0)} format={(n) => `${n.toFixed(1)} j`} hint="création → livraison" />
-        <Kpi index={4} label="Capacité couverte" value={capaciteCouverte} format={pourcent} hint={manque > 0 ? `Il manque ${manque} kg de capacité` : 'La demande est couverte'} />
-        {voitEuros && <Kpi index={5} label="Panier moyen" value={Number(s.panier_moyen ?? 0)} format={euros} />}
-      </div>
-
       <div className={`insight-banner ${manque > 0 ? 'warn' : ''}`}>
         <div>
           <p className="insight-oneline">
@@ -84,6 +75,15 @@ export function MarcheTab() {
             {manque > 0 ? ` · manque ${manque} kg, recrutez des voyageurs` : ' · capacité suffisante'}
           </p>
         </div>
+      </div>
+
+      <div className="cards">
+        <Kpi index={0} label="Demandes" value={s.demandes} hint="de transport" />
+        <Kpi index={1} label="Taux de livraison" value={tauxLivraison} format={pourcent} hint={`${s.livrees} livrées`} />
+        <Kpi index={2} label="Taux d'annulation" value={tauxAnnulation} format={pourcent} hint={`${s.annulees} annulées`} />
+        <Kpi index={3} label="Délai moyen" value={Number(s.delai_moyen_jours ?? 0)} format={(n) => `${n.toFixed(1)} j`} hint="création → livraison" />
+        <Kpi index={4} label="Capacité couverte" value={capaciteCouverte} format={pourcent} hint={manque > 0 ? `Il manque ${manque} kg de capacité` : 'La demande est couverte'} />
+        {voitEuros && <Kpi index={5} label="Panier moyen" value={Number(s.panier_moyen ?? 0)} format={euros} />}
       </div>
 
       <div className="chart-card">

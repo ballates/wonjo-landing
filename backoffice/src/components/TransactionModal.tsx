@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../lib/supabase';
 import { Avatar } from './Avatar';
+import { NumeroTelephone } from './NumeroTelephone';
 import { Modal } from './Modal';
 import { IconClose } from './Icons';
 import { useFicheCompte } from './FicheCompte';
-import { LABELS_ORIGINE, LABELS_TYPE_DOCUMENT, LABELS_TYPE_ENVOI, dateHeure, libellesEvenement, premierPrenom } from '../lib/labels';
+import { LABELS_TYPE_DOCUMENT, LABELS_TYPE_ENVOI, dateHeure, libellesEvenement, libellesOrigine, premierMot } from '../lib/labels';
 import type { EvenementTimeline, FicheTransaction, PhotoConstat } from '../lib/types';
 
 interface EvenementAffiche { cle: string; label: string; date: string; role: string | null; photo?: PhotoConstat }
@@ -45,7 +46,7 @@ function construireTimeline(f: FicheTransaction, photos: PhotoConstat[], libelle
 
 export function TransactionModal({ demandeId, onClose }: { demandeId: string; onClose: () => void }) {
   const [f, setF] = useState<FicheTransaction | null>(null);
-  const [photos, setPhotos] = useState<PhotoConstat[]>([]);
+  const [photos, setPhotos] = useState<PhotoConstat[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [photoOuverte, setPhotoOuverte] = useState<PhotoConstat | null>(null);
   const { ouvrir, modal } = useFicheCompte();
@@ -55,17 +56,27 @@ export function TransactionModal({ demandeId, onClose }: { demandeId: string; on
       if (e) { setError(e.message); return; }
       setF(data as FicheTransaction);
     });
+    // Attendu avant d'afficher le suivi (pas seulement f) : sinon les etapes
+    // avec photo (remise/livraison/restitution) apparaissent dans la liste
+    // une fois cet appel termine, apres les autres - la liste change de
+    // taille sous les yeux de l'admin au lieu de s'afficher complete d'un
+    // coup.
     supabase.functions.invoke('admin-photos-transaction', { body: { demandeId } }).then(({ data, error: e }) => {
-      if (!e && data?.photos) setPhotos(data.photos as PhotoConstat[]);
+      setPhotos(!e && data?.photos ? (data.photos as PhotoConstat[]) : []);
     });
   }, [demandeId]);
 
   if (error) return <Modal onClose={onClose}><p className="page-error" style={{ margin: 24 }}>{error}</p></Modal>;
-  if (!f) return <Modal onClose={onClose}><p className="loading-state" style={{ margin: 24 }}>Chargement…</p></Modal>;
+  if (!f || !photos) return <Modal onClose={onClose}><p className="loading-state" style={{ margin: 24 }}>Chargement…</p></Modal>;
 
-  const prenomExpediteur = premierPrenom(f.expediteur_nom, 'l\'expéditeur');
-  const prenomPorteur = premierPrenom(f.porteur_nom, 'le porteur');
+  // Prenom renvoye separement par la RPC (243) : le prenom entier tel que
+  // saisi par la personne, meme compose ("Marthe Djininga") - contrairement
+  // a un decoupage du nom complet sur le premier espace, qui coupait ces
+  // prenoms en deux.
+  const prenomExpediteur = f.expediteur_prenom || 'l\'expéditeur';
+  const prenomPorteur = f.porteur_prenom || 'le porteur';
   const libelles = libellesEvenement(prenomExpediteur, prenomPorteur);
+  const origines = libellesOrigine(prenomExpediteur, prenomPorteur);
   const timeline = construireTimeline(f, photos, libelles);
   const roleLabel = (role: string | null) => (role === 'expediteur' ? (f.expediteur_nom ?? 'Expéditeur') : role === 'porteur' ? (f.porteur_nom ?? 'Porteur') : null);
 
@@ -73,18 +84,22 @@ export function TransactionModal({ demandeId, onClose }: { demandeId: string; on
     <Modal onClose={onClose} wide>
       <div className="modal-hero">
         <div style={{ minWidth: 0, width: '100%' }}>
-          <div className="modal-hero-top">
-            <h2>Transaction</h2>
-            <div className="modal-hero-people">
-              <button type="button" className="modal-hero-chip modal-hero-col-1" onClick={() => ouvrir(f.expediteur_id)}>
-                <Avatar src={f.expediteur_photo} nom={f.expediteur_nom ?? ''} size={20} /> {prenomExpediteur}
+          <div className="modal-hero-people">
+            <div className="modal-hero-party">
+              <span className="modal-hero-role">Expéditeur</span>
+              <button type="button" className="modal-hero-chip" onClick={() => ouvrir(f.expediteur_id)}>
+                <Avatar src={f.expediteur_photo} nom={f.expediteur_nom ?? ''} size={28} /> {premierMot(prenomExpediteur)}
               </button>
-              <span className="modal-hero-arrow modal-hero-col-2">→</span>
-              <button type="button" className="modal-hero-chip modal-hero-col-3" onClick={() => ouvrir(f.porteur_id)}>
-                <Avatar src={f.porteur_photo} nom={f.porteur_nom ?? ''} size={20} /> {prenomPorteur}
+              <span className="modal-hero-addr">RDV départ · {f.lieu_remise_reception ?? 'non renseigné'}</span>
+              <span className="modal-hero-addr"><NumeroTelephone numero={f.expediteur_telephone} /></span>
+            </div>
+            <div className="modal-hero-party modal-hero-party--dest">
+              <span className="modal-hero-role">Porteur</span>
+              <button type="button" className="modal-hero-chip" onClick={() => ouvrir(f.porteur_id)}>
+                <Avatar src={f.porteur_photo} nom={f.porteur_nom ?? ''} size={28} /> {premierMot(prenomPorteur)}
               </button>
-              <span className="modal-hero-addr modal-hero-col-1">{f.lieu_remise_reception ?? 'Départ non renseigné'}</span>
-              <span className="modal-hero-addr modal-hero-col-3">{f.lieu_remise_livraison ?? 'Arrivée non renseignée'}</span>
+              <span className="modal-hero-addr">RDV arrivée · {f.lieu_remise_livraison ?? 'non renseignée'}</span>
+              <span className="modal-hero-addr"><NumeroTelephone numero={f.porteur_telephone} /></span>
             </div>
           </div>
         </div>
@@ -98,7 +113,7 @@ export function TransactionModal({ demandeId, onClose }: { demandeId: string; on
           <div className="stat"><strong>{f.code_genere ? 'Oui' : 'Non'}</strong><span>Code livraison</span></div>
         </div>
 
-        <p className="section-title-inline"><span className="section-title">Origine :</span> {f.origine ? (LABELS_ORIGINE[f.origine] ?? f.origine) : 'inconnue'}</p>
+        <p className="section-title-inline"><span className="section-title">Origine :</span> {f.origine ? (origines[f.origine] ?? f.origine) : 'inconnue'}</p>
 
         <p className="section-title-inline"><span className="section-title">Contenu :</span> {(() => {
           if (f.type_envoi === 'document') {

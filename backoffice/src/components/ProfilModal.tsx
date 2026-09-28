@@ -72,7 +72,6 @@ export function ProfilModal({ onClose }: { onClose: () => void }) {
               </button>
               {avatarUrl && <button className="btn btn-sm" disabled={busy} onClick={() => setAvatarUrl(null)}>Retirer</button>}
             </div>
-            <p className="hint">JPEG, PNG ou WebP. Recadrée automatiquement en carré.</p>
           </div>
           <input
             ref={fileRef}

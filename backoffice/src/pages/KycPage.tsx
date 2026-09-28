@@ -6,7 +6,7 @@ import { StatutBadge } from '../components/Badge';
 import { Avatar } from '../components/Avatar';
 import { DataTable, type Column } from '../components/DataTable';
 import { useFicheCompte, VoirFicheButton } from '../components/FicheCompte';
-import { LABELS_STATUT_KYC, nomComplet } from '../lib/labels';
+import { LABELS_STATUT_KYC, casserNom, casserPrenom, nomComplet } from '../lib/labels';
 import type { FicheKyc } from '../lib/types';
 
 export function KycPage() {
@@ -27,8 +27,8 @@ export function KycPage() {
 
   const columns: Column<FicheKyc>[] = [
     { key: 'avatar', label: 'Avatar', render: (k) => <Avatar src={k.photo_url} nom={nomComplet(k.prenom, k.nom)} size={36} />, width: 70 },
-    { key: 'prenom', label: 'Prénom', value: (k) => k.prenom, render: (k) => <strong>{k.prenom || '-'}</strong> },
-    { key: 'nom', label: 'Nom', value: (k) => k.nom },
+    { key: 'prenom', label: 'Prénom', value: (k) => k.prenom, render: (k) => <strong>{casserPrenom(k.prenom)}</strong> },
+    { key: 'nom', label: 'Nom', value: (k) => k.nom, render: (k) => casserNom(k.nom) },
     { key: 'statut', filter: 'options', label: 'Statut', value: (k) => LABELS_STATUT_KYC[k.kyc_status ?? 'none'] ?? k.kyc_status, render: (k) => <StatutBadge statut={k.kyc_status ?? 'none'} label={LABELS_STATUT_KYC[k.kyc_status ?? 'none'] ?? String(k.kyc_status)} /> },
     { key: 'motif', filter: 'options', label: 'Motif du rejet', value: (k) => k.kyc_reject_reason, render: (k) => k.kyc_reject_reason ?? '-' },
     { key: 'tentatives', label: 'Tentatives', value: (k) => k.kyc_attempts ?? 0 },
