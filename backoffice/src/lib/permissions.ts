@@ -1,37 +1,55 @@
 import type { AdminRole } from '../auth/AuthContext';
 
-// Table de correspondance role -> ecrans visibles (cf. migration 213 pour
+// Table de correspondance roles -> ecrans visibles (cf. migration 269 pour
 // l'equivalent cote serveur, seule source de verite reelle - ceci ne sert
-// qu'a l'affichage, jamais a la securite).
-export function peutVoirActivite(role: AdminRole | null): boolean {
-  return role === 'super_admin' || role === 'moderation' || role === 'lecture_seule';
+// qu'a l'affichage, jamais a la securite). Roles cumulables : une personne
+// peut en avoir plusieurs, ses droits sont l'union de tous.
+function a(roles: AdminRole[], ...accepte: AdminRole[]): boolean {
+  return roles.some((r) => accepte.includes(r));
 }
 
-export function peutVoirRevenus(role: AdminRole | null): boolean {
-  return role === 'super_admin' || role === 'finance';
+export function peutVoirActivite(roles: AdminRole[]): boolean {
+  return a(roles, 'super_admin', 'moderation', 'lecture_seule', 'data', 'stagiaire');
 }
 
-export function peutModerer(role: AdminRole | null): boolean {
-  return role === 'super_admin' || role === 'moderation';
+export function peutVoirRevenus(roles: AdminRole[]): boolean {
+  return a(roles, 'super_admin', 'finance');
 }
 
-export function peutVoirKyc(role: AdminRole | null): boolean {
-  return role === 'super_admin' || role === 'moderation';
+export function peutModerer(roles: AdminRole[]): boolean {
+  return a(roles, 'super_admin', 'moderation');
 }
 
-export function peutGererAdmins(role: AdminRole | null): boolean {
-  return role === 'super_admin';
+export function peutVoirKyc(roles: AdminRole[]): boolean {
+  return a(roles, 'super_admin', 'moderation');
+}
+
+export function peutGererAdmins(roles: AdminRole[]): boolean {
+  return a(roles, 'super_admin');
+}
+
+export function peutEnvoyerEmails(roles: AdminRole[]): boolean {
+  return a(roles, 'super_admin', 'commercial');
 }
 
 // Suppression (anonymisation) d'un compte : action irreversible, reservee au
 // super_admin - aucun autre role ne peut la mener, meme moderation.
-export function peutSupprimerCompte(role: AdminRole | null): boolean {
-  return role === 'super_admin';
+export function peutSupprimerCompte(roles: AdminRole[]): boolean {
+  return a(roles, 'super_admin');
+}
+
+// Ouvrir/fermer un pays dans les corridors : reserve au super_admin (cf.
+// admin_lister_pays_corridors / admin_definir_pays_corridor, migration 272).
+export function peutGererCorridors(roles: AdminRole[]): boolean {
+  return a(roles, 'super_admin');
 }
 
 export const LABELS_ROLES: Record<AdminRole, string> = {
-  super_admin: 'Super admin',
+  super_admin: 'Admin',
   moderation: 'Confiance & sécurité',
   finance: 'Finance',
+  commercial: 'Commercial',
+  data: 'Data',
+  stagiaire: 'Stagiaire',
   lecture_seule: 'Lecture seule',
 };

@@ -31,7 +31,7 @@ const SAISIES: Record<Exclude<Saisie, null>, { titre: string; obligatoire: boole
 };
 
 export function CompteModal({ fiche, onClose, onChanged }: { fiche: FicheCompte; onClose: () => void; onChanged: () => void }) {
-  const { role } = useAuth();
+  const { roles } = useAuth();
   const [saisie, setSaisie] = useState<Saisie>(null);
   const [motif, setMotif] = useState('');
   const [duree, setDuree] = useState('permanent');
@@ -186,7 +186,7 @@ export function CompteModal({ fiche, onClose, onChanged }: { fiche: FicheCompte;
                 </div>
               </div>
 
-              {peutSupprimerCompte(role) && (
+              {peutSupprimerCompte(roles) && (
                 <div className="action-group">
                   <div className="action-group-head">
                     <strong>Zone dangereuse</strong>

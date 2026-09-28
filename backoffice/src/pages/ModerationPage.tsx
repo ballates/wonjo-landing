@@ -67,8 +67,8 @@ function ComptesTab() {
   const [error, setError] = useState<string | null>(null);
   const [selection, setSelection] = useState<Set<string>>(new Set());
   const [selectionInfo, setSelectionInfo] = useState<Map<string, CompteRecherche>>(new Map());
-  const { role } = useAuth();
-  const peutEnvoyer = peutGererAdmins(role);
+  const { roles } = useAuth();
+  const peutEnvoyer = peutGererAdmins(roles);
   const navigate = useNavigate();
 
   function load() {
@@ -247,7 +247,7 @@ function SignalementsTab() {
   const columns: Column<Signalement>[] = [
     { key: 'raison', filter: 'options', label: 'Raison', value: (s) => s.raison },
     { key: 'details', label: 'Détails', value: (s) => s.details },
-    { key: 'date', label: 'Créé le', value: (s) => s.created_at, render: (s) => dateHeure(s.created_at) },
+    { key: 'date', label: 'Créé le', value: (s) => s.created_at, filter: 'date', render: (s) => dateHeure(s.created_at) },
     { key: 'statut', filter: 'options', label: 'Statut', value: (s) => LABELS_STATUT_SIGNALEMENT[s.statut] ?? s.statut, render: (s) => <StatutBadge statut={s.statut} label={LABELS_STATUT_SIGNALEMENT[s.statut] ?? s.statut} /> },
     {
       key: 'actions', label: 'Actions', render: (s) => (
@@ -334,7 +334,7 @@ function LitigeResolutionModal({ litige, onClose, onDone }: { litige: Litige; on
 }
 
 function LitigesTab() {
-  const { role } = useAuth();
+  const { roles } = useAuth();
   const [items, setItems] = useState<Litige[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [aRembourser, setARembourser] = useState<Litige | null>(null);
@@ -353,17 +353,17 @@ function LitigesTab() {
     { key: 'colis', label: 'Colis', value: (l) => l.description_colis },
     { key: 'montant', label: 'Montant', value: (l) => Number(l.montant_total), render: (l) => `${Number(l.montant_total).toFixed(2)} €` },
     { key: 'paiement', filter: 'options', label: 'Statut paiement', value: (l) => LABELS_PAIEMENT[l.statut_paiement] ?? l.statut_paiement },
-    { key: 'conteste', label: 'Contesté le', value: (l) => l.conteste_at, render: (l) => (l.conteste_at ? dateHeure(l.conteste_at) : '-') },
+    { key: 'conteste', label: 'Contesté le', value: (l) => l.conteste_at, filter: 'date', render: (l) => (l.conteste_at ? dateHeure(l.conteste_at) : '-') },
     { key: 'resolutions', label: 'Résolutions en attente', value: (l) => l.resolutions_en_attente },
     {
       key: 'actions', label: 'Parties', render: (l) => (
         <div className="action-row">
           <button className="btn btn-soft btn-sm" onClick={() => ouvrir(l.expediteur_id)}>Expéditeur</button>
-          <button className="btn btn-soft btn-sm" onClick={() => ouvrir(l.porteur_id)}>Porteur</button>
+          <button className="btn btn-soft btn-sm" onClick={() => ouvrir(l.porteur_id)}>Voyageur</button>
         </div>
       ),
     },
-    ...(peutVoirRevenus(role) ? [{
+    ...(peutVoirRevenus(roles) ? [{
       key: 'resoudre', label: '', render: (l: Litige) => (
         <button className="btn btn-danger-outline btn-sm" onClick={() => setARembourser(l)}>Rembourser</button>
       ), width: 130,

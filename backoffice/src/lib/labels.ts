@@ -22,7 +22,7 @@ export function clePaiementAffichee(statutPaiement: string, statutColis: string)
 
 export const LABELS_STATUT_COLIS: Record<string, string> = {
   en_attente: 'En attente', accepte: 'Accepté', en_transit: 'En transit',
-  arrive: 'Arrivé à destination', remis_porteur: 'Repris par le porteur', livre: 'Livré',
+  arrive: 'Arrivé à destination', remis_porteur: 'Repris par le voyageur', livre: 'Livré',
   annule: 'Annulé', litige: 'En litige', restitution_en_cours: 'Restitution en cours',
 };
 
@@ -64,7 +64,7 @@ export function libelleAction(action: string): string {
 }
 
 const LABELS_ROLES_TXT: Record<string, string> = {
-  super_admin: 'Super admin',
+  super_admin: 'Admin',
   moderation: 'Confiance & sécurité',
   finance: 'Finance',
   lecture_seule: 'Lecture seule',
@@ -148,10 +148,10 @@ export const LABELS_TYPE_DOCUMENT: Record<string, string> = {
 
 export const LABELS_CONSTAT: Record<string, string> = {
   remise_expediteur: 'Remise par l\'expéditeur',
-  remise_porteur: 'Réception par le porteur',
-  livraison_porteur: 'Livraison par le porteur',
+  remise_porteur: 'Réception par le voyageur',
+  livraison_porteur: 'Livraison par le voyageur',
   restitution_expediteur: 'Restitution par l\'expéditeur',
-  restitution_porteur: 'Restitution par le porteur',
+  restitution_porteur: 'Restitution par le voyageur',
 };
 
 // Premier mot d'un prenom (compose ou non) : utilise dans les colonnes de

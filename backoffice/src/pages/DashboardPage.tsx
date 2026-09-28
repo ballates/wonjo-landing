@@ -45,11 +45,11 @@ function salutation(): string {
 }
 
 export function DashboardPage() {
-  const { role, profil, email } = useAuth();
+  const { roles, profil, email } = useAuth();
   const location = useLocation();
   const ongletDemande = (location.state as { tab?: Tab } | null)?.tab ?? null;
-  const voitActivite = peutVoirActivite(role);
-  const voitRevenus = peutVoirRevenus(role);
+  const voitActivite = peutVoirActivite(roles);
+  const voitRevenus = peutVoirRevenus(roles);
   const onglets: Tab[] = [
     ...(voitActivite ? (['activite', 'communaute', 'marche', 'colis'] as Tab[]) : []),
     ...(voitRevenus ? (['finance'] as Tab[]) : []),
@@ -114,7 +114,7 @@ interface StatsUtilisation {
 }
 
 function ActiviteTab() {
-  const { role } = useAuth();
+  const { roles } = useAuth();
   const [u, setU] = useState<StatsUtilisation | null>(null);
   const [actifs, setActifs] = useState<CompteActif[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -143,7 +143,7 @@ function ActiviteTab() {
     { key: 'livraisons', label: 'Livraisons', value: (c) => c.nombre_livraisons ?? 0 },
     { key: 'colis', label: 'Colis expédiés', value: (c) => c.nombre_colis_confies ?? 0 },
     { key: 'total', label: 'Total', value: (c) => (c.nombre_livraisons ?? 0) + (c.nombre_colis_confies ?? 0) },
-    ...(peutModerer(role) ? [{ key: 'actions', label: '', render: (c: CompteActif) => <VoirFicheButton onClick={() => ouvrir(c.id)} />, width: 100 }] : []),
+    ...(peutModerer(roles) ? [{ key: 'actions', label: '', render: (c: CompteActif) => <VoirFicheButton onClick={() => ouvrir(c.id)} />, width: 100 }] : []),
   ];
 
   return (
@@ -339,7 +339,7 @@ const ETAPES_PAIEMENT: { statut: string; label: string; sens: string; couleur: s
 const COULEURS_TYPE_ENVOI: Record<string, string> = { colis: 'var(--teal)', document: 'var(--brown)', inconnu: 'var(--muted)' };
 
 function FinanceTab() {
-  const { role } = useAuth();
+  const { roles } = useAuth();
   const [revenus, setRevenus] = useState<StatsRevenusJour[]>([]);
   const [repartition, setRepartition] = useState<RepartitionTransaction[] | null>(null);
   const [repartitionType, setRepartitionType] = useState<RepartitionCommissionTypeEnvoi[]>([]);
@@ -498,7 +498,7 @@ function FinanceTab() {
             <div><strong>{euros(montantTaxe)}</strong><span>Taxe estimée ({(tauxTaxe * 100).toFixed(1)} %)</span></div>
             <div><strong>{euros(commissionNette)}</strong><span>Net</span></div>
           </div>
-          {role === 'super_admin' && (
+          {roles.includes('super_admin') && (
             <div className="inline-form" style={{ marginTop: 14 }}>
               <div className="suffix-input">
                 <input type="text" inputMode="decimal" value={tauxTaxeSaisi} onChange={(e) => setTauxTaxeSaisi(e.target.value)} aria-label="Taux de taxe" />
@@ -561,7 +561,7 @@ function FinanceTab() {
           initialSort={{ key: 'jour', dir: 'desc' }}
           emptyText="Aucun transport terminé sur la période."
           columns={[
-            { key: 'jour', label: 'Jour', value: (r) => r.jour, render: (r) => new Date(r.jour).toLocaleDateString('fr-FR') },
+            { key: 'jour', label: 'Jour', value: (r) => r.jour, filter: 'date', render: (r) => new Date(r.jour).toLocaleDateString('fr-FR') },
             { key: 'volume', label: 'Montant des transports', value: (r) => Number(r.volume_total), render: (r) => euros(Number(r.volume_total)) },
             { key: 'commission', label: 'Commission Wonjo', value: (r) => Number(r.commission), render: (r) => <strong>{euros(Number(r.commission))}</strong> },
             { key: 'nb', label: 'Transactions', value: (r) => Number(r.nb_transactions) },

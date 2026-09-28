@@ -16,18 +16,31 @@ const LABELS_CIBLE: Record<string, string> = {
 
 export function JournalPage() {
   const [items, setItems] = useState<EntreeJournal[] | null>(null);
+  const [chargeEnEntier, setChargeEnEntier] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { ouvrir, modal } = useFicheCompte();
 
   useEffect(() => {
-    supabase.rpc('admin_journal', { p_limite: 1000, p_offset: 0 }).then(({ data, error: rpcError }) => {
+    supabase.rpc('admin_journal', { p_limite: 100, p_offset: 0 }).then(({ data, error: rpcError }) => {
       if (rpcError) { setError(rpcError.message); return; }
       setItems((data ?? []) as EntreeJournal[]);
     });
   }, []);
 
+  // Recherche tapee dans la table : les 100 dernieres actions ne suffisent
+  // plus a la retrouver, on recharge un historique bien plus large une
+  // seule fois (le filtrage local prend ensuite le relais).
+  function surRecherche(q: string) {
+    if (!q.trim() || chargeEnEntier) return;
+    setChargeEnEntier(true);
+    supabase.rpc('admin_journal', { p_limite: 20000, p_offset: 0 }).then(({ data, error: rpcError }) => {
+      if (rpcError) { setError(rpcError.message); return; }
+      setItems((data ?? []) as EntreeJournal[]);
+    });
+  }
+
   const columns: Column<EntreeJournal>[] = [
-    { key: 'date', label: 'Date', value: (e) => e.created_at, render: (e) => dateHeure(e.created_at), width: 170 },
+    { key: 'date', label: 'Date', value: (e) => e.created_at, filter: 'date', render: (e) => dateHeure(e.created_at), width: 170 },
     { key: 'admin', filter: 'options', label: 'Par', value: (e) => e.admin_nom, render: (e) => <Person src={e.admin_avatar} nom={e.admin_nom ?? 'Admin inconnu'} size={30} /> },
     { key: 'action', filter: 'options', label: 'Action', value: (e) => libelleAction(e.action) },
     {
@@ -51,7 +64,7 @@ export function JournalPage() {
       </div>
       {error && <p className="page-error">{error}</p>}
       {!items ? <p className="loading-state">Chargement…</p> : (
-        <DataTable rows={items} columns={columns} rowKey={(e) => e.id} initialSort={{ key: 'date', dir: 'desc' }} emptyText="Aucune action enregistrée." />
+        <DataTable rows={items} columns={columns} rowKey={(e) => e.id} initialSort={{ key: 'date', dir: 'desc' }} emptyText="Aucune action enregistrée." onSearchChange={surRecherche} />
       )}
       {modal}
     </div>

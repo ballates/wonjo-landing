@@ -13,7 +13,7 @@ import { KycPage } from './pages/KycPage';
 import { AdminsPage } from './pages/AdminsPage';
 import { JournalPage } from './pages/JournalPage';
 import { EmailsPage } from './pages/EmailsPage';
-import { CommissionsPage } from './pages/CommissionsPage';
+import { TarificationPage } from './pages/TarificationPage';
 
 function Gate() {
   const { status } = useAuth();
@@ -52,7 +52,9 @@ function Gate() {
               <Route path="admins" element={<AdminsPage />} />
               <Route path="journal" element={<JournalPage />} />
               <Route path="emails" element={<EmailsPage />} />
-              <Route path="commissions" element={<CommissionsPage />} />
+              <Route path="tarification" element={<TarificationPage />} />
+              <Route path="commissions" element={<Navigate to="/tarification" replace />} />
+              <Route path="corridors" element={<Navigate to="/tarification" replace />} />
               <Route path="a-faire" element={<Navigate to="/" replace state={{ tab: 'afaire' }} />} />
             </Route>
           </Routes>

@@ -80,7 +80,7 @@ function periodeTexte(debut: string | null, fin: string | null): string {
   return 'sans limite';
 }
 
-export function CommissionsPage() {
+export function CommissionsSection() {
   const location = useLocation();
   const navigate = useNavigate();
   const selectionInitiale = (location.state ?? null) as { ids: string[]; noms: string[] } | null;
@@ -266,7 +266,7 @@ export function CommissionsPage() {
     { key: 'corridor', label: 'Trajets', value: (r) => corridorTexte(r) },
     { key: 'periode', label: 'Période', value: (r) => r.date_debut ?? '', render: (r) => periodeTexte(r.date_debut, r.date_fin) },
     { key: 'etat', label: 'État', filter: 'options', value: (r) => etatRegle(r).label, render: (r) => { const e = etatRegle(r); return <span className={`badge ${e.tone}`}>{e.label}</span>; } },
-    { key: 'creee', label: 'Créée', value: (r) => r.created_at, render: (r) => <span className="hint">{dateHeure(r.created_at)}<br />par {r.cree_par_nom ?? '-'}</span> },
+    { key: 'creee', label: 'Créée', value: (r) => r.created_at, filter: 'date', render: (r) => <span className="hint">{dateHeure(r.created_at)}<br />par {r.cree_par_nom ?? '-'}</span> },
     {
       key: 'actions', label: '', render: (r) => r.statut === 'en_attente' ? (
         r.cree_par === params?.moi
@@ -294,13 +294,6 @@ export function CommissionsPage() {
 
   return (
     <div>
-      <div className="page-head">
-        <div>
-          <h1>Commissions</h1>
-          <p className="page-sub">Réduire la commission payée par l'expéditeur, pour une personne, un groupe ou tout le monde, sur tous les trajets ou certains corridors. Le voyageur n'est jamais concerné.</p>
-        </div>
-      </div>
-
       {params.nb_super_admins < 2 && (
         <div className="insight-banner warn">
           <div>

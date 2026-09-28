@@ -50,7 +50,7 @@ function HBar({ data, height }: { data: { label: string; nb: number; pct?: numbe
   );
 }
 
-const COULEUR_NOTE = (n: number) => (n <= 2 ? 'var(--badge-danger-fg)' : n === 5 ? 'var(--series-3)' : 'var(--amber)');
+const COULEUR_NOTE = (n: number) => (n <= 2 ? 'var(--badge-danger-fg)' : n === 5 ? 'var(--badge-green-fg)' : 'var(--badge-amber-fg)');
 
 export function CommunauteTab() {
   const navigate = useNavigate();

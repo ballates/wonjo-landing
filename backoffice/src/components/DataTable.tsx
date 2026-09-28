@@ -12,8 +12,12 @@ export interface Column<T> {
   width?: number | string;
   // 'options' : colonne a modalites (statut, niveau...) -> filtre par cases a
   // cocher dans l'en-tete plutot qu'une recherche texte.
-  filter?: 'options';
+  // 'date' : filtre par plage (du / au) plutot qu'une recherche texte ;
+  // `value` doit renvoyer une chaine parsable par `Date` (ex. ISO 8601).
+  filter?: 'options' | 'date';
 }
+
+type Plage = { de: string; a: string };
 
 type Sort = { key: string; dir: 'asc' | 'desc' } | null;
 
@@ -26,7 +30,7 @@ const cle = (v: unknown) => (v == null || v === '' ? VIDE : String(v));
 
 export function DataTable<T>({
   rows, columns, rowKey, emptyText = 'Aucun résultat.', searchPlaceholder = 'Rechercher…',
-  initialSort, title, toolbar, selected, onSelectedChange, pageSize = 10, limiteSansRecherche,
+  initialSort, title, toolbar, selected, onSelectedChange, pageSize = 10, limiteSansRecherche, onRowClick, onSearchChange,
 }: {
   rows: T[];
   columns: Column<T>[];
@@ -44,10 +48,19 @@ export function DataTable<T>({
   // Sans recherche ni filtre, n'afficher que les N premieres lignes (ex. top
   // 20) ; une recherche fouille toujours dans toutes les lignes.
   limiteSansRecherche?: number;
+  // Ligne cliquable (ouvre une fiche/modale) ; les boutons d'action dans une
+  // cellule doivent stopper la propagation pour ne pas declencher ce click.
+  onRowClick?: (row: T) => void;
+  // Notifie le parent du texte de recherche : utile quand `rows` n'est
+  // qu'un extrait recent et que le parent doit recharger plus large des
+  // qu'une recherche est tapee (cf. JournalPage).
+  onSearchChange?: (q: string) => void;
 }) {
   const [search, setSearch] = useState('');
+  useEffect(() => { onSearchChange?.(search); }, [search]); // eslint-disable-line react-hooks/exhaustive-deps
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [choix, setChoix] = useState<Record<string, string[]>>({});
+  const [plages, setPlages] = useState<Record<string, Plage>>({});
   const [sort, setSort] = useState<Sort>(initialSort ?? null);
   const [menu, setMenu] = useState<{ key: string; anchor: HTMLElement } | null>(null);
   const [page, setPage] = useState(0);
@@ -56,6 +69,7 @@ export function DataTable<T>({
     const q = normalise(search.trim());
     const textes = Object.entries(filters).filter(([, v]) => v.trim() !== '');
     const options = Object.entries(choix).filter(([, v]) => v.length > 0);
+    const bornes = Object.entries(plages).filter(([, p]) => p.de || p.a);
     let out = rows.filter((row) => {
       if (q && !columns.some((c) => c.value && normalise(c.value(row)).includes(q))) return false;
       const okTexte = textes.every(([key, v]) => {
@@ -63,9 +77,21 @@ export function DataTable<T>({
         return !col?.value || normalise(col.value(row)).includes(normalise(v.trim()));
       });
       if (!okTexte) return false;
-      return options.every(([key, vals]) => {
+      const okOptions = options.every(([key, vals]) => {
         const col = columns.find((c) => c.key === key);
         return !col?.value || vals.includes(cle(col.value(row)));
+      });
+      if (!okOptions) return false;
+      return bornes.every(([key, p]) => {
+        const col = columns.find((c) => c.key === key);
+        if (!col?.value) return true;
+        const v = col.value(row);
+        if (v == null || v === '') return false;
+        const t = new Date(v).getTime();
+        if (Number.isNaN(t)) return false;
+        if (p.de && t < new Date(p.de).getTime()) return false;
+        if (p.a && t > new Date(p.a).getTime() + 86399999) return false;
+        return true;
       });
     });
     if (sort) {
@@ -86,18 +112,19 @@ export function DataTable<T>({
       }
     }
     return out;
-  }, [rows, columns, search, filters, choix, sort]);
+  }, [rows, columns, search, filters, choix, plages, sort]);
 
   const rechercheActive = search.trim() !== ''
     || Object.values(filters).some((v) => v.trim() !== '')
-    || Object.values(choix).some((v) => v.length > 0);
+    || Object.values(choix).some((v) => v.length > 0)
+    || Object.values(plages).some((p) => p.de || p.a);
   const lignes = limiteSansRecherche && !rechercheActive ? visible.slice(0, limiteSansRecherche) : visible;
   const nbPages = Math.max(1, Math.ceil(lignes.length / pageSize));
   const pageCourante = Math.min(page, nbPages - 1);
   const lignesPage = lignes.slice(pageCourante * pageSize, (pageCourante + 1) * pageSize);
 
   // Retour a la premiere page des que le contenu affiche change.
-  useEffect(() => { setPage(0); }, [search, filters, choix, sort, rows]);
+  useEffect(() => { setPage(0); }, [search, filters, choix, plages, sort, rows]);
 
 
   const selectable = !!selected && !!onSelectedChange;
@@ -118,8 +145,15 @@ export function DataTable<T>({
   }
 
   const choixActifs = columns.filter((c) => (choix[c.key]?.length ?? 0) > 0);
-  const textesActifs = columns.filter((c) => c.filter !== 'options' && (filters[c.key] ?? '').trim() !== '');
+  const textesActifs = columns.filter((c) => c.filter !== 'options' && c.filter !== 'date' && (filters[c.key] ?? '').trim() !== '');
+  const plagesActives = columns.filter((c) => { const p = plages[c.key]; return p && (p.de || p.a); });
   const menuCol = menu ? columns.find((c) => c.key === menu.key) : undefined;
+
+  function libellePlage(p: Plage) {
+    if (p.de && p.a) return `du ${new Date(p.de).toLocaleDateString('fr-FR')} au ${new Date(p.a).toLocaleDateString('fr-FR')}`;
+    if (p.de) return `à partir du ${new Date(p.de).toLocaleDateString('fr-FR')}`;
+    return `jusqu'au ${new Date(p.a).toLocaleDateString('fr-FR')}`;
+  }
 
   return (
     <div>
@@ -137,7 +171,7 @@ export function DataTable<T>({
         </span>
       </div>
 
-      {(choixActifs.length > 0 || textesActifs.length > 0) && (
+      {(choixActifs.length > 0 || textesActifs.length > 0 || plagesActives.length > 0) && (
         <div className="dt-active-filters">
           {choixActifs.map((c) => (
             <span key={c.key} className="dt-filter-chip">
@@ -151,7 +185,13 @@ export function DataTable<T>({
               <button aria-label={`Retirer le filtre ${c.label}`} onClick={() => setFilters((f) => ({ ...f, [c.key]: '' }))}>×</button>
             </span>
           ))}
-          <button className="dt-clear" onClick={() => { setChoix({}); setFilters({}); }}>Tout effacer</button>
+          {plagesActives.map((c) => (
+            <span key={c.key} className="dt-filter-chip">
+              <b>{c.label} :</b> {libellePlage(plages[c.key])}
+              <button aria-label={`Retirer le filtre ${c.label}`} onClick={() => setPlages((f) => ({ ...f, [c.key]: { de: '', a: '' } }))}>×</button>
+            </span>
+          ))}
+          <button className="dt-clear" onClick={() => { setChoix({}); setFilters({}); setPlages({}); }}>Tout effacer</button>
         </div>
       )}
 
@@ -167,7 +207,11 @@ export function DataTable<T>({
               {columns.map((c) => {
                 const actif = !!c.value;
                 const dir = sort?.key === c.key ? sort.dir : null;
-                const nbFiltre = c.filter === 'options' ? (choix[c.key]?.length ?? 0) : (filters[c.key]?.trim() ? 1 : 0);
+                const nbFiltre = c.filter === 'options'
+                  ? (choix[c.key]?.length ?? 0)
+                  : c.filter === 'date'
+                    ? ((plages[c.key]?.de || plages[c.key]?.a) ? 1 : 0)
+                    : (filters[c.key]?.trim() ? 1 : 0);
                 return (
                   <th
                     key={c.key}
@@ -200,7 +244,11 @@ export function DataTable<T>({
             {lignesPage.length === 0 ? (
               <tr><td className="dt-empty" colSpan={columns.length + (selectable ? 1 : 0)}>{emptyText}</td></tr>
             ) : lignesPage.map((row) => (
-              <tr key={rowKey(row)} className={selectable && selected!.has(rowKey(row)) ? 'dt-selected' : undefined}>
+              <tr
+                key={rowKey(row)}
+                className={`${selectable && selected!.has(rowKey(row)) ? 'dt-selected' : ''} ${onRowClick ? 'dt-row-clickable' : ''}`}
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
+              >
                 {selectable && (
                   <td><input type="checkbox" className="dt-check" checked={selected!.has(rowKey(row))} onChange={() => toggleRow(rowKey(row))} aria-label="Sélectionner" /></td>
                 )}
@@ -235,15 +283,17 @@ export function DataTable<T>({
         <OptionsMenu
           anchor={menu.anchor}
           label={menuCol.label}
-          mode={menuCol.filter === 'options' ? 'options' : 'texte'}
+          mode={menuCol.filter === 'options' ? 'options' : menuCol.filter === 'date' ? 'date' : 'texte'}
           numerique={rows.some((r) => typeof menuCol.value!(r) === 'number')}
           valeurs={rows.map((r) => cle(menuCol.value!(r)))}
           choisis={choix[menu.key] ?? []}
           texte={filters[menu.key] ?? ''}
+          plage={plages[menu.key] ?? { de: '', a: '' }}
           sort={sort?.key === menu.key ? sort.dir : null}
           onSort={(dir) => setSort(dir ? { key: menu.key, dir } : null)}
           onChange={(vals) => setChoix((f) => ({ ...f, [menu.key]: vals }))}
           onTexte={(v) => setFilters((f) => ({ ...f, [menu.key]: v }))}
+          onPlage={(p) => setPlages((f) => ({ ...f, [menu.key]: p }))}
           onClose={() => setMenu(null)}
         />
       )}
@@ -254,19 +304,21 @@ export function DataTable<T>({
 // Menu d'en-tete d'une colonne a modalites : tri + cases a cocher (une, deux
 // ou plusieurs modalites a la fois), avec le nombre de lignes par modalite.
 function OptionsMenu({
-  anchor, label, mode, numerique, valeurs, choisis, texte, sort, onSort, onChange, onTexte, onClose,
+  anchor, label, mode, numerique, valeurs, choisis, texte, plage, sort, onSort, onChange, onTexte, onPlage, onClose,
 }: {
   anchor: HTMLElement;
   label: string;
-  mode: 'options' | 'texte';
+  mode: 'options' | 'texte' | 'date';
   numerique: boolean;
   valeurs: string[];
   choisis: string[];
   texte: string;
+  plage: Plage;
   sort: 'asc' | 'desc' | null;
   onSort: (dir: 'asc' | 'desc' | null) => void;
   onChange: (vals: string[]) => void;
   onTexte: (v: string) => void;
+  onPlage: (p: Plage) => void;
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -319,8 +371,8 @@ function OptionsMenu({
         aria-label={`Filtrer ${label}`}
       >
         <div className="col-menu-sort">
-          <button className={sort === 'asc' ? 'on' : ''} onClick={() => onSort(sort === 'asc' ? null : 'asc')}>{numerique ? 'Croissant ↑' : 'Trier A → Z'}</button>
-          <button className={sort === 'desc' ? 'on' : ''} onClick={() => onSort(sort === 'desc' ? null : 'desc')}>{numerique ? 'Décroissant ↓' : 'Trier Z → A'}</button>
+          <button className={sort === 'asc' ? 'on' : ''} onClick={() => onSort(sort === 'asc' ? null : 'asc')}>{mode === 'date' ? 'Plus ancien ↑' : numerique ? 'Croissant ↑' : 'Trier A → Z'}</button>
+          <button className={sort === 'desc' ? 'on' : ''} onClick={() => onSort(sort === 'desc' ? null : 'desc')}>{mode === 'date' ? 'Plus récent ↓' : numerique ? 'Décroissant ↓' : 'Trier Z → A'}</button>
         </div>
         {mode === 'texte' ? (
           <>
@@ -334,6 +386,23 @@ function OptionsMenu({
               onChange={(e) => onTexte(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') onClose(); }}
             />
+          </>
+        ) : mode === 'date' ? (
+          <>
+            <p className="col-menu-title">Filtrer par période</p>
+            <div className="col-menu-dates">
+              <label>
+                À partir du
+                <input type="date" value={plage.de} onChange={(e) => onPlage({ ...plage, de: e.target.value })} />
+              </label>
+              <label>
+                Jusqu'au
+                <input type="date" value={plage.a} onChange={(e) => onPlage({ ...plage, a: e.target.value })} />
+              </label>
+            </div>
+            <div className="col-menu-foot">
+              <button onClick={() => onPlage({ de: '', a: '' })} disabled={!plage.de && !plage.a}>Effacer</button>
+            </div>
           </>
         ) : (
         <>

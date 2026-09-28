@@ -38,6 +38,8 @@ export const IconSort = ({ dir }: { dir: 'asc' | 'desc' | null }) => (
   </svg>
 );
 export const IconMail = () => <Svg><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></Svg>;
+export const IconTrash = () => <Svg size={16}><path d="M3 6h18" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6M14 11v6" /></Svg>;
+export const IconRestore = () => <Svg size={16}><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" /></Svg>;
 export const IconWmail = () => (
   <svg width="18" height="18" viewBox="0 0 40 40" fill="none" stroke="currentColor" strokeWidth="5.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M6,10 L13,30 L20,14 L27,30 L34,10" />
@@ -49,6 +51,8 @@ export const IconStar = () => <Svg><polygon points="12 2 15 9 22 9.5 17 14.5 18.
 export const IconChevronRight = () => <Svg size={14}><polyline points="9 6 15 12 9 18" /></Svg>;
 export const IconChevronLeft = () => <Svg size={14}><polyline points="15 6 9 12 15 18" /></Svg>;
 export const IconSend = () => <Svg size={16}><path d="m22 2-20 8 9 3 3 9z" /><path d="M22 2 11 13" /></Svg>;
+export const IconGlobe = () => <Svg><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15 15 0 0 1 0 20a15 15 0 0 1 0-20z" /></Svg>;
+export const IconTag = () => <Svg><path d="M12.6 2H4a2 2 0 0 0-2 2v8.6a2 2 0 0 0 .59 1.41l9.4 9.4a2 2 0 0 0 2.82 0l7.6-7.6a2 2 0 0 0 0-2.82l-9.4-9.4A2 2 0 0 0 12.6 2z" /><circle cx="7.5" cy="7.5" r="1.5" /></Svg>;
 export const IconSquarePencil = () => (
   <Svg size={16}>
     <path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5" />

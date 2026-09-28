@@ -2,20 +2,20 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
-import { LABELS_ROLES, peutGererAdmins, peutModerer, peutVoirKyc } from '../lib/permissions';
+import { LABELS_ROLES, peutEnvoyerEmails, peutGererAdmins, peutGererCorridors, peutModerer, peutVoirKyc } from '../lib/permissions';
 import { useTheme } from '../lib/theme';
 import { brandMark } from './Brand';
 import { Avatar } from './Avatar';
 import { ProfilModal } from './ProfilModal';
 import {
   IconDashboard, IconExchange, IconHistory, IconId, IconLogout, IconMoon, IconPanelClose, IconPanelOpen,
-  IconWmail, IconPercent, IconShield, IconStar, IconSun, IconUsers,
+  IconWmail, IconTag, IconShield, IconStar, IconSun, IconUsers,
 } from './Icons';
 
 const STORAGE_KEY = 'wonjo-backoffice-sidebar-collapsed';
 
 export function Layout() {
-  const { signOut, role, email, profil } = useAuth();
+  const { signOut, roles, email, profil } = useAuth();
   const { theme, toggle: toggleTheme } = useTheme();
   const location = useLocation();
   const [profilOuvert, setProfilOuvert] = useState(false);
@@ -34,14 +34,14 @@ export function Layout() {
   const nom = profil?.nom ?? email ?? '';
   const liens = [
     { to: '/', label: 'Tableau de bord', icon: <IconDashboard />, visible: true, end: true },
-    { to: '/moderation', label: 'Confiance', icon: <IconShield />, visible: peutModerer(role) },
-    { to: '/kyc', label: 'KYC', icon: <IconId />, visible: peutVoirKyc(role) },
-    { to: '/transactions', label: 'Transactions', icon: <IconExchange />, visible: peutModerer(role) },
-    { to: '/avis', label: 'Avis', icon: <IconStar />, visible: peutModerer(role) },
-    { to: '/commissions', label: 'Commissions', icon: <IconPercent />, visible: peutGererAdmins(role) },
-    { to: '/emails', label: 'Emails', icon: <IconWmail />, visible: peutGererAdmins(role) },
-    { to: '/journal', label: 'Actions', icon: <IconHistory />, visible: peutGererAdmins(role) },
-    { to: '/admins', label: 'Admin', icon: <IconUsers />, visible: peutGererAdmins(role) },
+    { to: '/moderation', label: 'Confiance', icon: <IconShield />, visible: peutModerer(roles) },
+    { to: '/kyc', label: 'KYC', icon: <IconId />, visible: peutVoirKyc(roles) },
+    { to: '/transactions', label: 'Transactions', icon: <IconExchange />, visible: peutModerer(roles) },
+    { to: '/avis', label: 'Avis', icon: <IconStar />, visible: peutModerer(roles) },
+    { to: '/tarification', label: 'Tarification', icon: <IconTag />, visible: peutGererAdmins(roles) || peutGererCorridors(roles) },
+    { to: '/emails', label: 'Emails', icon: <IconWmail />, visible: peutEnvoyerEmails(roles) },
+    { to: '/journal', label: 'Actions', icon: <IconHistory />, visible: peutGererAdmins(roles) },
+    { to: '/admins', label: 'Admin', icon: <IconUsers />, visible: peutGererAdmins(roles) || !!profil?.peut_inviter },
   ];
 
   return (
@@ -87,7 +87,9 @@ export function Layout() {
             {!collapsed && (
               <span className="sidebar-me-text">
                 <span className="sidebar-me-name">{nom}</span>
-                <span className="badge badge-teal" style={{ alignSelf: 'flex-start' }}>{role ? LABELS_ROLES[role] : ''}</span>
+                <span className="sidebar-me-roles">
+                  {roles.map((r) => <span key={r} className="badge badge-teal">{LABELS_ROLES[r]}</span>)}
+                </span>
               </span>
             )}
           </button>

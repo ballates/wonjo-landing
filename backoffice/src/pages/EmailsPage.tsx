@@ -7,10 +7,10 @@ import { DataTable, type Column } from '../components/DataTable';
 import { dateHeure, nomComplet } from '../lib/labels';
 import type { CompteRecherche } from '../lib/types';
 import logo from '../assets/wonjo-logo.png';
-import { IconChevronLeft, IconSend, IconSquarePencil } from '../components/Icons';
+import { IconChevronLeft, IconRestore, IconSend, IconSquarePencil, IconTrash } from '../components/Icons';
 
 type TypeEmail = 'service' | 'promotion';
-type SousOnglet = 'envoyer' | 'modeles' | 'desinscrits';
+type SousOnglet = 'envoyer' | 'modeles' | 'desinscrits' | 'corbeille';
 
 interface Modele {
   id: string;
@@ -21,6 +21,7 @@ interface Modele {
   created_at: string;
   updated_at: string;
   cree_par_nom: string | null;
+  corbeille: boolean;
 }
 
 const CATEGORIES_MODELE: Option<string>[] = [
@@ -60,12 +61,14 @@ interface Campagne {
   created_at: string;
   type: TypeEmail;
   sujet: string;
+  message: string;
   segment: string;
   nb_destinataires: number;
   nb_envoyes: number;
   nb_echecs: number;
   admin_nom: string | null;
   admin_avatar: string | null;
+  corbeille: boolean;
 }
 
 export function EmailsPage() {
@@ -100,6 +103,9 @@ export function EmailsPage() {
   const [modeleChoisi, setModeleChoisi] = useState('');
   const [nbDesinscrits, setNbDesinscrits] = useState<number | null>(null);
   const [desinscrits, setDesinscrits] = useState<Desinscrit[] | null>(null);
+  const [modelesCorbeille, setModelesCorbeille] = useState<Modele[] | null>(null);
+  const [campagnesCorbeille, setCampagnesCorbeille] = useState<Campagne[] | null>(null);
+  const [campagneOuverte, setCampagneOuverte] = useState<Campagne | null>(null);
 
   useEffect(() => {
     supabase.rpc('admin_nb_desinscrits').then(({ data }) => setNbDesinscrits(Number(data ?? 0)));
@@ -111,8 +117,16 @@ export function EmailsPage() {
     }
   }, [sousOnglet, desinscrits]);
 
+  function chargerCorbeille() {
+    supabase.rpc('admin_lister_modeles', { p_corbeille: true }).then(({ data }) => setModelesCorbeille((data ?? []) as Modele[]));
+    supabase.rpc('admin_lister_campagnes', { p_corbeille: true }).then(({ data }) => setCampagnesCorbeille((data ?? []) as Campagne[]));
+  }
+  useEffect(() => {
+    if (sousOnglet === 'corbeille') chargerCorbeille();
+  }, [sousOnglet]); // eslint-disable-line react-hooks/exhaustive-deps
+
   function chargerModeles() {
-    supabase.rpc('admin_lister_modeles').then(({ data }) => setModeles((data ?? []) as Modele[]));
+    supabase.rpc('admin_lister_modeles', { p_corbeille: false }).then(({ data }) => setModeles((data ?? []) as Modele[]));
   }
   useEffect(chargerModeles, []);
 
@@ -130,7 +144,7 @@ export function EmailsPage() {
   );
 
   function chargerCampagnes() {
-    supabase.rpc('admin_lister_campagnes').then(({ data }) => setCampagnes((data ?? []) as Campagne[]));
+    supabase.rpc('admin_lister_campagnes', { p_corbeille: false }).then(({ data }) => setCampagnes((data ?? []) as Campagne[]));
   }
   useEffect(chargerCampagnes, []);
   useEffect(() => {
@@ -219,14 +233,61 @@ export function EmailsPage() {
     chargerModeles();
   }
 
-  async function supprimerModele(id: string) {
-    if (!window.confirm('Supprimer ce modèle ?')) return;
-    await supabase.rpc('admin_supprimer_modele', { p_id: id });
+  function toggleSelection(set: Set<string>, id: string): Set<string> {
+    const n = new Set(set);
+    if (n.has(id)) n.delete(id); else n.add(id);
+    return n;
+  }
+
+  const [selectionModeles, setSelectionModeles] = useState<Set<string> | null>(null);
+  const [selectionCampagnes, setSelectionCampagnes] = useState<Set<string> | null>(null);
+  const [selectionModelesCorbeille, setSelectionModelesCorbeille] = useState<Set<string>>(new Set());
+  const [selectionCampagnesCorbeille, setSelectionCampagnesCorbeille] = useState<Set<string>>(new Set());
+
+  async function mettreModelesCorbeille(ids: string[]) {
+    if (ids.length === 0) return;
+    await Promise.all(ids.map((id) => supabase.rpc('admin_deplacer_modele_corbeille', { p_id: id, p_corbeille: true })));
+    setSelectionModeles(null);
     chargerModeles();
+  }
+  async function restaurerModeles(ids: string[]) {
+    if (ids.length === 0) return;
+    await Promise.all(ids.map((id) => supabase.rpc('admin_deplacer_modele_corbeille', { p_id: id, p_corbeille: false })));
+    setSelectionModelesCorbeille(new Set());
+    chargerCorbeille();
+    chargerModeles();
+  }
+  async function supprimerModelesDefinitivement(ids: string[]) {
+    if (ids.length === 0) return;
+    if (!window.confirm(`Supprimer définitivement ${ids.length} modèle(s) ? Impossible à annuler.`)) return;
+    await Promise.all(ids.map((id) => supabase.rpc('admin_supprimer_modele', { p_id: id })));
+    setSelectionModelesCorbeille(new Set());
+    chargerCorbeille();
+  }
+
+  async function mettreCampagnesCorbeille(ids: string[]) {
+    if (ids.length === 0) return;
+    await Promise.all(ids.map((id) => supabase.rpc('admin_deplacer_campagne_corbeille', { p_id: id, p_corbeille: true })));
+    setSelectionCampagnes(null);
+    chargerCampagnes();
+  }
+  async function restaurerCampagnes(ids: string[]) {
+    if (ids.length === 0) return;
+    await Promise.all(ids.map((id) => supabase.rpc('admin_deplacer_campagne_corbeille', { p_id: id, p_corbeille: false })));
+    setSelectionCampagnesCorbeille(new Set());
+    chargerCorbeille();
+    chargerCampagnes();
+  }
+  async function supprimerCampagnesDefinitivement(ids: string[]) {
+    if (ids.length === 0) return;
+    if (!window.confirm(`Supprimer définitivement ${ids.length} envoi(s) de l'historique ? Impossible à annuler.`)) return;
+    await Promise.all(ids.map((id) => supabase.rpc('admin_supprimer_campagne', { p_id: id })));
+    setSelectionCampagnesCorbeille(new Set());
+    chargerCorbeille();
   }
 
   const colonnes: Column<Campagne>[] = [
-    { key: 'date', label: 'Date', value: (c) => c.created_at, render: (c) => dateHeure(c.created_at), width: 170 },
+    { key: 'date', label: 'Date', value: (c) => c.created_at, filter: 'date', render: (c) => dateHeure(c.created_at), width: 170 },
     { key: 'par', filter: 'options', label: 'Par', value: (c) => c.admin_nom, render: (c) => <Person src={c.admin_avatar} nom={c.admin_nom ?? '-'} size={28} /> },
     { key: 'type', filter: 'options', label: 'Type', value: (c) => (c.type === 'promotion' ? 'Promotion' : 'Information'), render: (c) => <span className={`badge ${c.type === 'promotion' ? 'badge-amber' : 'badge-teal'}`}>{c.type === 'promotion' ? 'Promotion' : 'Information'}</span> },
     { key: 'sujet', label: 'Objet', value: (c) => c.sujet },
@@ -237,7 +298,7 @@ export function EmailsPage() {
   const colonnesDesinscrits: Column<Desinscrit>[] = [
     { key: 'nom', label: 'Membre', value: (d) => `${d.prenom ?? ''} ${d.nom ?? ''}`, render: (d) => nomComplet(d.prenom, d.nom) || d.email || '-' },
     { key: 'email', label: 'Email', value: (d) => d.email },
-    { key: 'date', label: 'Désinscrit le', value: (d) => d.desinscrit_le, render: (d) => dateHeure(d.desinscrit_le), width: 170 },
+    { key: 'date', label: 'Désinscrit le', value: (d) => d.desinscrit_le, filter: 'date', render: (d) => dateHeure(d.desinscrit_le), width: 170 },
   ];
 
   return (
@@ -267,31 +328,60 @@ export function EmailsPage() {
         <button className={sousOnglet === 'envoyer' ? 'active' : ''} onClick={() => setSousOnglet('envoyer')}><IconSend /> Messages envoyés</button>
         <button className={sousOnglet === 'modeles' ? 'active' : ''} onClick={() => setSousOnglet('modeles')}>Modèles{modeles?.length ? ` (${modeles.length})` : ''}</button>
         <button className={sousOnglet === 'desinscrits' ? 'active' : ''} onClick={() => setSousOnglet('desinscrits')}>Désinscrits{nbDesinscrits ? ` (${nbDesinscrits})` : ''}</button>
+        <button className={sousOnglet === 'corbeille' ? 'active' : ''} onClick={() => setSousOnglet('corbeille')}><IconTrash /> Corbeille</button>
       </div>
 
       {sousOnglet === 'modeles' ? (
         <div className="panel">
           <div className="page-head" style={{ marginBottom: 12 }}>
             <p className="chart-sub" style={{ margin: 0 }}>Des sujets/messages prêts à réutiliser, classés par catégorie. Chargez-en un depuis l'onglet Composer, modifiez-le si besoin, puis envoyez.</p>
-            <button className="btn btn-primary btn-sm" onClick={() => ouvrirNouveauModele(false)}><IconSquarePencil /> Nouveau modèle</button>
+            <div className="action-row">
+              {selectionModeles ? (
+                <>
+                  <button className="btn btn-sm" onClick={() => setSelectionModeles(null)}>Annuler</button>
+                  <button className="btn btn-danger-outline btn-sm" disabled={selectionModeles.size === 0} onClick={() => mettreModelesCorbeille([...selectionModeles])}>
+                    <IconTrash /> Mettre à la corbeille{selectionModeles.size ? ` (${selectionModeles.size})` : ''}
+                  </button>
+                </>
+              ) : (
+                <button className="icon-button icon-button-danger" title="Sélectionner des modèles à supprimer" aria-label="Sélectionner des modèles à supprimer" onClick={() => setSelectionModeles(new Set())}><IconTrash /></button>
+              )}
+              <button className="btn btn-primary btn-sm" onClick={() => ouvrirNouveauModele(false)}><IconSquarePencil /> Nouveau modèle</button>
+            </div>
           </div>
           {!modeles ? <p className="hint">Chargement…</p> : modeles.length === 0 ? <p className="hint">Aucun modèle enregistré pour l'instant.</p> : (
             <div className="dt-wrap">
               <table>
-                <thead><tr><th>Catégorie</th><th>Nom</th><th>Objet</th><th>Dernière modif.</th><th></th></tr></thead>
+                <thead>
+                  <tr>
+                    {selectionModeles && (
+                      <th style={{ width: 36 }}>
+                        <input
+                          type="checkbox" className="dt-check" aria-label="Tout sélectionner"
+                          checked={modeles.length > 0 && selectionModeles.size === modeles.length}
+                          onChange={() => setSelectionModeles(selectionModeles.size === modeles.length ? new Set() : new Set(modeles.map((m) => m.id)))}
+                        />
+                      </th>
+                    )}
+                    <th>Catégorie</th><th>Nom</th><th>Objet</th><th>Dernière modif.</th>
+                  </tr>
+                </thead>
                 <tbody>
                   {modeles.map((m) => (
-                    <tr key={m.id}>
+                    <tr
+                      key={m.id}
+                      className="dt-row-clickable"
+                      onClick={() => (selectionModeles ? setSelectionModeles(toggleSelection(selectionModeles, m.id)) : ouvrirEditionModele(m))}
+                    >
+                      {selectionModeles && (
+                        <td onClick={(e) => e.stopPropagation()}>
+                          <input type="checkbox" className="dt-check" aria-label="Sélectionner" checked={selectionModeles.has(m.id)} onChange={() => setSelectionModeles(toggleSelection(selectionModeles, m.id))} />
+                        </td>
+                      )}
                       <td><span className="badge badge-teal">{LABELS_CATEGORIE_MODELE[m.categorie] ?? m.categorie}</span></td>
                       <td>{m.nom}</td>
                       <td>{m.sujet}</td>
                       <td className="hint">{dateHeure(m.updated_at)}{m.cree_par_nom ? ` · ${m.cree_par_nom}` : ''}</td>
-                      <td>
-                        <div className="action-row">
-                          <button className="btn btn-soft btn-sm" onClick={() => ouvrirEditionModele(m)}>Modifier</button>
-                          <button className="btn btn-danger-outline btn-sm" onClick={() => supprimerModele(m.id)}>Supprimer</button>
-                        </div>
-                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -349,6 +439,86 @@ export function EmailsPage() {
             </div>
           )}
         </div>
+      ) : sousOnglet === 'corbeille' ? (
+        <div className="panel">
+          <p className="chart-sub" style={{ marginTop: 0 }}>Éléments supprimés, récupérables tant qu'ils n'ont pas été effacés définitivement. Le journal des actions garde une trace dans tous les cas.</p>
+
+          <div className="page-head" style={{ marginBottom: 8 }}>
+            <h3 style={{ margin: 0 }}>Modèles</h3>
+            <div className="action-row">
+              <button className="btn btn-sm" disabled={selectionModelesCorbeille.size === 0} onClick={() => restaurerModeles([...selectionModelesCorbeille])}><IconRestore /> Restaurer{selectionModelesCorbeille.size ? ` (${selectionModelesCorbeille.size})` : ''}</button>
+              <button className="btn btn-danger-outline btn-sm" disabled={selectionModelesCorbeille.size === 0} onClick={() => supprimerModelesDefinitivement([...selectionModelesCorbeille])}><IconTrash /> Supprimer définitivement{selectionModelesCorbeille.size ? ` (${selectionModelesCorbeille.size})` : ''}</button>
+            </div>
+          </div>
+          {!modelesCorbeille ? <p className="hint">Chargement…</p> : modelesCorbeille.length === 0 ? <p className="hint">Corbeille des modèles vide.</p> : (
+            <div className="dt-wrap" style={{ marginBottom: 24 }}>
+              <table>
+                <thead>
+                  <tr>
+                    <th style={{ width: 36 }}>
+                      <input
+                        type="checkbox" className="dt-check" aria-label="Tout sélectionner"
+                        checked={modelesCorbeille.length > 0 && selectionModelesCorbeille.size === modelesCorbeille.length}
+                        onChange={() => setSelectionModelesCorbeille(selectionModelesCorbeille.size === modelesCorbeille.length ? new Set() : new Set(modelesCorbeille.map((m) => m.id)))}
+                      />
+                    </th>
+                    <th>Catégorie</th><th>Nom</th><th>Objet</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {modelesCorbeille.map((m) => (
+                    <tr key={m.id} className="dt-row-clickable" onClick={() => setSelectionModelesCorbeille(toggleSelection(selectionModelesCorbeille, m.id))}>
+                      <td onClick={(e) => e.stopPropagation()}>
+                        <input type="checkbox" className="dt-check" aria-label="Sélectionner" checked={selectionModelesCorbeille.has(m.id)} onChange={() => setSelectionModelesCorbeille(toggleSelection(selectionModelesCorbeille, m.id))} />
+                      </td>
+                      <td><span className="badge badge-teal">{LABELS_CATEGORIE_MODELE[m.categorie] ?? m.categorie}</span></td>
+                      <td>{m.nom}</td>
+                      <td>{m.sujet}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <div className="page-head" style={{ marginBottom: 8 }}>
+            <h3 style={{ margin: 0 }}>Messages envoyés</h3>
+            <div className="action-row">
+              <button className="btn btn-sm" disabled={selectionCampagnesCorbeille.size === 0} onClick={() => restaurerCampagnes([...selectionCampagnesCorbeille])}><IconRestore /> Restaurer{selectionCampagnesCorbeille.size ? ` (${selectionCampagnesCorbeille.size})` : ''}</button>
+              <button className="btn btn-danger-outline btn-sm" disabled={selectionCampagnesCorbeille.size === 0} onClick={() => supprimerCampagnesDefinitivement([...selectionCampagnesCorbeille])}><IconTrash /> Supprimer définitivement{selectionCampagnesCorbeille.size ? ` (${selectionCampagnesCorbeille.size})` : ''}</button>
+            </div>
+          </div>
+          {!campagnesCorbeille ? <p className="hint">Chargement…</p> : campagnesCorbeille.length === 0 ? <p className="hint">Corbeille de l'historique vide.</p> : (
+            <div className="dt-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th style={{ width: 36 }}>
+                      <input
+                        type="checkbox" className="dt-check" aria-label="Tout sélectionner"
+                        checked={campagnesCorbeille.length > 0 && selectionCampagnesCorbeille.size === campagnesCorbeille.length}
+                        onChange={() => setSelectionCampagnesCorbeille(selectionCampagnesCorbeille.size === campagnesCorbeille.length ? new Set() : new Set(campagnesCorbeille.map((c) => c.id)))}
+                      />
+                    </th>
+                    <th>Date</th><th>Objet</th><th>Envoyés</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {campagnesCorbeille.map((c) => (
+                    <tr key={c.id} className="dt-row-clickable" onClick={() => setSelectionCampagnesCorbeille(toggleSelection(selectionCampagnesCorbeille, c.id))}>
+                      <td onClick={(e) => e.stopPropagation()}>
+                        <input type="checkbox" className="dt-check" aria-label="Sélectionner" checked={selectionCampagnesCorbeille.has(c.id)} onChange={() => setSelectionCampagnesCorbeille(toggleSelection(selectionCampagnesCorbeille, c.id))} />
+                      </td>
+                      <td className="hint">{dateHeure(c.created_at)}</td>
+                      <td>{c.sujet}</td>
+                      <td>{c.nb_envoyes} / {c.nb_destinataires}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       ) : sousOnglet === 'desinscrits' ? (
         <div className="panel">
           <div className="page-head" style={{ marginBottom: 12 }}>
@@ -372,13 +542,47 @@ export function EmailsPage() {
           <div className="panel">
             <div className="page-head" style={{ marginBottom: 12 }}>
               <p className="chart-sub" style={{ margin: 0 }}>Chaque envoi est tracé ci-dessous.</p>
-              <button className="btn btn-primary btn-sm" onClick={() => setComposerOuvert(true)}><IconSquarePencil /> Nouveau message</button>
+              <div className="action-row">
+                {selectionCampagnes ? (
+                  <>
+                    <button className="btn btn-sm" onClick={() => setSelectionCampagnes(null)}>Annuler</button>
+                    <button className="btn btn-danger-outline btn-sm" disabled={selectionCampagnes.size === 0} onClick={() => mettreCampagnesCorbeille([...selectionCampagnes])}>
+                      <IconTrash /> Mettre à la corbeille{selectionCampagnes.size ? ` (${selectionCampagnes.size})` : ''}
+                    </button>
+                  </>
+                ) : (
+                  <button className="icon-button icon-button-danger" title="Sélectionner des envois à supprimer" aria-label="Sélectionner des envois à supprimer" onClick={() => setSelectionCampagnes(new Set())}><IconTrash /></button>
+                )}
+                <button className="btn btn-primary btn-sm" onClick={() => setComposerOuvert(true)}><IconSquarePencil /> Nouveau message</button>
+              </div>
             </div>
             <h3>Historique des envois</h3>
             {!campagnes ? <p className="hint">Chargement…</p> : (
-              <DataTable rows={campagnes} columns={colonnes} rowKey={(c) => c.id} initialSort={{ key: 'date', dir: 'desc' }} emptyText="Aucun envoi pour l'instant." />
+              <DataTable
+                rows={campagnes} columns={colonnes} rowKey={(c) => c.id} initialSort={{ key: 'date', dir: 'desc' }} emptyText="Aucun envoi pour l'instant."
+                onRowClick={selectionCampagnes ? undefined : setCampagneOuverte}
+                selected={selectionCampagnes ?? undefined}
+                onSelectedChange={selectionCampagnes ? setSelectionCampagnes : undefined}
+              />
             )}
           </div>
+
+          {campagneOuverte && (
+            <div className="modal-overlay" onClick={() => setCampagneOuverte(null)}>
+              <div className="modal" onClick={(e) => e.stopPropagation()}>
+                <div className="page-head" style={{ marginBottom: 12 }}>
+                  <div>
+                    <h3 style={{ margin: 0 }}>{campagneOuverte.sujet}</h3>
+                    <p className="chart-sub" style={{ margin: 0 }}>
+                      {dateHeure(campagneOuverte.created_at)} · {campagneOuverte.type === 'promotion' ? 'Promotion' : 'Information'} · {LABELS_SEGMENT[campagneOuverte.segment] ?? campagneOuverte.segment} · {campagneOuverte.nb_envoyes}/{campagneOuverte.nb_destinataires} envoyé(s){campagneOuverte.nb_echecs ? `, ${campagneOuverte.nb_echecs} échec(s)` : ''}
+                    </p>
+                  </div>
+                  <button className="btn btn-sm" onClick={() => setCampagneOuverte(null)}>Fermer</button>
+                </div>
+                <div className="panel" style={{ whiteSpace: 'pre-wrap' }}>{campagneOuverte.message}</div>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
       <>

@@ -102,7 +102,7 @@ export function TransactionsPage() {
       ),
     },
     {
-      key: 'porteur', label: 'Porteur', render: (t) => (
+      key: 'porteur', label: 'Voyageur', render: (t) => (
         <span className="chip"><Avatar src={t.porteur_photo} nom={t.porteur_nom ?? ''} size={22} /> {casserPrenom(premierMot(t.porteur_prenom))}</span>
       ),
     },

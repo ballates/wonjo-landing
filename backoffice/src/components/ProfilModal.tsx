@@ -22,7 +22,7 @@ async function versJpegCarre(file: File): Promise<Blob> {
 }
 
 export function ProfilModal({ onClose }: { onClose: () => void }) {
-  const { profil, role, email, refreshProfil } = useAuth();
+  const { profil, roles, email, refreshProfil } = useAuth();
   const [nomAffiche, setNomAffiche] = useState(profil?.nom_affiche ?? '');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(profil?.avatar_url ?? null);
   const [busy, setBusy] = useState(false);
@@ -87,7 +87,7 @@ export function ProfilModal({ onClose }: { onClose: () => void }) {
             Nom affiché
             <input type="text" value={nomAffiche} placeholder={profil?.nom ?? 'Ex. Ben'} onChange={(e) => setNomAffiche(e.target.value)} />
           </label>
-          <p className="hint">Email : {email} · Rôle : {role ? LABELS_ROLES[role] : ''}</p>
+          <p className="hint">Email : {email} · Rôle{roles.length > 1 ? 's' : ''} : {roles.map((r) => LABELS_ROLES[r]).join(', ')}</p>
         </div>
 
         {error && <p className="page-error">{error}</p>}

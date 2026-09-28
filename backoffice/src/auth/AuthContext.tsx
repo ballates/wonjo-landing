@@ -16,11 +16,12 @@ export type AuthStatus =
   | 'loading' | 'signed_out' | 'need_password_set' | 'need_mfa_enroll' | 'need_mfa_challenge'
   | 'checking' | 'authorized' | 'unauthorized';
 
-export type AdminRole = 'super_admin' | 'moderation' | 'finance' | 'lecture_seule';
+export type AdminRole = 'super_admin' | 'moderation' | 'finance' | 'commercial' | 'data' | 'stagiaire' | 'lecture_seule';
 
 export interface AdminProfil {
   user_id: string;
-  role: AdminRole;
+  roles: AdminRole[];
+  peut_inviter: boolean;
   email: string;
   nom_affiche: string | null;
   nom: string;
@@ -30,7 +31,7 @@ export interface AdminProfil {
 interface AuthState {
   status: AuthStatus;
   error: string | null;
-  role: AdminRole | null;
+  roles: AdminRole[];
   email: string | null;
   profil: AdminProfil | null;
   signIn: (email: string, password: string) => Promise<void>;
@@ -44,7 +45,7 @@ const AuthCtx = createContext<AuthState | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>('loading');
   const [error, setError] = useState<string | null>(null);
-  const [role, setRole] = useState<AdminRole | null>(null);
+  const [roles, setRoles] = useState<AdminRole[]>([]);
   const [email, setEmail] = useState<string | null>(null);
   const [profil, setProfil] = useState<AdminProfil | null>(null);
 
@@ -52,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: sessionData } = await supabase.auth.getSession();
     if (!sessionData.session) {
       setStatus('signed_out');
-      setRole(null);
+      setRoles([]);
       return;
     }
 
@@ -76,11 +77,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const p = data as AdminProfil | null;
       if (rpcError || !p) {
         setStatus('unauthorized');
-        setRole(null);
+        setRoles([]);
         setProfil(null);
         return;
       }
-      setRole(p.role);
+      setRoles(p.roles);
       setEmail(p.email);
       setProfil(p);
       setStatus('authorized');
@@ -118,11 +119,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signOut() {
     await supabase.auth.signOut();
     setStatus('signed_out');
-    setRole(null);
+    setRoles([]);
   }
 
   return (
-    <AuthCtx.Provider value={{ status, error, role, email, profil, signIn, signOut, refreshMfaState: evaluate, refreshProfil }}>
+    <AuthCtx.Provider value={{ status, error, roles, email, profil, signIn, signOut, refreshMfaState: evaluate, refreshProfil }}>
       {children}
     </AuthCtx.Provider>
   );

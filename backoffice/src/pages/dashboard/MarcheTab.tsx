@@ -31,8 +31,8 @@ const LABELS_STATUT: Record<string, string> = {
 };
 
 export function MarcheTab() {
-  const { role } = useAuth();
-  const voitEuros = peutVoirRevenus(role);
+  const { roles } = useAuth();
+  const voitEuros = peutVoirRevenus(roles);
   const [s, setS] = useState<StatsMarche | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [continent, setContinent] = useState<string | null>(null);

@@ -74,11 +74,11 @@ export function TransactionModal({ demandeId, onClose }: { demandeId: string; on
   // a un decoupage du nom complet sur le premier espace, qui coupait ces
   // prenoms en deux.
   const prenomExpediteur = f.expediteur_prenom || 'l\'expéditeur';
-  const prenomPorteur = f.porteur_prenom || 'le porteur';
+  const prenomPorteur = f.porteur_prenom || 'le voyageur';
   const libelles = libellesEvenement(prenomExpediteur, prenomPorteur);
   const origines = libellesOrigine(prenomExpediteur, prenomPorteur);
   const timeline = construireTimeline(f, photos, libelles);
-  const roleLabel = (role: string | null) => (role === 'expediteur' ? (f.expediteur_nom ?? 'Expéditeur') : role === 'porteur' ? (f.porteur_nom ?? 'Porteur') : null);
+  const roleLabel = (role: string | null) => (role === 'expediteur' ? (f.expediteur_nom ?? 'Expéditeur') : role === 'porteur' ? (f.porteur_nom ?? 'Voyageur') : null);
 
   return (
     <Modal onClose={onClose} wide>
@@ -94,7 +94,7 @@ export function TransactionModal({ demandeId, onClose }: { demandeId: string; on
               <span className="modal-hero-addr"><NumeroTelephone numero={f.expediteur_telephone} /></span>
             </div>
             <div className="modal-hero-party modal-hero-party--dest">
-              <span className="modal-hero-role">Porteur</span>
+              <span className="modal-hero-role">Voyageur</span>
               <button type="button" className="modal-hero-chip" onClick={() => ouvrir(f.porteur_id)}>
                 <Avatar src={f.porteur_photo} nom={f.porteur_nom ?? ''} size={28} /> {premierMot(prenomPorteur)}
               </button>
