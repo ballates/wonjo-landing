@@ -1369,13 +1369,15 @@ th.filtered { color: var(--accent-ink); }
 .tabs button.active .tab-badge { background: #fff; color: var(--danger); }
 
 /* [300] Moderation : conversation, publications, notes internes */
-.conversation-admin { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; max-height: 420px; overflow-y: auto; }
-.conversation-admin-msg { display: flex; flex-direction: column; gap: 4px; padding: 6px 10px; border-radius: 12px; border: 1px solid var(--border); max-width: 85%; }
-.conversation-admin-msg.is-porteur { align-self: flex-end; }
-.conversation-admin-msg.is-systeme { align-self: center; opacity: 0.75; font-style: italic; }
-.conversation-admin-msg img { max-width: 220px; border-radius: 8px; display: block; }
+.conversation-admin { list-style: none; margin: 0; padding: 2px 0; display: flex; flex-direction: column; gap: 6px; max-height: 420px; overflow-y: auto; }
+.conversation-admin-msg { display: flex; flex-direction: column; gap: 2px; padding: 6px 10px 7px; border-radius: 14px 14px 14px 4px; background: var(--surface-2); max-width: 78%; align-self: flex-start; }
+.conversation-admin-msg.is-porteur { align-self: flex-end; border-radius: 14px 14px 4px 14px; background: var(--accent-soft); }
+.conversation-admin-msg.is-systeme { align-self: center; max-width: 90%; border-radius: 999px; background: transparent; border: 1px dashed var(--border); opacity: 0.8; font-style: italic; text-align: center; }
+.conversation-admin-msg .timeline-meta { font-size: 10.5px; line-height: 1.3; }
+.conversation-admin-msg .timeline-meta b { font-weight: 600; color: var(--text); opacity: 0.75; }
+.conversation-admin-msg img { max-width: 200px; border-radius: 10px; display: block; }
 .conversation-admin-texte, .note-admin-texte { white-space: pre-wrap; overflow-wrap: anywhere; }
-.conversation-admin-texte { font-size: 12.5px; line-height: 1.4; }
+.conversation-admin-texte { font-size: 12px; line-height: 1.4; }
 .publications-admin { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .publications-admin li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); }
 .publications-admin li > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
