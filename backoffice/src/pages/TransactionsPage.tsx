@@ -4,6 +4,7 @@ import { StatutBadge } from '../components/Badge';
 import { Avatar } from '../components/Avatar';
 import { ServerTable, type ServerColumn } from '../components/ServerTable';
 import { TransactionModal } from '../components/TransactionModal';
+import { prechargementFiche } from '../lib/ficheTransaction';
 import { LABELS_PAIEMENT, LABELS_STATUT_COLIS, LABELS_TYPE_ENVOI, casserPrenom, clePaiementAffichee, dateHeure, premierMot } from '../lib/labels';
 import { useDebounce } from '../lib/useDebounce';
 import type { TransactionListe } from '../lib/types';
@@ -111,7 +112,7 @@ export function TransactionsPage() {
       render: (t) => (t.code_genere ? 'Généré' : 'Non généré'),
     },
     { key: 'creee', label: 'Créée le', sortKey: 'created_at', render: (t) => dateHeure(t.created_at) },
-    { key: 'actions', label: '', render: (t) => <button className="btn btn-soft btn-sm" onClick={() => setOuverte(t.id)}>Fiche</button>, width: 100 },
+    { key: 'actions', label: '', render: (t) => <button className="btn btn-soft btn-sm" onClick={() => setOuverte(t.id)} {...prechargementFiche(t.id)}>Fiche</button>, width: 100 },
   ];
 
   if (error) return <p className="page-error">{error}</p>;

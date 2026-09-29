@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { ServerTable, type ServerColumn } from '../components/ServerTable';
 import { StatutBadge } from '../components/Badge';
 import { TransactionModal } from '../components/TransactionModal';
+import { prechargementFiche } from '../lib/ficheTransaction';
 import { LABELS_CATEGORIE_AVIS, casserPrenom, categorieAvis, dateHeure, premierMot } from '../lib/labels';
 import { useDebounce } from '../lib/useDebounce';
 import type { AvisListe } from '../lib/types';
@@ -87,7 +88,7 @@ export function AvisPage() {
     {
       key: 'actions', label: '', width: 190, render: (a) => (
         <div className="action-row">
-          <button className="btn btn-soft btn-sm" onClick={() => setOuverte(a.demande_id)}>Fiche</button>
+          <button className="btn btn-soft btn-sm" onClick={() => setOuverte(a.demande_id)} {...prechargementFiche(a.demande_id)}>Fiche</button>
           <button className={`btn btn-sm ${a.masque_at ? 'btn-soft' : 'btn-danger-outline'}`} disabled={busyAvis === a.id} onClick={() => basculerMasquage(a)}>
             {a.masque_at ? 'Réafficher' : 'Masquer'}
           </button>

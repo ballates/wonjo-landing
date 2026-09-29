@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { supabase } from '../lib/supabase';
+import { chargerFicheTransaction } from '../lib/ficheTransaction';
 import { Avatar } from './Avatar';
 import { NumeroTelephone } from './NumeroTelephone';
 import { ConversationTransaction } from './ConversationTransaction';
@@ -53,22 +53,18 @@ export function TransactionModal({ demandeId, onClose }: { demandeId: string; on
   const { ouvrir, modal } = useFicheCompte();
 
   useEffect(() => {
-    supabase.rpc('admin_fiche_transaction', { p_demande_id: demandeId }).single().then(({ data, error: e }) => {
-      if (e) { setError(e.message); return; }
-      setF(data as FicheTransaction);
-    });
-    // Attendu avant d'afficher le suivi (pas seulement f) : sinon les etapes
-    // avec photo (remise/livraison/restitution) apparaissent dans la liste
-    // une fois cet appel termine, apres les autres - la liste change de
-    // taille sous les yeux de l'admin au lieu de s'afficher complete d'un
-    // coup.
-    supabase.functions.invoke('admin-photos-transaction', { body: { demandeId } }).then(({ data, error: e }) => {
-      setPhotos(!e && data?.photos ? (data.photos as PhotoConstat[]) : []);
-    });
+    // Preche au survol du bouton "Fiche" (lib/ficheTransaction) : souvent
+    // deja en cache a l'ouverture. La fiche s'affiche des que la RPC repond ;
+    // les photos (fonction Edge, plus lente) arrivent ensuite.
+    let actif = true;
+    const { fiche, photos: photosP } = chargerFicheTransaction(demandeId);
+    fiche.then((data) => { if (actif) setF(data); }, (e: Error) => { if (actif) setError(e.message); });
+    photosP.then((p) => { if (actif) setPhotos(p); });
+    return () => { actif = false; };
   }, [demandeId]);
 
   if (error) return <Modal onClose={onClose}><p className="page-error" style={{ margin: 24 }}>{error}</p></Modal>;
-  if (!f || !photos) return <Modal onClose={onClose}><p className="loading-state" style={{ margin: 24 }}>Chargement…</p></Modal>;
+  if (!f) return <Modal onClose={onClose}><p className="loading-state" style={{ margin: 24 }}>Chargement…</p></Modal>;
 
   // Prenom renvoye separement par la RPC (243) : le prenom entier tel que
   // saisi par la personne, meme compose ("Marthe Djininga") - contrairement
@@ -78,7 +74,7 @@ export function TransactionModal({ demandeId, onClose }: { demandeId: string; on
   const prenomPorteur = f.porteur_prenom || 'le voyageur';
   const libelles = libellesEvenement(prenomExpediteur, prenomPorteur);
   const origines = libellesOrigine(prenomExpediteur, prenomPorteur);
-  const timeline = construireTimeline(f, photos, libelles);
+  const timeline = photos ? construireTimeline(f, photos, libelles) : [];
   const roleLabel = (role: string | null) => (role === 'expediteur' ? (f.expediteur_nom ?? 'Expéditeur') : role === 'porteur' ? (f.porteur_nom ?? 'Voyageur') : null);
 
   return (
@@ -126,7 +122,8 @@ export function TransactionModal({ demandeId, onClose }: { demandeId: string; on
         })()}</p>
 
         <div>
-          <p className="section-title">Suivi de la transaction {photos.length > 0 && <span className="hint">: cliquez sur une étape avec photo pour l'agrandir</span>}</p>
+          <p className="section-title">Suivi de la transaction {photos && photos.length > 0 && <span className="hint">: cliquez sur une étape avec photo pour l'agrandir</span>}</p>
+          {!photos && <p className="loading-state">Chargement du suivi…</p>}
           <ul className="stepper-vertical">
             {timeline.map((e, i) => (
               <li key={e.cle} className={`stepper-vertical-item ${e.photo ? 'stepper-vertical-item--photo' : ''}`}>
