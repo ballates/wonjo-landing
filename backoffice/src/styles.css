@@ -1370,11 +1370,12 @@ th.filtered { color: var(--accent-ink); }
 
 /* [300] Moderation : conversation, publications, notes internes */
 .conversation-admin { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; max-height: 420px; overflow-y: auto; }
-.conversation-admin-msg { display: flex; flex-direction: column; gap: 4px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border); max-width: 85%; }
+.conversation-admin-msg { display: flex; flex-direction: column; gap: 4px; padding: 6px 10px; border-radius: 12px; border: 1px solid var(--border); max-width: 85%; }
 .conversation-admin-msg.is-porteur { align-self: flex-end; }
 .conversation-admin-msg.is-systeme { align-self: center; opacity: 0.75; font-style: italic; }
 .conversation-admin-msg img { max-width: 220px; border-radius: 8px; display: block; }
 .conversation-admin-texte, .note-admin-texte { white-space: pre-wrap; overflow-wrap: anywhere; }
+.conversation-admin-texte { font-size: 12.5px; line-height: 1.4; }
 .publications-admin { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .publications-admin li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); }
 .publications-admin li > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
