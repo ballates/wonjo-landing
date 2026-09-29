@@ -621,34 +621,32 @@ select:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px r
 .corridors-plage-ligne { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .corridors-plage-ligne .corridors-borne-label { flex: none; }
 
-.corridors-stepper {
-  display: flex; align-items: stretch; flex: none;
-  border: 1px solid var(--border); border-radius: 10px; background: var(--surface); overflow: hidden;
-}
+.corridors-stepper { display: flex; align-items: center; flex: none; gap: 6px; }
 .corridors-stepper input {
-  all: unset; width: 40px; text-align: center; font-size: 13px; font-weight: 800; color: var(--text);
-  font-variant-numeric: tabular-nums;
+  all: unset; box-sizing: border-box; height: 28px; width: 40px; text-align: center;
+  font-size: 13px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums;
+  border: 1px solid var(--border); border-right: none; border-radius: 8px 0 0 8px; background: var(--surface);
 }
 .corridors-stepper input:focus { background: var(--accent-soft); }
 .corridors-stepper input::-webkit-outer-spin-button,
 .corridors-stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .corridors-stepper input[type="number"] { -moz-appearance: textfield; }
 .corridors-stepper-btn {
-  all: unset; display: flex; align-items: center; justify-content: center;
-  width: 28px; flex: none; cursor: pointer; color: var(--muted); font-size: 16px; line-height: 1;
-  background: var(--surface-2);
-  transition: background 0.12s ease, color 0.12s ease;
+  all: unset; display: flex; align-items: center; justify-content: center; flex: none;
+  width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+  border: 1px solid var(--border); background: var(--surface); color: var(--muted); font-size: 16px; line-height: 1;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
 }
-.corridors-stepper-btn:hover:not(:disabled) { background: var(--badge-teal-bg); color: var(--teal); }
-.corridors-stepper-btn:active:not(:disabled) { background: var(--teal); color: #fff; }
+.corridors-stepper-btn:hover:not(:disabled) { border-color: var(--teal); color: var(--teal); }
+.corridors-stepper-btn:active:not(:disabled) { background: var(--teal); border-color: var(--teal); color: #fff; }
 .corridors-stepper-btn:disabled { cursor: default; opacity: 0.4; }
 .corridors-stepper input:disabled { opacity: 0.5; }
 .corridors-stepper-unite {
-  display: flex; align-items: center; padding: 0 10px;
-  border-left: 1px solid var(--border); background: var(--surface-2);
+  box-sizing: border-box; display: flex; align-items: center; height: 28px; padding: 0 10px;
+  border: 1px solid var(--border); border-radius: 0 8px 8px 0; background: var(--surface-2);
   font-size: 11px; font-weight: 700; color: var(--muted); white-space: nowrap;
 }
-.corridors-villes-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; margin-top: 12px; }
+.corridors-villes-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(142px, 1fr)); gap: 6px; margin-top: 12px; }
 .corridors-ville-pays-bouton {
   display: flex; align-items: center; justify-content: space-between; gap: 6px; min-width: 0;
   padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2);
@@ -663,6 +661,8 @@ select:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px r
 .corridors-ville-pays-bouton:not(.has-fermees):not(:disabled) .hint { color: var(--brown); }
 .chart-head-titre { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .corridors-ville-pays-bouton:disabled { opacity: 0.45; cursor: not-allowed; }
+.corridors-ville-pays-bouton:disabled .hint,
+.corridors-ville-pays-bouton:disabled .corridors-ville-pays-nom { color: var(--text); font-weight: 600; }
 .corridors-ville-pays-bouton:disabled:hover { border-color: var(--border); }
 .corridors-villes-panneau {
   position: fixed; z-index: 200; width: max-content; max-width: 320px;
@@ -1186,6 +1186,7 @@ tbody tr.dt-row-clickable:hover { background: var(--hover); }
 .segmented button b { font-size: 14px; color: var(--ink); }
 .segmented button span { font-size: 12px; color: var(--muted); }
 .segmented button:hover { border-color: var(--teal); }
+.segmented button:disabled { opacity: 0.55; cursor: not-allowed; border-color: var(--border); }
 .segmented button.on { border-color: var(--teal); background: var(--accent-soft); box-shadow: 0 0 0 3px rgba(74,136,150,0.14); }
 .email-preview-wrap { position: sticky; top: 20px; }
 .email-preview { border-radius: 20px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08); background: #fff; color: #374151; border: 1px solid #E4E2EC; border-top: none; }
@@ -1366,3 +1367,58 @@ th.filtered { color: var(--accent-ink); }
 .greeting-date { font-size: 13px; color: var(--muted); font-weight: 600; text-transform: capitalize; }
 .tab-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; margin-left: 6px; padding: 0 5px; border-radius: 999px; background: var(--danger); color: #fff; font-size: 10.5px; font-weight: 800; }
 .tabs button.active .tab-badge { background: #fff; color: var(--danger); }
+
+/* [300] Moderation : conversation, publications, notes internes */
+.conversation-admin { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; max-height: 420px; overflow-y: auto; }
+.conversation-admin-msg { display: flex; flex-direction: column; gap: 4px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border); max-width: 85%; }
+.conversation-admin-msg.is-porteur { align-self: flex-end; }
+.conversation-admin-msg.is-systeme { align-self: center; opacity: 0.75; font-style: italic; }
+.conversation-admin-msg img { max-width: 220px; border-radius: 8px; display: block; }
+.conversation-admin-texte, .note-admin-texte { white-space: pre-wrap; overflow-wrap: anywhere; }
+.publications-admin { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.publications-admin li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.publications-admin li > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.publications-admin li.is-masquee strong { text-decoration: line-through; opacity: 0.7; }
+
+/* [308] Blocage automatique (meme identite qu'un compte suspendu) */
+.bandeau-alerte { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--danger); background: color-mix(in srgb, var(--danger) 8%, transparent); font-size: 13px; line-height: 1.5; }
+.bandeau-alerte strong { color: var(--danger); }
+button.lien { background: none; border: none; padding: 0; font: inherit; color: var(--teal); text-decoration: underline; cursor: pointer; }
+
+/* [314] Bornes de poids des colis (Tarification > Corridors) */
+.poids-bornes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.poids-borne {
+  display: flex; flex-direction: column; gap: 10px; padding: 14px 16px;
+  border: 1px solid var(--border); border-radius: 14px; background: var(--surface-2);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.poids-borne.is-modifie { border-color: var(--teal); background: var(--accent-soft); }
+.poids-borne-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.poids-borne-label { font-size: 13px; font-weight: 700; color: var(--muted); }
+.poids-borne-avant { font-size: 11.5px; color: var(--muted); text-decoration: line-through; font-variant-numeric: tabular-nums; }
+.poids-borne-saisie { display: flex; align-items: center; gap: 10px; }
+.poids-borne-valeur { display: flex; align-items: baseline; gap: 4px; flex: 1; justify-content: center; min-width: 0; }
+.poids-borne-valeur input {
+  all: unset; width: 3.2ch; min-width: 0; flex: 1; max-width: 90px; text-align: right;
+  font-size: 30px; font-weight: 800; line-height: 1.1; color: var(--text); font-variant-numeric: tabular-nums;
+  border-bottom: 2px solid transparent; transition: border-color 0.15s ease;
+}
+.poids-borne-valeur input:focus { border-bottom-color: var(--teal); }
+.poids-borne-valeur input:disabled { cursor: default; }
+.poids-borne-valeur span { font-size: 15px; font-weight: 700; color: var(--muted); }
+.poids-borne-btn {
+  all: unset; display: flex; align-items: center; justify-content: center; flex: none;
+  width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 18px; line-height: 1;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+.poids-borne-btn:hover { border-color: var(--teal); color: var(--teal); }
+.poids-borne-btn:active { background: var(--teal); border-color: var(--teal); color: #fff; }
+.poids-borne-btn:focus-visible { box-shadow: 0 0 0 3px rgba(74,136,150,0.25); }
+.poids-borne-aide { font-size: 12px; color: var(--muted); text-align: center; }
+
+.poids-plage { display: flex; flex-direction: column; gap: 6px; padding: 4px 2px 0; }
+.poids-plage-piste { position: relative; height: 8px; border-radius: 999px; background: var(--border); }
+.poids-plage-bande { position: absolute; top: 0; bottom: 0; border-radius: 999px; background: var(--brand-gradient); transition: left 0.2s ease, width 0.2s ease; }
+.poids-plage.is-invalide .poids-plage-piste { background: rgba(229,72,77,0.25); }
+.poids-plage-graduations { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; }

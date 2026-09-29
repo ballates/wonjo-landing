@@ -49,6 +49,7 @@ export const IconPercent = () => <Svg><line x1="19" y1="5" x2="5" y2="19" /><cir
 export const IconChecklist = () => <Svg><path d="M9 6h11M9 12h11M9 18h11" /><path d="m3 6 1.5 1.5L7 5" /><path d="m3 12 1.5 1.5L7 11" /><path d="m3 18 1.5 1.5L7 17" /></Svg>;
 export const IconStar = () => <Svg><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 21 12 17.5 5.5 21 7 14.5 2 9.5 9 9 12 2" /></Svg>;
 export const IconChevronRight = () => <Svg size={14}><polyline points="9 6 15 12 9 18" /></Svg>;
+export const IconArrowLeftRight = () => <Svg size={14}><path d="m8 3-4 4 4 4" /><path d="M4 7h16" /><path d="m16 21 4-4-4-4" /><path d="M20 17H4" /></Svg>;
 export const IconChevronLeft = () => <Svg size={14}><polyline points="15 6 9 12 15 18" /></Svg>;
 export const IconSend = () => <Svg size={16}><path d="m22 2-20 8 9 3 3 9z" /><path d="M22 2 11 13" /></Svg>;
 export const IconGlobe = () => <Svg><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15 15 0 0 1 0 20a15 15 0 0 1 0-20z" /></Svg>;

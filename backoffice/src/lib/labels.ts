@@ -55,7 +55,16 @@ export const LABELS_ACTIONS: Record<string, string> = {
   commission_approuvee: 'a approuvé un changement de commission',
   commission_rejetee: 'a rejeté un changement de commission',
   commission_regle_desactivee: 'a désactivé une règle de commission',
-  litige_rembourser: 'a résolu un litige (remboursement manuel)',
+  litige_rembourser: 'a tranché un litige : remboursement de l\'expéditeur',
+  litige_verser_voyageur: 'a tranché un litige : paiement du voyageur',
+  bornes_poids: 'a modifié les bornes de poids des colis',
+  // [300] moderation
+  consulter_conversation: 'a consulté une conversation',
+  consulter_coordonnees: 'a consulté les coordonnées',
+  masquer_contenu: 'a masqué un contenu',
+  demasquer_contenu: 'a réaffiché un contenu',
+  // [291] zones enveloppe
+  definir_actif_enveloppe: 'a ouvert ou fermé une zone enveloppe',
   reinitialiser_tentatives_kyc: 'a réinitialisé les tentatives de vérification d\'identité',
 };
 
@@ -78,6 +87,9 @@ export function libelleMotif(action: string, motif: string | null): string | nul
     const [statut, ...note] = motif.split(' - ');
     const lib = LABELS_STATUT_SIGNALEMENT[statut] ?? statut;
     return note.length ? `${lib} : ${note.join(' - ')}` : lib;
+  }
+  if (action === 'consulter_coordonnees') {
+    return motif === 'telephone' ? 'Téléphone' : motif === 'adresse' ? 'Adresse' : motif;
   }
   if (action === 'changer_role_admin' || action === 'inviter_admin') {
     return `Rôle : ${LABELS_ROLES_TXT[motif] ?? motif}`;
@@ -128,11 +140,24 @@ export function dateHeure(iso: string): string {
   return `${dateSeule(iso)}, ${heure}`;
 }
 
+// Date seule "AAAA-MM-JJ" lue comme date locale (new Date() la lit en minuit
+// UTC : la veille a l'ouest de Greenwich). Les instants gardent la lecture native.
+export function versDate(v: string): Date {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+  return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : new Date(v);
+}
+
+// Date du jour a Paris, en AAAA-MM-JJ : la reference des regles de commission
+// cote serveur (migration 313), quel que soit le fuseau du navigateur.
+export function aujourdhuiParis(): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris' }).format(new Date());
+}
+
 export function dateSeule(iso: string): string {
-  const d = new Date(iso);
+  const d = versDate(iso);
   const jour = String(d.getDate()).padStart(2, '0');
   const mois = String(d.getMonth() + 1).padStart(2, '0');
-  return `${jour}-${mois}-${d.getFullYear()}`;
+  return `${jour}/${mois}/${d.getFullYear()}`;
 }
 
 // Deux seules valeurs possibles en base (type_envoi IN ('colis','document')) :

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../lib/supabase';
-import { IconChevronRight } from '../components/Icons';
+import { NomCorridor, NomZoneEnveloppe } from '../components/NomCorridor';
+import { PoidsColisCard } from '../components/PoidsColisCard';
 
 interface PaysCorridor {
   code: string;
@@ -25,6 +26,7 @@ interface EnveloppePrix {
   prix_min: number;
   prix: number;
   devise: string;
+  actif: boolean;
 }
 
 interface VilleCorridor {
@@ -42,14 +44,20 @@ const LABELS_REGION: Record<string, string> = {
   afrique_centre: 'Afrique centrale',
   afrique_est: "Afrique de l'Est",
   afrique_australe: 'Afrique australe',
+  asie: 'Asie',
+  amerique_nord: 'Amérique du Nord',
+  amerique_sud: 'Amérique du Sud',
 };
 
 const LABELS_ZONE_ENVELOPPE: Record<string, string> = {
   intra_europe: 'Intra-Europe',
   europe_afrique: 'Europe ↔ Afrique',
+  europe_asie: 'Europe ↔ Asie',
+  europe_amerique: 'Europe ↔ Amériques',
+  intra_afrique: 'Intra-Afrique',
 };
 
-const ORDRE_REGION = ['france', 'europe', 'maghreb', 'afrique_ouest', 'afrique_centre', 'afrique_est', 'afrique_australe'];
+const ORDRE_REGION = ['france', 'europe', 'maghreb', 'afrique_ouest', 'afrique_centre', 'afrique_est', 'afrique_australe', 'asie', 'amerique_nord', 'amerique_sud'];
 
 export function CorridorsSection() {
   const [pays, setPays] = useState<PaysCorridor[] | null>(null);
@@ -214,6 +222,24 @@ export function CorridorsSection() {
     setPrixEnveloppes(prixEnveloppesOriginal);
   }
 
+  // Meme regle que l'interrupteur d'un corridor : effet immediat, sans
+  // Valider. Zone fermee = aucun document, meme si le corridor est ouvert.
+  async function toggleActifEnveloppe(e: EnveloppePrix) {
+    const cle = `env:${e.zone}`;
+    setEnCours((s) => new Set(s).add(cle));
+    const nextActif = !e.actif;
+    const appliquer = (actif: boolean) => (liste: EnveloppePrix[] | null) => liste!.map((x) => (x.zone === e.zone ? { ...x, actif } : x));
+    setPrixEnveloppes(appliquer(nextActif));
+    setPrixEnveloppesOriginal(appliquer(nextActif));
+    const { error: rpcError } = await supabase.rpc('admin_definir_actif_enveloppe', { p_zone: e.zone, p_actif: nextActif });
+    if (rpcError) {
+      setPrixEnveloppes(appliquer(e.actif));
+      setPrixEnveloppesOriginal(appliquer(e.actif));
+      alert(rpcError.message);
+    }
+    setEnCours((s) => { const n = new Set(s); n.delete(cle); return n; });
+  }
+
   if (error) return <p className="page-error">{error}</p>;
   if (!pays || !prixCorridors || !prixEnveloppes || !villes) return <p className="loading-state">Chargement…</p>;
 
@@ -226,6 +252,8 @@ export function CorridorsSection() {
 
   return (
     <div className="corridors-section">
+      <PoidsColisCard />
+
       <div className="chart-card">
         <div className="chart-head">
           <div className="chart-head-titre">
@@ -295,7 +323,7 @@ export function CorridorsSection() {
         <div className="chart-head">
           <div className="chart-head-titre">
             <h3>Tarifs des enveloppes, par zone</h3>
-            <span className="badge badge-muted">{prixEnveloppes.length} zone{prixEnveloppes.length > 1 ? 's' : ''}</span>
+            <span className="badge badge-muted">{prixEnveloppes.filter((e) => e.actif).length}/{prixEnveloppes.length}</span>
           </div>
           {prixEnveloppesModifies.length > 0 && (
             <div className="action-row">
@@ -306,10 +334,10 @@ export function CorridorsSection() {
             </div>
           )}
         </div>
-        <p className="chart-sub">Prix au forfait pour les documents, indépendant du prix au kilo.</p>
+        <p className="chart-sub">Prix au forfait pour les documents, indépendant du prix au kilo. Une zone fermée n'accepte aucun document, même si son corridor est ouvert ; l'interrupteur agit immédiatement, les prix attendent Valider.</p>
         <div className="corridors-prix-grille">
           {prixEnveloppes.map((e) => (
-            <LignePrixEnveloppe key={e.zone} enveloppe={e} onModifier={modifierPrixEnveloppeLocal} />
+            <LignePrixEnveloppe key={e.zone} enveloppe={e} busy={enCours.has(`env:${e.zone}`)} onModifier={modifierPrixEnveloppeLocal} onToggleActif={toggleActifEnveloppe} />
           ))}
         </div>
       </div>
@@ -392,24 +420,6 @@ function StepperLigne({
         <span className="corridors-stepper-unite">{unite}</span>
       </div>
     </div>
-  );
-}
-
-// Les noms de corridors stockes en base utilisent tantot "→", tantot
-// " vers " (ex. "Europe → Afrique de l'Ouest" / "Europe vers Afrique
-// Australe") - affiches ici avec le meme chevron dans les deux cas.
-function NomCorridor({ nom }: { nom: string }) {
-  const parties = nom.split(/\s*→\s*|\s+vers\s+/i).filter(Boolean);
-  if (parties.length < 2) return <span>{nom}</span>;
-  return (
-    <span className="corridors-nom-chevrons">
-      {parties.map((partie, i) => (
-        <span key={i} className="corridors-nom-partie">
-          {i > 0 && <IconChevronRight />}
-          {partie}
-        </span>
-      ))}
-    </span>
   );
 }
 
@@ -542,29 +552,37 @@ function VilleBoutonEtPopover({
 }
 
 function LignePrixEnveloppe({
-  enveloppe, onModifier,
+  enveloppe, busy: toggleBusy, onModifier, onToggleActif,
 }: {
   enveloppe: EnveloppePrix;
+  busy: boolean;
   onModifier: (zone: string, champ: 'prix_min' | 'prix', valeur: number) => void;
+  onToggleActif: (e: EnveloppePrix) => void;
 }) {
   return (
-    <div className="corridors-prix-carte">
+    <div className={`corridors-prix-carte ${!enveloppe.actif ? 'is-off' : ''}`}>
       <div className="corridors-prix-carte-head">
         <div className="corridors-prix-nom">
-          <span>{LABELS_ZONE_ENVELOPPE[enveloppe.zone] ?? enveloppe.zone}</span>
+          <NomZoneEnveloppe nom={LABELS_ZONE_ENVELOPPE[enveloppe.zone] ?? enveloppe.zone} />
         </div>
+        <label className={`corridor-toggle ${enveloppe.actif ? 'is-on' : ''}`} title={enveloppe.actif ? 'Fermer cette zone' : 'Ouvrir cette zone'}>
+          <input type="checkbox" checked={enveloppe.actif} disabled={toggleBusy} onChange={() => onToggleActif(enveloppe)} />
+          <span className="corridor-toggle-switch" />
+        </label>
       </div>
       <div className="corridors-prix-carte-foot">
         <StepperLigne
           label="Min"
           value={String(enveloppe.prix_min)}
           unite={enveloppe.devise}
+          disabled={!enveloppe.actif}
           onChange={(v) => onModifier(enveloppe.zone, 'prix_min', Number(v))}
         />
         <StepperLigne
           label="Max"
           value={String(enveloppe.prix)}
           unite={enveloppe.devise}
+          disabled={!enveloppe.actif}
           onChange={(v) => onModifier(enveloppe.zone, 'prix', Number(v))}
         />
       </div>

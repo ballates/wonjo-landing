@@ -5,12 +5,12 @@ import { StatutBadge } from '../components/Badge';
 import { Avatar } from '../components/Avatar';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
-import { peutGererAdmins, peutVoirRevenus } from '../lib/permissions';
+import { peutGererAdmins, peutModerer, peutVoirRevenus } from '../lib/permissions';
 import { DataTable, type Column } from '../components/DataTable';
 import { ServerTable, type ServerColumn } from '../components/ServerTable';
 import { Modal } from '../components/Modal';
 import { useFicheCompte, VoirFicheButton } from '../components/FicheCompte';
-import { LABELS_NIVEAU, LABELS_PAIEMENT, LABELS_STATUT_KYC, LABELS_STATUT_SIGNALEMENT, casserNom, casserPrenom, dateHeure, depuis, nomComplet } from '../lib/labels';
+import { LABELS_NIVEAU, LABELS_PAIEMENT, LABELS_STATUT_COLIS, LABELS_STATUT_KYC, LABELS_STATUT_SIGNALEMENT, casserNom, casserPrenom, dateHeure, depuis, nomComplet } from '../lib/labels';
 import { useDebounce } from '../lib/useDebounce';
 import type { CompteRecherche, Litige, Signalement } from '../lib/types';
 
@@ -21,8 +21,11 @@ type Tab = 'comptes' | 'signalements' | 'litiges';
 export function ModerationPage() {
   const location = useLocation();
   const ongletDemande = (location.state as { tab?: Tab } | null)?.tab;
-  const [tab, setTab] = useState<Tab>(ongletDemande ?? 'comptes');
-  useEffect(() => { if (ongletDemande) setTab(ongletDemande); }, [ongletDemande, location.key]);
+  const { roles } = useAuth();
+  // [301] La finance n'accede qu'aux litiges (pas aux comptes ni aux signalements).
+  const moderateur = peutModerer(roles);
+  const [tab, setTab] = useState<Tab>(moderateur ? (ongletDemande ?? 'comptes') : 'litiges');
+  useEffect(() => { if (ongletDemande && moderateur) setTab(ongletDemande); }, [ongletDemande, location.key]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <div>
       <div className="page-head">
@@ -32,12 +35,12 @@ export function ModerationPage() {
         </div>
       </div>
       <div className="tabs">
-        <button className={tab === 'comptes' ? 'active' : ''} onClick={() => setTab('comptes')}>Comptes</button>
-        <button className={tab === 'signalements' ? 'active' : ''} onClick={() => setTab('signalements')}>Signalements</button>
+        {moderateur && <button className={tab === 'comptes' ? 'active' : ''} onClick={() => setTab('comptes')}>Comptes</button>}
+        {moderateur && <button className={tab === 'signalements' ? 'active' : ''} onClick={() => setTab('signalements')}>Signalements</button>}
         <button className={tab === 'litiges' ? 'active' : ''} onClick={() => setTab('litiges')}>Litiges</button>
       </div>
-      {tab === 'comptes' && <ComptesTab />}
-      {tab === 'signalements' && <SignalementsTab />}
+      {tab === 'comptes' && moderateur && <ComptesTab />}
+      {tab === 'signalements' && moderateur && <SignalementsTab />}
       {tab === 'litiges' && <LitigesTab />}
     </div>
   );
@@ -298,17 +301,32 @@ function SignalementsTab() {
   );
 }
 
+// [303] Decision de Wonjo a defaut d'accord (CGU 1.5.0, art. 8) : pour
+// l'expediteur (annulation) ou pour le voyageur (transport repute effectue).
+// Les conditions sont reverifiees par la base ; ici elles servent a expliquer.
+type Decision = 'expediteur' | 'voyageur';
+const COLIS_REMIS = ['remis_porteur', 'en_transit', 'arrive', 'livre'];
+const COLIS_CHEZ_VOYAGEUR = ['remis_porteur', 'en_transit'];
+
 function LitigeResolutionModal({ litige, onClose, onDone }: { litige: Litige; onClose: () => void; onDone: () => void }) {
+  const [decision, setDecision] = useState<Decision | null>(null);
   const [motif, setMotif] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const avant = litige.statut_avant_litige ?? '';
+  const voyageurPossible = COLIS_REMIS.includes(avant) && litige.statut_paiement === 'escrow';
+  const restitution = COLIS_CHEZ_VOYAGEUR.includes(avant);
+  const montant = `${Number(litige.montant_total).toFixed(2)} €`;
+
   async function confirmer() {
     const m = motif.trim();
+    if (!decision) { setError('Choisissez en faveur de qui trancher.'); return; }
     if (!m) { setError('Le motif est obligatoire.'); return; }
     setBusy(true);
     setError(null);
-    const { error: rpcError } = await supabase.rpc('admin_resoudre_litige_remboursement', { p_demande_id: litige.id, p_motif: m });
+    const rpc = decision === 'voyageur' ? 'admin_resoudre_litige_voyageur' : 'admin_resoudre_litige_remboursement';
+    const { error: rpcError } = await supabase.rpc(rpc, { p_demande_id: litige.id, p_motif: m });
     setBusy(false);
     if (rpcError) { setError(rpcError.message); return; }
     onDone();
@@ -316,18 +334,38 @@ function LitigeResolutionModal({ litige, onClose, onDone }: { litige: Litige; on
 
   return (
     <Modal onClose={onClose}>
-      <h2 className="modal-title">Rembourser l'expéditeur</h2>
+      <h2 className="modal-title">Trancher le litige</h2>
       <div className="modal-body">
-        <p className="hint">Colis : {litige.description_colis} · {Number(litige.montant_total).toFixed(2)} €</p>
-        <p className="hint">Le transport sera annulé et le remboursement Stripe traité automatiquement dans l'heure, via le circuit habituel. À utiliser quand un accord a été trouvé entre les deux parties (ex. via le support) mais que la résolution automatique dans l'app ne s'est pas déclenchée.</p>
+        <p className="hint">Colis : {litige.description_colis} · {montant} · litige ouvert au stade « {LABELS_STATUT_COLIS[avant] ?? (avant || 'inconnu')} »</p>
+        <p className="hint">Décision de Wonjo (CGU, art. 8), définitive sur la plateforme : aucun nouveau litige ne pourra être ouvert. À prendre à défaut d'accord entre les parties, après examen du dossier (constats, conversation, déclarations), ou quand un accord trouvé via le support ne s'est pas appliqué dans l'app.</p>
+        <div className="segmented" role="radiogroup" aria-label="Décision">
+          <button role="radio" aria-checked={decision === 'expediteur'} className={decision === 'expediteur' ? 'on' : ''} onClick={() => setDecision('expediteur')}>
+            <b>Rembourser l'expéditeur</b>
+            <span>{restitution
+              ? 'Transaction annulée. Le voyageur doit rendre le colis ; remboursement une fois la restitution confirmée par les deux.'
+              : 'Transaction annulée, remboursement Stripe traité automatiquement dans l\'heure.'}</span>
+          </button>
+          <button role="radio" aria-checked={decision === 'voyageur'} className={decision === 'voyageur' ? 'on' : ''} disabled={!voyageurPossible} onClick={() => setDecision('voyageur')}>
+            <b>Payer le voyageur</b>
+            <span>{voyageurPossible
+              ? 'Transport réputé effectué : transaction livrée, virement au voyageur dans l\'heure.'
+              : litige.statut_paiement !== 'escrow'
+                ? 'Impossible : aucun paiement encaissé sur cette transaction.'
+                : 'Impossible : le colis n\'a jamais été remis au voyageur.'}</span>
+          </button>
+        </div>
         <div className="action-group motif-form">
-          <label htmlFor="motif-litige">Motif de la résolution manuelle</label>
-          <textarea id="motif-litige" autoFocus value={motif} onChange={(e) => setMotif(e.target.value)} placeholder="Ex. accord trouvé entre les deux parties via le support, le 26/09." />
+          <label htmlFor="motif-litige">Motif de la décision : il sera envoyé aux deux parties dans leur conversation</label>
+          <textarea id="motif-litige" value={motif} onChange={(e) => setMotif(e.target.value)} placeholder={decision === 'voyageur'
+            ? 'Ex. la photo de livraison montre le colis intact remis au destinataire ; l\'expéditeur n\'a fourni aucun élément contraire.'
+            : 'Ex. le colis n\'a jamais été remis au destinataire : aucune photo de livraison et le voyageur ne répond plus depuis 10 jours.'} />
         </div>
         {error && <p className="page-error">{error}</p>}
         <div className="action-row" style={{ justifyContent: 'flex-end' }}>
           <button className="btn" disabled={busy} onClick={onClose}>Annuler</button>
-          <button className="btn btn-danger" disabled={busy} onClick={confirmer}>Confirmer le remboursement</button>
+          <button className={`btn ${decision === 'voyageur' ? 'btn-primary' : 'btn-danger'}`} disabled={busy || !decision} onClick={confirmer}>
+            {busy ? '…' : decision === 'voyageur' ? `Verser ${montant} au voyageur` : decision === 'expediteur' ? 'Confirmer le remboursement' : 'Confirmer'}
+          </button>
         </div>
       </div>
     </Modal>
@@ -338,7 +376,7 @@ function LitigesTab() {
   const { roles } = useAuth();
   const [items, setItems] = useState<Litige[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [aRembourser, setARembourser] = useState<Litige | null>(null);
+  const [aTrancher, setATrancher] = useState<Litige | null>(null);
 
   function charger() {
     supabase.rpc('admin_lister_litiges', { p_limite: 500, p_offset: 0 }).then(({ data, error: rpcError }) => {
@@ -357,7 +395,7 @@ function LitigesTab() {
     { key: 'conteste', label: 'Contesté le', value: (l) => l.conteste_at, filter: 'date', render: (l) => (l.conteste_at ? dateHeure(l.conteste_at) : '-') },
     { key: 'resolutions', label: 'Résolutions en attente', value: (l) => l.resolutions_en_attente },
     {
-      key: 'actions', label: 'Parties', render: (l) => (
+      key: 'actions', label: 'Parties', render: (l) => !peutModerer(roles) ? <span className="hint">-</span> : (
         <div className="action-row">
           <button className="btn btn-soft btn-sm" onClick={() => ouvrir(l.expediteur_id)}>Expéditeur</button>
           <button className="btn btn-soft btn-sm" onClick={() => ouvrir(l.porteur_id)}>Voyageur</button>
@@ -366,7 +404,7 @@ function LitigesTab() {
     },
     ...(peutVoirRevenus(roles) ? [{
       key: 'resoudre', label: '', render: (l: Litige) => (
-        <button className="btn btn-danger-outline btn-sm" onClick={() => setARembourser(l)}>Rembourser</button>
+        <button className="btn btn-soft btn-sm" onClick={() => setATrancher(l)}>Trancher</button>
       ), width: 130,
     }] : []),
   ];
@@ -377,11 +415,11 @@ function LitigesTab() {
     <>
       <DataTable rows={items} columns={columns} rowKey={(l) => l.id} initialSort={{ key: 'conteste', dir: 'desc' }} emptyText="Aucun litige en cours." />
       {modal}
-      {aRembourser && (
+      {aTrancher && (
         <LitigeResolutionModal
-          litige={aRembourser}
-          onClose={() => setARembourser(null)}
-          onDone={() => { setARembourser(null); charger(); }}
+          litige={aTrancher}
+          onClose={() => setATrancher(null)}
+          onDone={() => { setATrancher(null); charger(); }}
         />
       )}
     </>

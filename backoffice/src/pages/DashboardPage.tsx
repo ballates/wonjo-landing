@@ -9,7 +9,7 @@ import { useAuth } from '../auth/AuthContext';
 import { peutModerer, peutVoirActivite, peutVoirAlertes, peutVoirColis, peutVoirRevenus } from '../lib/permissions';
 import { DataTable, type Column } from '../components/DataTable';
 import { useFicheCompte, VoirFicheButton } from '../components/FicheCompte';
-import { LABELS_TYPE_ENVOI, casserNom, casserPrenom, nomComplet } from '../lib/labels';
+import { LABELS_TYPE_ENVOI, casserNom, casserPrenom, nomComplet, versDate } from '../lib/labels';
 import { Avatar } from '../components/Avatar';
 import { AnimatedNumber, Kpi, VizTooltip, euros, pourcent } from '../components/Kpi';
 import { useLocation } from 'react-router-dom';
@@ -131,7 +131,9 @@ function ActiviteTab() {
       if (e) { setError(e.message); return; }
       setU(data as StatsUtilisation);
     });
-    supabase.rpc('admin_comptes_plus_actifs', { p_limite: 5000 }).then(({ data }) => setActifs((data ?? []) as CompteActif[]));
+    // Liste secondaire : refusee par le serveur aux roles data/stagiaire, qui
+    // voient pourtant cet onglet - l'erreur ne doit pas masquer les stats.
+    supabase.rpc('admin_comptes_plus_actifs', { p_limite: 5000 }).then(({ data, error: e }) => { if (e) { setActifs([]); return; } setActifs((data ?? []) as CompteActif[]); });
   }, []);
 
   if (error) return <p className="page-error">{error}</p>;
@@ -225,7 +227,8 @@ function ColisTab() {
       if (rpcError) { setError(rpcError.message); return; }
       setTypeEnvoi((data ?? []) as RepartitionTypeEnvoi[]);
     });
-    supabase.rpc('admin_stats_marche').then(({ data }) => {
+    supabase.rpc('admin_stats_marche').then(({ data, error: e }) => {
+      if (e) { setError(e.message); return; }
       const m = data as { demandes: number; livrees: number; annulees: number; en_litige: number } | null;
       if (!m) return;
       const enCours = Math.max(0, m.demandes - m.livrees - m.annulees - m.en_litige);
@@ -357,7 +360,8 @@ function FinanceTab() {
   const { ouvrir, modal } = useFicheCompte();
 
   function chargerTaxe() {
-    supabase.rpc('admin_taux_taxe').then(({ data }) => {
+    supabase.rpc('admin_taux_taxe').then(({ data, error: e }) => {
+      if (e) { setError(e.message); return; }
       const t = Number(data ?? 0);
       setTauxTaxe(t);
       setTauxTaxeSaisi(String(Math.round(t * 10000) / 100));
@@ -566,7 +570,7 @@ function FinanceTab() {
           initialSort={{ key: 'jour', dir: 'desc' }}
           emptyText="Aucun transport terminé sur la période."
           columns={[
-            { key: 'jour', label: 'Jour', value: (r) => r.jour, filter: 'date', render: (r) => new Date(r.jour).toLocaleDateString('fr-FR') },
+            { key: 'jour', label: 'Jour', value: (r) => r.jour, filter: 'date', render: (r) => versDate(r.jour).toLocaleDateString('fr-FR') },
             { key: 'volume', label: 'Montant des transports', value: (r) => Number(r.volume_total), render: (r) => euros(Number(r.volume_total)) },
             { key: 'commission', label: 'Commission Wonjo', value: (r) => Number(r.commission), render: (r) => <strong>{euros(Number(r.commission))}</strong> },
             { key: 'nb', label: 'Transactions', value: (r) => Number(r.nb_transactions) },

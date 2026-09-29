@@ -179,6 +179,9 @@ export interface AvisListe {
   destinataire_nom: string;
   destinataire_prenom: string | null;
   role_destinataire: 'expediteur' | 'porteur';
+  // [300] avis masque par la moderation (ne compte plus dans la note).
+  masque_at: string | null;
+  masque_motif: string | null;
 }
 
 export interface FicheTransaction {
@@ -280,6 +283,8 @@ export interface FicheCompte {
   signaleurs_distincts: number;
   dernier_signalement: string | null;
   raisons: string[] | null;
+  // [296] une ligne par champ, pays en premier.
+  adresse: string | null;
 }
 
 export interface ActionHistorique {

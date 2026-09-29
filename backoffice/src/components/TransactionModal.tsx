@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { supabase } from '../lib/supabase';
 import { Avatar } from './Avatar';
 import { NumeroTelephone } from './NumeroTelephone';
+import { ConversationTransaction } from './ConversationTransaction';
 import { Modal } from './Modal';
 import { IconClose } from './Icons';
 import { useFicheCompte } from './FicheCompte';
@@ -91,7 +92,7 @@ export function TransactionModal({ demandeId, onClose }: { demandeId: string; on
                 <Avatar src={f.expediteur_photo} nom={f.expediteur_nom ?? ''} size={28} /> {premierMot(prenomExpediteur)}
               </button>
               <span className="modal-hero-addr">RDV départ · {f.lieu_remise_reception ?? 'non renseigné'}</span>
-              <span className="modal-hero-addr"><NumeroTelephone numero={f.expediteur_telephone} /></span>
+              <span className="modal-hero-addr"><NumeroTelephone userId={f.expediteur_id} numero={f.expediteur_telephone} /></span>
             </div>
             <div className="modal-hero-party modal-hero-party--dest">
               <span className="modal-hero-role">Voyageur</span>
@@ -99,7 +100,7 @@ export function TransactionModal({ demandeId, onClose }: { demandeId: string; on
                 <Avatar src={f.porteur_photo} nom={f.porteur_nom ?? ''} size={28} /> {premierMot(prenomPorteur)}
               </button>
               <span className="modal-hero-addr">RDV arrivée · {f.lieu_remise_livraison ?? 'non renseignée'}</span>
-              <span className="modal-hero-addr"><NumeroTelephone numero={f.porteur_telephone} /></span>
+              <span className="modal-hero-addr"><NumeroTelephone userId={f.porteur_id} numero={f.porteur_telephone} /></span>
             </div>
           </div>
         </div>
@@ -149,7 +150,12 @@ export function TransactionModal({ demandeId, onClose }: { demandeId: string; on
           </ul>
         </div>
 
-        {f.photo_colis_url && (
+        <ConversationTransaction demandeId={f.id} />
+
+        {/* [297] URL fournie a l'origine par le membre : jamais un lien si
+            elle n'est pas en https (un "javascript:" s'executerait au clic,
+            React 18 ne le bloque pas). Verrouillee aussi cote serveur. */}
+        {f.photo_colis_url && /^https:\/\//i.test(f.photo_colis_url) && (
           <div>
             <p className="section-title">Photo du colis (à la publication)</p>
             <a href={f.photo_colis_url} target="_blank" rel="noopener noreferrer">

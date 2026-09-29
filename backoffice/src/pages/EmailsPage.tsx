@@ -101,6 +101,9 @@ export function EmailsPage() {
   const [compte, setCompte] = useState<{ destinataires: number; desinscrits_exclus: number } | null>(null);
   const [busy, setBusy] = useState(false);
   const [retour, setRetour] = useState<{ ok: boolean; texte: string } | null>(null);
+  // Echec d'un chargement (modeles, campagnes, desinscrits...) : affiche plutot
+  // qu'une liste vide trompeuse.
+  const [erreurChargement, setErreurChargement] = useState<string | null>(null);
   const [campagnes, setCampagnes] = useState<Campagne[] | null>(null);
   const [sousOnglet, setSousOnglet] = useState<SousOnglet>('envoyer');
   const [composerOuvert, setComposerOuvert] = useState(false);
@@ -113,25 +116,25 @@ export function EmailsPage() {
   const [campagneOuverte, setCampagneOuverte] = useState<Campagne | null>(null);
 
   useEffect(() => {
-    supabase.rpc('admin_nb_desinscrits').then(({ data }) => setNbDesinscrits(Number(data ?? 0)));
+    supabase.rpc('admin_nb_desinscrits').then(({ data, error: e }) => { if (e) { setErreurChargement(e.message); return; } setNbDesinscrits(Number(data ?? 0)); });
   }, []);
 
   useEffect(() => {
     if (sousOnglet === 'desinscrits' && !desinscrits) {
-      supabase.rpc('admin_lister_desinscrits').then(({ data }) => setDesinscrits((data ?? []) as Desinscrit[]));
+      supabase.rpc('admin_lister_desinscrits').then(({ data, error: e }) => { if (e) { setErreurChargement(e.message); return; } setDesinscrits((data ?? []) as Desinscrit[]); });
     }
   }, [sousOnglet, desinscrits]);
 
   function chargerCorbeille() {
-    supabase.rpc('admin_lister_modeles', { p_corbeille: true }).then(({ data }) => setModelesCorbeille((data ?? []) as Modele[]));
-    supabase.rpc('admin_lister_campagnes', { p_corbeille: true }).then(({ data }) => setCampagnesCorbeille((data ?? []) as Campagne[]));
+    supabase.rpc('admin_lister_modeles', { p_corbeille: true }).then(({ data, error: e }) => { if (e) { setErreurChargement(e.message); return; } setModelesCorbeille((data ?? []) as Modele[]); });
+    supabase.rpc('admin_lister_campagnes', { p_corbeille: true }).then(({ data, error: e }) => { if (e) { setErreurChargement(e.message); return; } setCampagnesCorbeille((data ?? []) as Campagne[]); });
   }
   useEffect(() => {
     if (sousOnglet === 'corbeille') chargerCorbeille();
   }, [sousOnglet]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function chargerModeles() {
-    supabase.rpc('admin_lister_modeles', { p_corbeille: false }).then(({ data }) => setModeles((data ?? []) as Modele[]));
+    supabase.rpc('admin_lister_modeles', { p_corbeille: false }).then(({ data, error: e }) => { if (e) { setErreurChargement(e.message); return; } setModeles((data ?? []) as Modele[]); });
   }
   useEffect(chargerModeles, []);
 
@@ -149,11 +152,11 @@ export function EmailsPage() {
   );
 
   function chargerCampagnes() {
-    supabase.rpc('admin_lister_campagnes', { p_corbeille: false }).then(({ data }) => setCampagnes((data ?? []) as Campagne[]));
+    supabase.rpc('admin_lister_campagnes', { p_corbeille: false }).then(({ data, error: e }) => { if (e) { setErreurChargement(e.message); return; } setCampagnes((data ?? []) as Campagne[]); });
   }
   useEffect(chargerCampagnes, []);
   useEffect(() => {
-    supabase.rpc('admin_rechercher_comptes', { p_recherche: '', p_limite: 2000 }).then(({ data }) => setComptes((data ?? []) as CompteRecherche[]));
+    supabase.rpc('admin_rechercher_comptes', { p_recherche: '', p_limite: 2000 }).then(({ data, error: e }) => { if (e) { setErreurChargement(e.message); return; } setComptes((data ?? []) as CompteRecherche[]); });
   }, []);
 
   const comptesFiltres = useMemo(() => {
@@ -171,7 +174,8 @@ export function EmailsPage() {
   useEffect(() => {
     setCompte(null);
     const t = setTimeout(() => {
-      supabase.rpc('admin_compter_destinataires', { p_segment: segment, p_ids: ids, p_type: type }).then(({ data }) => {
+      supabase.rpc('admin_compter_destinataires', { p_segment: segment, p_ids: ids, p_type: type }).then(({ data, error: e }) => {
+        if (e) { setErreurChargement(e.message); return; }
         if (data) setCompte(data as { destinataires: number; desinscrits_exclus: number });
       });
     }, 200);
@@ -348,6 +352,7 @@ export function EmailsPage() {
         <button className={sousOnglet === 'desinscrits' ? 'active' : ''} onClick={() => setSousOnglet('desinscrits')}>Désinscrits{nbDesinscrits ? ` (${nbDesinscrits})` : ''}</button>
         <button className={sousOnglet === 'corbeille' ? 'active' : ''} onClick={() => setSousOnglet('corbeille')}><IconTrash /> Corbeille</button>
       </div>
+      {erreurChargement && <p className="page-error">{erreurChargement}</p>}
       {retour && !retour.ok && !composerOuvert && <p className="page-error">{retour.texte}</p>}
 
       {sousOnglet === 'modeles' ? (

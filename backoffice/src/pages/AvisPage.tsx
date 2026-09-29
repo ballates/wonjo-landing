@@ -27,6 +27,23 @@ export function AvisPage() {
   const [chargement, setChargement] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ouverte, setOuverte] = useState<string | null>(null);
+  const [busyAvis, setBusyAvis] = useState<string | null>(null);
+
+  // [300] Masquer un avis (diffamatoire, hors sujet, coordonnees...) : il
+  // disparait de l'app et ne compte plus dans la note du destinataire.
+  async function basculerMasquage(a: AvisListe) {
+    const masquer = !a.masque_at;
+    let motif: string | null = null;
+    if (masquer) {
+      motif = window.prompt('Motif du masquage de cet avis (obligatoire) :');
+      if (!motif?.trim()) return;
+    } else if (!window.confirm('Réafficher cet avis ? Il comptera à nouveau dans la note.')) return;
+    setBusyAvis(a.id);
+    const { error: rpcError } = await supabase.rpc('admin_masquer_contenu', { p_type: 'avis', p_id: a.id, p_masquer: masquer, p_motif: motif });
+    setBusyAvis(null);
+    if (rpcError) { window.alert(rpcError.message); return; }
+    load();
+  }
 
   function load() {
     setChargement(true);
@@ -51,7 +68,7 @@ export function AvisPage() {
 
   const columns: ServerColumn<AvisListe>[] = [
     { key: 'date', label: 'Date', sortKey: 'created_at', width: 150, render: (a) => dateHeure(a.created_at) },
-    { key: 'note', label: 'Note', sortKey: 'note', width: 80, render: (a) => `⭐ ${a.note}/5` },
+    { key: 'note', label: 'Note', sortKey: 'note', width: 80, render: (a) => `${a.note}/5` },
     {
       key: 'categorie', label: 'Catégorie', filterKey: 'categorie',
       filterOptions: Object.entries(LABELS_CATEGORIE_AVIS).map(([value, label]) => ({ value, label })),
@@ -59,8 +76,24 @@ export function AvisPage() {
     },
     { key: 'auteur', label: 'Auteur', sortKey: 'auteur_nom', render: (a) => casserPrenom(premierMot(a.auteur_prenom)) },
     { key: 'destinataire', label: 'Destinataire', render: (a) => casserPrenom(premierMot(a.destinataire_prenom)) },
-    { key: 'commentaire', label: 'Commentaire', render: (a) => a.commentaire ?? <span className="hint">Sans commentaire</span> },
-    { key: 'actions', label: '', width: 100, render: (a) => <button className="btn btn-soft btn-sm" onClick={() => setOuverte(a.demande_id)}>Fiche</button> },
+    {
+      key: 'commentaire', label: 'Commentaire', render: (a) => (
+        <>
+          {a.masque_at && <span className="badge badge-danger" title={a.masque_motif ?? undefined}>Masqué</span>}{' '}
+          {a.commentaire ?? <span className="hint">Sans commentaire</span>}
+        </>
+      ),
+    },
+    {
+      key: 'actions', label: '', width: 190, render: (a) => (
+        <div className="action-row">
+          <button className="btn btn-soft btn-sm" onClick={() => setOuverte(a.demande_id)}>Fiche</button>
+          <button className={`btn btn-sm ${a.masque_at ? 'btn-soft' : 'btn-danger-outline'}`} disabled={busyAvis === a.id} onClick={() => basculerMasquage(a)}>
+            {a.masque_at ? 'Réafficher' : 'Masquer'}
+          </button>
+        </div>
+      ),
+    },
   ];
 
   if (error) return <p className="page-error">{error}</p>;

@@ -40,6 +40,12 @@ export function peutModerer(roles: AdminRole[]): boolean {
   return a(roles, 'super_admin', 'moderation');
 }
 
+// [301] Litiges : la moderation les suit, la finance les rembourse
+// (admin_lister_litiges / admin_resoudre_litige_remboursement).
+export function peutVoirLitiges(roles: AdminRole[]): boolean {
+  return a(roles, 'super_admin', 'moderation', 'finance');
+}
+
 export function peutVoirKyc(roles: AdminRole[]): boolean {
   return a(roles, 'super_admin', 'moderation');
 }

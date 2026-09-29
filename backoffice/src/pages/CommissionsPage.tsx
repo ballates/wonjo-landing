@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { Select, type Option } from '../components/Select';
 import { Avatar } from '../components/Avatar';
 import { DataTable, type Column } from '../components/DataTable';
-import { dateHeure, nomComplet } from '../lib/labels';
+import { aujourdhuiParis, dateHeure, nomComplet } from '../lib/labels';
 import { Kpi } from '../components/Kpi';
 import type { CompteRecherche } from '../lib/types';
 
@@ -62,7 +62,7 @@ function corridorTexte(r: Pick<Regle, 'depart_ville' | 'depart_pays' | 'arrivee_
 }
 
 function etatRegle(r: Regle): { label: string; tone: string } {
-  const aujourdHui = new Date().toISOString().slice(0, 10);
+  const aujourdHui = aujourdhuiParis();
   if (r.statut === 'en_attente') return { label: 'À valider', tone: 'badge-amber' };
   if (r.statut === 'rejetee') return { label: 'Rejetée', tone: 'badge-danger' };
   if (r.statut === 'annulee') return { label: 'Annulée', tone: 'badge-muted' };
@@ -125,14 +125,14 @@ export function CommissionsSection() {
       setParams(p);
       setDefautSaisi(String(Math.round(Number(p.defaut) * 10000) / 100));
     });
-    supabase.rpc('admin_commission_lister_regles').then(({ data }) => setRegles((data ?? []) as Regle[]));
-    supabase.rpc('admin_commission_lister_changements').then(({ data }) => setChangements((data ?? []) as Changement[]));
+    supabase.rpc('admin_commission_lister_regles').then(({ data, error: e }) => { if (e) { setError(e.message); return; } setRegles((data ?? []) as Regle[]); });
+    supabase.rpc('admin_commission_lister_changements').then(({ data, error: e }) => { if (e) { setError(e.message); return; } setChangements((data ?? []) as Changement[]); });
   }
 
   useEffect(() => {
     charger();
-    supabase.rpc('admin_rechercher_comptes', { p_recherche: '', p_limite: 2000 }).then(({ data }) => setComptes((data ?? []) as CompteRecherche[]));
-    supabase.rpc('admin_commission_lieux').then(({ data }) => setLieux((data ?? []) as Lieu[]));
+    supabase.rpc('admin_rechercher_comptes', { p_recherche: '', p_limite: 2000 }).then(({ data, error: e }) => { if (e) { setError(e.message); return; } setComptes((data ?? []) as CompteRecherche[]); });
+    supabase.rpc('admin_commission_lieux').then(({ data, error: e }) => { if (e) { setError(e.message); return; } setLieux((data ?? []) as Lieu[]); });
   }, []);
 
   const paysOptions: Option<string>[] = useMemo(() => {
@@ -171,7 +171,7 @@ export function CommissionsSection() {
     if (!params) return;
     const texte = params.actif
       ? 'Désactiver les commissions personnalisées ? Toutes les nouvelles demandes repasseront à 10 %.'
-      : 'Activer les commissions personnalisées ?\n\nL\'app récupère déjà le taux réel auprès du serveur (pas de 10 % figé côté client) : le nouveau taux s\'affiche à l\'app dans les 5 minutes, sans republication. Seules des versions très anciennes de l\'app (antérieures à ce mécanisme) afficheraient encore 10 % à tort.';
+      : 'Activer les commissions personnalisées ?\n\nL\'app récupère le taux réel auprès du serveur : dès l\'enregistrement, le nouveau taux s\'affiche instantanément dans l\'app, sans reconnexion ni rechargement. Le montant débité est toujours celui affiché à l\'écran de paiement.';
     if (!window.confirm(texte)) return;
     executer(
       () => supabase.rpc('admin_commission_activer', { p_actif: !params.actif }),
@@ -307,7 +307,7 @@ export function CommissionsSection() {
 
       <div className="cards">
         <Kpi index={0} label="Taux personnalisés" value={params.actif ? 1 : 0} format={() => (params.actif ? 'Actives' : 'Inactives')} />
-        <Kpi index={1} label={`Taux par défaut (${pct(params.plancher)}–10 %)`} value={params.defaut * 100} format={(n) => `${n.toLocaleString('fr-FR')} %`} />
+        <Kpi index={1} label={`Taux par défaut (${pct(params.plancher)}, 10 % max)`} value={params.defaut * 100} format={(n) => `${n.toLocaleString('fr-FR')} %`} />
         <Kpi index={2} label="Règles en vigueur" value={nbEnVigueur} />
         <Kpi index={3} label="À valider" value={nbEnAttente} hint={nbEnAttente > 0 ? 'Aucun effet tant que non approuvé' : undefined} />
       </div>
@@ -379,7 +379,7 @@ export function CommissionsSection() {
               <p className="chart-sub">
                 {params.actif
                   ? 'Les règles s\'appliquent aux nouvelles demandes. Une demande garde toujours le taux calculé à sa création.'
-                  : <>Toutes les demandes sont à 10 % tant que c'est inactif.<br />L'app affiche déjà le taux réel dès l'activation, sans republication (sauf versions très anciennes de l'app).</>}
+                  : <>Toutes les demandes sont à 10 % tant que c'est inactif.<br />Dès l'activation, l'app affiche instantanément le taux réel, sans reconnexion ni rechargement.</>}
               </p>
             </div>
             <button className={`btn ${params.actif ? 'btn-danger-outline' : 'btn-primary'}`} disabled={busy} onClick={basculer}>
@@ -389,7 +389,7 @@ export function CommissionsSection() {
 
           <div className="panel">
             <h3>Taux par défaut</h3>
-            <p className="chart-sub">S'applique par défaut à tout le monde (sauf règle plus avantageuse) ; une baisse doit être validée par un autre super admin, une hausse s'applique tout de suite.</p>
+            <p className="chart-sub">S'applique par défaut à tout le monde (sauf règle plus avantageuse) ; une baisse doit être validée par un autre super admin, une hausse s'applique tout de suite. Dans les deux cas, l'app se met à jour instantanément.</p>
             <div className="inline-form">
               <div className="suffix-input">
                 <input type="text" inputMode="decimal" value={defautSaisi} onChange={(e) => setDefautSaisi(e.target.value)} aria-label="Taux par défaut" />

@@ -4,8 +4,10 @@ import { useAuth } from '../auth/AuthContext';
 import { peutSupprimerCompte } from '../lib/permissions';
 import { StatutBadge } from './Badge';
 import { Avatar } from './Avatar';
-import { NumeroTelephone } from './NumeroTelephone';
+import { AdresseMasquee, NumeroTelephone } from './NumeroTelephone';
 import { Modal } from './Modal';
+import { BlocageAutomatique, NotesCompte, PublicationsCompte } from './ModerationCompte';
+import { useFicheCompte } from './FicheCompte';
 import { Select } from './Select';
 import { LABELS_NIVEAU, LABELS_STATUT_KYC, dateHeure, depuis, libelleAction, libelleMotif, nomComplet, niveauReputation } from '../lib/labels';
 import type { ActionHistorique, FicheCompte } from '../lib/types';
@@ -39,10 +41,14 @@ export function CompteModal({ fiche, onClose, onChanged }: { fiche: FicheCompte;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [historique, setHistorique] = useState<ActionHistorique[] | null>(null);
+  const { ouvrir, modal } = useFicheCompte();
 
   function chargerHistorique() {
-    supabase.rpc('admin_historique_compte', { p_user_id: fiche.id }).then(({ data }) => {
-      setHistorique((data ?? []) as ActionHistorique[]);
+    supabase.rpc('admin_historique_compte', { p_user_id: fiche.id }).then(({ data, error: e }) => {
+      if (e) setError(e.message);
+      // [300] Les consultations de coordonnees sont au journal, mais ne sont
+      // pas des actions sur le compte : elles masqueraient la derniere vraie.
+      setHistorique(((data ?? []) as ActionHistorique[]).filter((h) => !h.action.startsWith('consulter_')));
     });
   }
 
@@ -100,7 +106,7 @@ export function CompteModal({ fiche, onClose, onChanged }: { fiche: FicheCompte;
         <Avatar src={fiche.photo_url} nom={nom} size={72} />
         <div style={{ minWidth: 0 }}>
           <h2>{nom}</h2>
-          <p className="modal-email">{fiche.email ?? ''} · <NumeroTelephone numero={fiche.telephone} /> · inscrit le {new Date(fiche.created_at).toLocaleDateString('fr-FR')}</p>
+          <p className="modal-email">{fiche.email ?? ''} · <NumeroTelephone userId={fiche.id} numero={fiche.telephone} /> · inscrit le {new Date(fiche.created_at).toLocaleDateString('fr-FR')}</p>
           <div className="badges">
             {fiche.bloque
               ? <span className="badge badge-danger">Compte bloqué{fiche.bloque_jusqu_a ? ` jusqu'au ${dateHeure(fiche.bloque_jusqu_a)}` : ' (permanent)'}</span>
@@ -112,6 +118,7 @@ export function CompteModal({ fiche, onClose, onChanged }: { fiche: FicheCompte;
       </div>
 
       <div className="modal-body">
+        <BlocageAutomatique userId={fiche.id} onOuvrir={ouvrir} />
         <div className="stats-row">
           <div className="stat"><strong>{fiche.nombre_livraisons ?? 0}</strong><span>Livraisons</span></div>
           <div className="stat"><strong>{fiche.nombre_colis_confies ?? 0}</strong><span>Colis expédiés</span></div>
@@ -127,6 +134,7 @@ export function CompteModal({ fiche, onClose, onChanged }: { fiche: FicheCompte;
                 <span className="chip">Téléphone : <span className={fiche.telephone_verifie ? 'check-yes' : 'check-no'}>{fiche.telephone_verifie ? 'vérifié' : 'non vérifié'}</span></span>
                 <span className="chip">Identité : <span className={fiche.id_verifie ? 'check-yes' : 'check-no'}>{fiche.id_verifie ? 'vérifiée' : 'non vérifiée'}</span></span>
                 <span className="chip">Dernière connexion : {depuis(fiche.derniere_connexion)}</span>
+                <span className="chip">Adresse : <AdresseMasquee userId={fiche.id} adresse={fiche.adresse} /></span>
               </div>
               {fiche.raisons && fiche.raisons.filter(Boolean).length > 0 && (
                 <p className="hint" style={{ marginTop: 8 }}>Motifs des signalements : {fiche.raisons.filter(Boolean).join(', ')}</p>
@@ -198,6 +206,11 @@ export function CompteModal({ fiche, onClose, onChanged }: { fiche: FicheCompte;
           </div>
         </div>
 
+        <div className="modal-columns">
+          <div className="modal-col"><PublicationsCompte userId={fiche.id} /></div>
+          <div className="modal-col"><NotesCompte userId={fiche.id} /></div>
+        </div>
+
         {saisie && (
           <div className="action-group motif-form motif-form-wide">
             {saisie === 'bloquer' && (
@@ -248,6 +261,7 @@ export function CompteModal({ fiche, onClose, onChanged }: { fiche: FicheCompte;
           </div>
         )}
       </div>
+      {modal}
     </Modal>
   );
 }

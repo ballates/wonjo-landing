@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { DataTable, type Column } from '../components/DataTable';
 import { euros } from '../components/Kpi';
+import { NomCorridor } from '../components/NomCorridor';
 
 interface AnalyseCorridor {
   corridor_id: string;
@@ -62,14 +63,14 @@ export function AnalyseCorridorsSection() {
   const compte = (s: Statut) => avecStatut.filter((l) => l.statut === s).length;
 
   const columns: Column<typeof avecStatut[number]>[] = [
-    { key: 'nom', label: 'Corridor', value: (l) => l.nom, filter: 'options' },
+    { key: 'nom', label: 'Corridor', value: (l) => l.nom, filter: 'options', render: (l) => <NomCorridor nom={l.nom} /> },
     {
       key: 'statut', label: 'Statut', filter: 'options', value: (l) => LABELS_STATUT[l.statut],
       render: (l) => <span className={`badge ${BADGE_STATUT[l.statut]}`}>{LABELS_STATUT[l.statut]}</span>,
     },
-    { key: 'nb_demandes', label: 'Demandes (total)', value: (l) => l.nb_demandes, render: (l) => l.nb_demandes },
+    { key: 'nb_demandes', label: 'Demandes', value: (l) => l.nb_demandes, render: (l) => l.nb_demandes },
     {
-      key: 'revenu_commission', label: 'Commission encaissée', value: (l) => Number(l.revenu_commission),
+      key: 'revenu_commission', label: 'Encaissé', value: (l) => Number(l.revenu_commission),
       render: (l) => (
         <span title="Somme sur les demandes payantes uniquement (colonne suivante) - les demandes en attente de paiement n'ont pas encore de commission connue.">
           <strong>{euros(Number(l.revenu_commission))}</strong> <span className="hint">sur {l.nb_payantes}</span>
@@ -77,13 +78,13 @@ export function AnalyseCorridorsSection() {
       ),
     },
     {
-      key: 'commission_remboursee', label: 'Commission rendue', value: (l) => Number(l.commission_remboursee),
+      key: 'commission_remboursee', label: 'Rendu', value: (l) => Number(l.commission_remboursee),
       render: (l) => Number(l.commission_remboursee) > 0
         ? <span className="badge badge-amber">{euros(Number(l.commission_remboursee))}</span>
         : euros(0),
     },
     {
-      key: 'frais_stripe_perdus', label: 'Frais Stripe jamais récupérés', value: (l) => Number(l.frais_stripe_perdus),
+      key: 'frais_stripe_perdus', label: 'Frais Stripe perdus', value: (l) => Number(l.frais_stripe_perdus),
       render: (l) => {
         const manquant = l.nb_remboursees > 0 && l.nb_frais_stripe_connu < l.nb_remboursees;
         return (
@@ -96,9 +97,9 @@ export function AnalyseCorridorsSection() {
         );
       },
     },
-    { key: 'nb_remboursees', label: 'Dont remboursées', value: (l) => l.nb_remboursees, render: (l) => l.nb_remboursees },
+    { key: 'nb_remboursees', label: 'Remboursées', value: (l) => l.nb_remboursees, render: (l) => l.nb_remboursees },
     {
-      key: 'derniere_activite', label: 'Dernière activité', filter: 'date',
+      key: 'derniere_activite', label: 'Activité', filter: 'date',
       value: (l) => l.derniere_activite ?? '',
       render: (l) => l.derniere_activite ? new Date(l.derniere_activite).toLocaleDateString('fr-FR') : 'Jamais',
     },
@@ -111,7 +112,7 @@ export function AnalyseCorridorsSection() {
           <div>
             <h3>Revenu et activité par corridor</h3>
             <p className="chart-sub">
-              Sur un remboursement : Wonjo rend sa commission (« Commission rendue ») et perd en plus les frais que Stripe a pris à l'encaissement et ne rend jamais (« Frais Stripe jamais récupérés »).
+              Sur un remboursement : Wonjo rend sa commission (« Rendu ») et perd en plus les frais que Stripe a pris à l'encaissement et ne rend jamais (« Frais Stripe perdus »). « Encaissé » : commission gardée, sur les demandes payées.
             </p>
           </div>
         </div>
