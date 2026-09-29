@@ -46,7 +46,7 @@ export function ConversationTransaction({ demandeId }: { demandeId: string }) {
 
   if (messages) {
     return (
-      <div>
+      <div className="info-card">
         <p className="section-title">Conversation <span className="hint">: consultation enregistrée dans le journal</span></p>
         {messages.length === 0 && <p className="hint">Aucun message échangé.</p>}
         <ul className="conversation-admin">
@@ -69,11 +69,12 @@ export function ConversationTransaction({ demandeId }: { demandeId: string }) {
   }
 
   return (
-    <div>
-      <p className="section-title">Conversation</p>
-      {!ouvert ? (
-        <button className="btn btn-soft btn-sm" onClick={() => setOuvert(true)}>Lire la conversation</button>
-      ) : (
+    <div className={`info-card ${ouvert ? '' : 'info-card--compact'}`}>
+      <div className={`info-card-head ${ouvert ? 'info-card-head--ouvert' : ''}`}>
+        <p className="section-title">Conversation</p>
+        {!ouvert && <button className="btn btn-soft btn-sm" onClick={() => setOuvert(true)}>Lire la conversation</button>}
+      </div>
+      {ouvert && (
         <div className="action-group motif-form">
           <label htmlFor="motif-conversation">Motif de la consultation (enregistré dans le journal)</label>
           <div className="action-row">

@@ -227,19 +227,6 @@ export function libellesEvenement(prenomExpediteur: string, prenomPorteur: strin
   };
 }
 
-// annonce_id defini = l'expediteur a demande une place sur le trajet publie
-// par le porteur (Flux 1) : c'est l'expediteur qui a cree la demande.
-// offre_colis_id defini = le porteur a propose de transporter le colis
-// publie par l'expediteur (Flux 2) : c'est le porteur qui a cree la demande.
-// Prenoms reels a la place de "l'expediteur"/"le porteur", comme
-// libellesEvenement ci-dessus.
-export function libellesOrigine(prenomExpediteur: string, prenomPorteur: string): Record<string, string> {
-  return {
-    annonce: `lancée par ${prenomExpediteur}, en réponse au trajet publié par ${prenomPorteur}`,
-    offre_colis: `lancée par ${prenomPorteur}, en réponse au colis publié par ${prenomExpediteur}`,
-  };
-}
-
 // Cote avis : "porteur" est desigle "Voyageur" pour l'admin, plus parlant
 // que le terme interne utilise ailleurs dans le back-office.
 export const LABELS_ROLE_AVIS: Record<string, string> = {

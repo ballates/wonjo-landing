@@ -7,7 +7,7 @@ import { ConversationTransaction } from './ConversationTransaction';
 import { Modal } from './Modal';
 import { IconClose } from './Icons';
 import { useFicheCompte } from './FicheCompte';
-import { LABELS_TYPE_DOCUMENT, LABELS_TYPE_ENVOI, dateHeure, libellesEvenement, libellesOrigine, premierMot } from '../lib/labels';
+import { LABELS_TYPE_DOCUMENT, LABELS_TYPE_ENVOI, dateHeure, libellesEvenement, premierMot } from '../lib/labels';
 import type { EvenementTimeline, FicheTransaction, PhotoConstat } from '../lib/types';
 
 interface EvenementAffiche { cle: string; label: string; date: string; role: string | null; photo?: PhotoConstat }
@@ -73,7 +73,13 @@ export function TransactionModal({ demandeId, onClose }: { demandeId: string; on
   const prenomExpediteur = f.expediteur_prenom || 'l\'expéditeur';
   const prenomPorteur = f.porteur_prenom || 'le voyageur';
   const libelles = libellesEvenement(prenomExpediteur, prenomPorteur);
-  const origines = libellesOrigine(prenomExpediteur, prenomPorteur);
+  const exp = <span className="nom-chip nom-chip--exp">{premierMot(prenomExpediteur)}</span>;
+  const enveloppes = f.type_envoi === 'document';
+  const plusieurs = (f.nb_enveloppes ?? 0) > 1;
+  const objet = enveloppes
+    ? (plusieurs ? { indefini: 'des enveloppes', defini: 'les enveloppes' } : { indefini: 'une enveloppe', defini: 'l\'enveloppe' })
+    : { indefini: 'un colis', defini: 'le colis' };
+  const por = <span className="nom-chip nom-chip--por">{premierMot(prenomPorteur)}</span>;
   const timeline = photos ? construireTimeline(f, photos, libelles) : [];
   const roleLabel = (role: string | null) => (role === 'expediteur' ? (f.expediteur_nom ?? 'Expéditeur') : role === 'porteur' ? (f.porteur_nom ?? 'Voyageur') : null);
 
@@ -102,26 +108,42 @@ export function TransactionModal({ demandeId, onClose }: { demandeId: string; on
         </div>
       </div>
 
-      <div className="modal-body">
-        <div className="stats-row">
+      <div className="modal-body modal-body--serre">
+        <div className="stats-row stats-row--compact">
           <div className="stat"><strong>{LABELS_TYPE_ENVOI[f.type_envoi ?? ''] ?? f.type_envoi ?? '-'}</strong><span>Type d'envoi</span></div>
           <div className="stat"><strong>{f.poids_kg ?? '-'} kg</strong><span>Poids</span></div>
           <div className="stat"><strong>{f.service_fee != null ? `${Number(f.service_fee).toFixed(2)} €` : '-'}</strong><span>Commission Wonjo</span></div>
           <div className="stat"><strong>{f.code_genere ? 'Oui' : 'Non'}</strong><span>Code livraison</span></div>
         </div>
 
-        <p className="section-title-inline"><span className="section-title">Origine :</span> {f.origine ? (origines[f.origine] ?? f.origine) : 'inconnue'}</p>
+        <div className="info-rows">
+          <div className="info-row">
+            <span className="info-row-label">Origine</span>
+            <span className="info-row-value">
+              {f.origine === 'annonce' ? <>{exp} a demandé à envoyer {objet.indefini} sur le trajet de {por}</>
+                : f.origine === 'offre_colis' ? <>{por} a proposé de transporter {objet.defini} de {exp}</>
+                : 'Inconnue'}
+            </span>
+          </div>
+          <div className="info-row">
+            <span className="info-row-label">Contenu</span>
+            <span className="info-row-value info-row-tags">{(() => {
+              if (f.type_envoi === 'document') {
+                const types = (f.type_document ?? '').split(',').filter(Boolean).map((k) => LABELS_TYPE_DOCUMENT[k] ?? k);
+                const n = f.nb_enveloppes ?? 0;
+                return <>
+                  <span>{n} enveloppe{n > 1 ? 's' : ''}{types.length > 0 && ' :'}</span>
+                  {types.map((t) => <span key={t} className="tag-chip">{t}</span>)}
+                </>;
+              }
+              const natures = (f.nature_contenu ?? '').split(',').map((x) => x.trim()).filter(Boolean);
+              if (natures.length === 0) return 'Non précisé';
+              return natures.map((n) => <span key={n} className="tag-chip">{n.charAt(0).toUpperCase() + n.slice(1)}</span>);
+            })()}</span>
+          </div>
+        </div>
 
-        <p className="section-title-inline"><span className="section-title">Contenu :</span> {(() => {
-          if (f.type_envoi === 'document') {
-            const types = (f.type_document ?? '').split(',').filter(Boolean).map((k) => LABELS_TYPE_DOCUMENT[k] ?? k).join(', ');
-            const n = f.nb_enveloppes ?? 0;
-            return `${n} enveloppe${n > 1 ? 's' : ''}${types ? ` : ${types}` : ''}`;
-          }
-          return f.nature_contenu ? f.nature_contenu.toLowerCase() : 'non précisé';
-        })()}</p>
-
-        <div>
+        <div className="info-card">
           <p className="section-title">Suivi de la transaction {photos && photos.length > 0 && <span className="hint">: cliquez sur une étape avec photo pour l'agrandir</span>}</p>
           {!photos && <p className="loading-state">Chargement du suivi…</p>}
           <ul className="stepper-vertical">

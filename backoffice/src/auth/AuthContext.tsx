@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
 
 // Etats du parcours de connexion admin :
@@ -48,6 +48,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roles, setRoles] = useState<AdminRole[]>([]);
   const [email, setEmail] = useState<string | null>(null);
   const [profil, setProfil] = useState<AdminProfil | null>(null);
+  // Lu dans evaluate() (appele par des callbacks anciens) : etat courant, pas celui de la closure.
+  const statusRef = useRef(status);
+  statusRef.current = status;
 
   async function evaluate() {
     const { data: sessionData } = await supabase.auth.getSession();
@@ -80,7 +83,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
     if (aal?.currentLevel === 'aal2') {
-      setStatus('checking');
+      // Deja autorise : re-verification silencieuse. Passer par 'checking'
+      // demonterait tout le back-office (Gate affiche un spinner) et
+      // fermerait la fiche ouverte a chaque retour sur l'onglet, car
+      // Supabase emet un evenement d'auth au retour de focus.
+      if (statusRef.current !== 'authorized') setStatus('checking');
       // admin_mon_profil() renvoie une ligne seulement si le compte est dans
       // admin_users et actif - meme fonction pour confirmer l'acces ET
       // recuperer le role, plutot que deux appels separes.
