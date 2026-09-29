@@ -227,12 +227,6 @@ export function libellesEvenement(prenomExpediteur: string, prenomPorteur: strin
   };
 }
 
-// Cote avis : "porteur" est desigle "Voyageur" pour l'admin, plus parlant
-// que le terme interne utilise ailleurs dans le back-office.
-export const LABELS_ROLE_AVIS: Record<string, string> = {
-  expediteur: 'Expéditeur', porteur: 'Voyageur',
-};
-
 // Categorie d'un avis a partir de sa note (1-5), meme decoupage que
 // l'intuition "negatif / intermediaire / positif" du widget Communaute.
 export function categorieAvis(note: number): 'negatif' | 'intermediaire' | 'positif' {

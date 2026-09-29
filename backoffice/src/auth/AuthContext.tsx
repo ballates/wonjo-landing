@@ -40,6 +40,9 @@ interface AuthState {
   refreshProfil: () => Promise<void>;
 }
 
+const INACTIVITE_MAX_MS = 60 * 60 * 1000;
+const CLE_ACTIVITE = 'wonjo_bo_derniere_activite';
+
 const AuthCtx = createContext<AuthState | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -119,6 +122,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Deconnexion apres 1h sans activite. La derniere activite est partagee via
+  // localStorage : plusieurs onglets comptent comme une seule session, et un
+  // onglet rouvert apres plus d'1h est deconnecte des le retour.
+  useEffect(() => {
+    if (status === 'loading' || status === 'signed_out') return;
+
+    const lire = () => {
+      try { return Number(localStorage.getItem(CLE_ACTIVITE)) || Date.now(); } catch { return Date.now(); }
+    };
+    const ecrire = () => {
+      try { localStorage.setItem(CLE_ACTIVITE, String(Date.now())); } catch { /* stockage indisponible */ }
+    };
+    const verifier = () => {
+      if (Date.now() - lire() >= INACTIVITE_MAX_MS) {
+        try { localStorage.removeItem(CLE_ACTIVITE); } catch { /* idem */ }
+        signOut();
+      }
+    };
+
+    // Premiere verification avant d'ecrire : sinon le chargement de la page
+    // effacerait l'inactivite accumulee pendant que l'onglet etait ferme.
+    verifier();
+    try { if (!localStorage.getItem(CLE_ACTIVITE)) ecrire(); } catch { /* idem */ }
+
+    let dernierEcrit = 0;
+    const surActivite = () => {
+      const now = Date.now();
+      if (now - dernierEcrit < 5000) return;
+      dernierEcrit = now;
+      ecrire();
+    };
+    const surVisibilite = () => { if (document.visibilityState === 'visible') verifier(); };
+
+    const evenements = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'wheel'] as const;
+    evenements.forEach((e) => window.addEventListener(e, surActivite, { passive: true }));
+    document.addEventListener('visibilitychange', surVisibilite);
+    const timer = window.setInterval(verifier, 30_000);
+    return () => {
+      evenements.forEach((e) => window.removeEventListener(e, surActivite));
+      document.removeEventListener('visibilitychange', surVisibilite);
+      window.clearInterval(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status === 'loading' || status === 'signed_out']);
+
   async function signIn(email: string, password: string) {
     setError(null);
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
@@ -135,6 +183,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signOut() {
+    try { localStorage.removeItem(CLE_ACTIVITE); } catch { /* stockage indisponible */ }
     await supabase.auth.signOut();
     setStatus('signed_out');
     setRoles([]);

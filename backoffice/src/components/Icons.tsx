@@ -37,7 +37,6 @@ export const IconSort = ({ dir }: { dir: 'asc' | 'desc' | null }) => (
     {dir !== 'asc' && <polyline points="7 14 12 19 17 14" />}
   </svg>
 );
-export const IconMail = () => <Svg><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></Svg>;
 export const IconTrash = () => <Svg size={16}><path d="M3 6h18" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6M14 11v6" /></Svg>;
 export const IconRestore = () => <Svg size={16}><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" /></Svg>;
 export const IconWmail = () => (
@@ -45,14 +44,11 @@ export const IconWmail = () => (
     <path d="M6,10 L13,30 L20,14 L27,30 L34,10" />
   </svg>
 );
-export const IconPercent = () => <Svg><line x1="19" y1="5" x2="5" y2="19" /><circle cx="6.5" cy="6.5" r="2.5" /><circle cx="17.5" cy="17.5" r="2.5" /></Svg>;
-export const IconChecklist = () => <Svg><path d="M9 6h11M9 12h11M9 18h11" /><path d="m3 6 1.5 1.5L7 5" /><path d="m3 12 1.5 1.5L7 11" /><path d="m3 18 1.5 1.5L7 17" /></Svg>;
 export const IconStar = () => <Svg><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 21 12 17.5 5.5 21 7 14.5 2 9.5 9 9 12 2" /></Svg>;
 export const IconChevronRight = () => <Svg size={14}><polyline points="9 6 15 12 9 18" /></Svg>;
 export const IconArrowLeftRight = () => <Svg size={14}><path d="m8 3-4 4 4 4" /><path d="M4 7h16" /><path d="m16 21 4-4-4-4" /><path d="M20 17H4" /></Svg>;
 export const IconChevronLeft = () => <Svg size={14}><polyline points="15 6 9 12 15 18" /></Svg>;
 export const IconSend = () => <Svg size={16}><path d="m22 2-20 8 9 3 3 9z" /><path d="M22 2 11 13" /></Svg>;
-export const IconGlobe = () => <Svg><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15 15 0 0 1 0 20a15 15 0 0 1 0-20z" /></Svg>;
 export const IconTag = () => (
   <Svg>
     <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />

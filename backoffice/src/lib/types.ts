@@ -1,15 +1,6 @@
 // Formes renvoyées par les RPC admin_* (migration 212, dépôt wonjo).
 // Tenues à la main en synchro avec les RETURNS TABLE des fonctions SQL.
 
-export interface StatsActivite {
-  inscriptions_7j: number;
-  inscriptions_30j: number;
-  comptes_bloques: number;
-  kyc_en_attente: number;
-  litiges_ouverts: number;
-  signalements_nouveaux: number;
-}
-
 export interface StatsRevenusJour {
   jour: string;
   volume_total: number;
