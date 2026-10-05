@@ -2,3 +2,4 @@ backoffice/node_modules/
 backoffice/dist/
 backoffice/.env.local
 _site/
+supabase/.temp/linked-project.json

@@ -100,7 +100,7 @@ export function ProtectionValeurCard() {
     <div className="chart-card">
       <div className="chart-head">
         <div className="chart-head-titre">
-          <h3>Protection de la valeur déclarée</h3>
+          <h3>Garantie de la valeur déclarée</h3>
           {actuel && (
             <span className={`badge ${actuel.actif ? 'badge-green' : 'badge-muted'}`}>{actuel.actif ? 'Activée' : 'Éteinte'}</span>
           )}
@@ -127,7 +127,7 @@ export function ProtectionValeurCard() {
             {allume && (
               <p className="page-error">
                 Avant d'allumer : le cadre réglementaire de ce frais doit être validé, et les emails de paiement
-                relus (ils ne montrent pas encore la ligne de protection).
+                relus (ils ne montrent pas encore la ligne de garantie).
               </p>
             )}
             <textarea value={motif} onChange={(e) => setMotif(e.target.value)}
