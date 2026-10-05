@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { supabase } from '../lib/supabase';
 import { NomCorridor, NomZoneEnveloppe } from '../components/NomCorridor';
 import { PoidsColisCard } from '../components/PoidsColisCard';
+import { ProtectionValeurCard } from '../components/ProtectionValeurCard';
 
 interface PaysCorridor {
   code: string;
@@ -253,6 +254,7 @@ export function CorridorsSection() {
   return (
     <div className="corridors-section">
       <PoidsColisCard />
+      <ProtectionValeurCard />
 
       <div className="chart-card">
         <div className="chart-head">

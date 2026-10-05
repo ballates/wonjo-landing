@@ -58,6 +58,7 @@ export const LABELS_ACTIONS: Record<string, string> = {
   litige_rembourser: 'a tranché un litige : remboursement de l\'expéditeur',
   litige_verser_voyageur: 'a tranché un litige : paiement du voyageur',
   bornes_poids: 'a modifié les bornes de poids des colis',
+  protection_valeur: 'a modifié les frais de protection de la valeur déclarée',
   // [300] moderation
   consulter_conversation: 'a consulté une conversation',
   consulter_coordonnees: 'a consulté les coordonnées',
