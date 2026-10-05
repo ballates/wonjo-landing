@@ -3,72 +3,91 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../auth/AuthContext';
 import { peutGererAdmins } from '../lib/permissions';
 
-// [318] Frais de protection de la valeur déclarée (app_config, fn_bareme_protection).
+// [318-320] Frais de protection de la valeur déclarée (app_config, fn_bareme_protection).
 // Par tranches : rien jusqu'au seuil 1, taux 1 sur la part entre les deux seuils,
-// taux 2 au-delà du seuil 2 (plafond de la valeur déclarée : 250 €). Colis ET
-// documents (valeur déclarée de toute l'expédition). Figé sur chaque demande à sa
-// création ; livré ÉTEINT.
-// Modifiable par le super admin seul (admin_definir_protection), motif obligatoire,
-// inscrit au journal. L'app suit en temps réel.
-interface Bareme { actif: boolean; seuil1: number; seuil2: number; taux1: number; taux2: number }
+// taux 2 au-delà du seuil 2 (plafond de la valeur déclarée : 250 €). Deux barèmes
+// INDÉPENDANTS - colis et documents - pour pouvoir ajuster l'un sans toucher
+// l'autre ; un seul interrupteur (taux des documents à 0 % = documents exemptés).
+// Calculé sur la valeur déclarée de toute l'expédition et figé sur chaque demande
+// à sa création. Modifiable par le super admin seul (admin_definir_protection),
+// motif obligatoire, inscrit au journal. L'app suit en temps réel.
+interface Bareme { seuil1: number; seuil2: number; taux1: number; taux2: number }
+interface Saisie { seuil1: string; seuil2: string; taux1: string; taux2: string }
+type Type = 'colis' | 'document';
 
 const PLAFOND_VALEUR = 250;
+const TYPES: { type: Type; titre: string; sous: string }[] = [
+  { type: 'colis', titre: 'Colis', sous: 'Valeur déclarée du colis' },
+  { type: 'document', titre: 'Documents (enveloppes)', sous: 'Valeur déclarée de l\'ensemble des enveloppes' },
+];
 const eur = (n: number) => `${n.toFixed(2).replace('.', ',').replace(/,00$/, '')} €`;
+const pct = (n: number) => `${Math.round(n * 1000) / 10} %`;
 
 function frais(valeur: number, b: Bareme): number {
   if (valeur <= b.seuil1) return 0;
   return Math.round(((Math.min(valeur, b.seuil2) - b.seuil1) * b.taux1 + Math.max(valeur - b.seuil2, 0) * b.taux2) * 100) / 100;
 }
 
+const versSaisie = (b: Bareme): Saisie => ({
+  seuil1: String(b.seuil1), seuil2: String(b.seuil2),
+  taux1: String(Math.round(b.taux1 * 1000) / 10), taux2: String(Math.round(b.taux2 * 1000) / 10),
+});
+const nombre = (v: string) => Number(v.replace(',', '.'));
+const versBareme = (s: Saisie): Bareme => ({
+  seuil1: nombre(s.seuil1), seuil2: nombre(s.seuil2), taux1: nombre(s.taux1) / 100, taux2: nombre(s.taux2) / 100,
+});
+const valide = (b: Bareme) => [b.seuil1, b.seuil2, b.taux1, b.taux2].every(Number.isFinite)
+  && b.seuil1 >= 0 && b.seuil2 > b.seuil1 && b.seuil2 <= PLAFOND_VALEUR
+  && b.taux1 >= 0 && b.taux2 >= 0 && b.taux1 <= 0.15 && b.taux2 <= 0.15;
+const egal = (a: Bareme, b: Bareme) => a.seuil1 === b.seuil1 && a.seuil2 === b.seuil2
+  && Math.abs(a.taux1 - b.taux1) < 1e-9 && Math.abs(a.taux2 - b.taux2) < 1e-9;
+
 export function ProtectionValeurCard() {
   const { roles } = useAuth();
   const modifiable = peutGererAdmins(roles);
-  const [actuel, setActuel] = useState<Bareme | null>(null);
+  const [actuel, setActuel] = useState<{ actif: boolean; colis: Bareme; document: Bareme } | null>(null);
   const [actif, setActif] = useState(false);
-  const [seuil1, setSeuil1] = useState('');
-  const [seuil2, setSeuil2] = useState('');
-  const [taux1, setTaux1] = useState('');
-  const [taux2, setTaux2] = useState('');
+  const [saisie, setSaisie] = useState<Record<Type, Saisie> | null>(null);
   const [motif, setMotif] = useState('');
   const [busy, setBusy] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
   const [ok, setOk] = useState(false);
 
   function charger() {
-    supabase.rpc('fn_bareme_protection').single().then(({ data, error }) => {
-      if (error) { setErreur(error.message); return; }
-      const b = data as { actif: boolean; seuil_1: number; seuil_2: number; taux_1: number; taux_2: number };
-      const lu = { actif: b.actif, seuil1: Number(b.seuil_1), seuil2: Number(b.seuil_2), taux1: Number(b.taux_1), taux2: Number(b.taux_2) };
-      setActuel(lu);
-      setActif(lu.actif);
-      setSeuil1(String(lu.seuil1));
-      setSeuil2(String(lu.seuil2));
-      setTaux1(String(Math.round(lu.taux1 * 1000) / 10));
-      setTaux2(String(Math.round(lu.taux2 * 1000) / 10));
+    Promise.all([
+      supabase.rpc('fn_bareme_protection', { p_type: 'colis' }).single(),
+      supabase.rpc('fn_bareme_protection', { p_type: 'document' }).single(),
+    ]).then(([c, d]) => {
+      if (c.error || d.error) { setErreur((c.error ?? d.error)!.message); return; }
+      const lire = (r: unknown): Bareme => {
+        const b = r as { seuil_1: number; seuil_2: number; taux_1: number; taux_2: number };
+        return { seuil1: Number(b.seuil_1), seuil2: Number(b.seuil_2), taux1: Number(b.taux_1), taux2: Number(b.taux_2) };
+      };
+      const colis = lire(c.data);
+      const document = lire(d.data);
+      const allume = (c.data as { actif: boolean }).actif;
+      setActuel({ actif: allume, colis, document });
+      setActif(allume);
+      setSaisie({ colis: versSaisie(colis), document: versSaisie(document) });
     });
   }
   useEffect(charger, []);
 
-  const nombre = (v: string) => Number(v.replace(',', '.'));
-  const propose: Bareme = {
-    actif, seuil1: nombre(seuil1), seuil2: nombre(seuil2), taux1: nombre(taux1) / 100, taux2: nombre(taux2) / 100,
-  };
-  const valide = [propose.seuil1, propose.seuil2, propose.taux1, propose.taux2].every(Number.isFinite)
-    && propose.seuil1 >= 0 && propose.seuil2 > propose.seuil1 && propose.seuil2 <= PLAFOND_VALEUR
-    && propose.taux1 >= 0 && propose.taux2 >= 0 && propose.taux1 <= 0.15 && propose.taux2 <= 0.15;
-  const modifie = actuel !== null && (
-    propose.actif !== actuel.actif || propose.seuil1 !== actuel.seuil1 || propose.seuil2 !== actuel.seuil2
-    || Math.abs(propose.taux1 - actuel.taux1) > 1e-9 || Math.abs(propose.taux2 - actuel.taux2) > 1e-9);
-  const allume = modifie && actuel !== null && !actuel.actif && propose.actif;
+  const propose = saisie ? { colis: versBareme(saisie.colis), document: versBareme(saisie.document) } : null;
+  const tousValides = !!propose && valide(propose.colis) && valide(propose.document);
+  const modifie = !!actuel && !!propose && (
+    actif !== actuel.actif || !egal(propose.colis, actuel.colis) || !egal(propose.document, actuel.document));
+  const allume = modifie && !!actuel && !actuel.actif && actif;
   const desactive = !modifiable || busy;
 
   async function enregistrer() {
+    if (!propose) return;
     if (!motif.trim()) { setErreur('Le motif est obligatoire.'); return; }
+    const json = (b: Bareme) => ({ seuil_1: b.seuil1, seuil_2: b.seuil2, taux_1: b.taux1, taux_2: b.taux2 });
     setBusy(true);
     setErreur(null);
     const { error } = await supabase.rpc('admin_definir_protection', {
-      p_actif: propose.actif, p_seuil_1: propose.seuil1, p_seuil_2: propose.seuil2,
-      p_taux_1: propose.taux1, p_taux_2: propose.taux2, p_motif: motif.trim(),
+      p_actif: actif, p_colis: json(propose.colis), p_document: json(propose.document), p_motif: motif.trim(),
     });
     setBusy(false);
     if (error) { setErreur(error.message); return; }
@@ -93,49 +112,33 @@ export function ProtectionValeurCard() {
         </label>
       </div>
       <p className="chart-sub">
-        Frais ajouté au paiement d'une expédition (colis ou documents) dont la valeur déclarée dépasse le
-        premier seuil, par tranches (aucun saut de prix à la frontière). Calculé sur la valeur déclarée de
-        toute l'expédition et figé sur chaque demande à sa création. Éteint, aucun frais n'est calculé ni affiché.
+        Frais ajouté au paiement d'une expédition dont la valeur déclarée dépasse le premier seuil, par tranches
+        (aucun saut de prix à la frontière). Figé sur chaque demande à sa création. Éteint, aucun frais n'est
+        calculé ni affiché. Un taux à 0 % exempte le type concerné.
       </p>
       <div className="action-group motif-form">
-        <div className="poids-bornes">
-          <Champ label="Seuil 1" unite="€" aide="Aucun frais en dessous" value={seuil1} disabled={desactive}
-                 avant={modifie && actuel && propose.seuil1 !== actuel.seuil1 ? eur(actuel.seuil1) : undefined}
-                 onChange={(v) => { setSeuil1(v); setOk(false); }} />
-          <Champ label="Taux 1" unite="%" aide="Sur la part entre les deux seuils" value={taux1} disabled={desactive}
-                 avant={modifie && actuel && Math.abs(propose.taux1 - actuel.taux1) > 1e-9 ? `${Math.round(actuel.taux1 * 1000) / 10} %` : undefined}
-                 onChange={(v) => { setTaux1(v); setOk(false); }} />
-        </div>
-        <div className="poids-bornes">
-          <Champ label="Seuil 2" unite="€" aide={`Le taux change ici (plafond ${PLAFOND_VALEUR} €)`} value={seuil2} disabled={desactive}
-                 avant={modifie && actuel && propose.seuil2 !== actuel.seuil2 ? eur(actuel.seuil2) : undefined}
-                 onChange={(v) => { setSeuil2(v); setOk(false); }} />
-          <Champ label="Taux 2" unite="%" aide="Sur la part au-dessus du seuil 2" value={taux2} disabled={desactive}
-                 avant={modifie && actuel && Math.abs(propose.taux2 - actuel.taux2) > 1e-9 ? `${Math.round(actuel.taux2 * 1000) / 10} %` : undefined}
-                 onChange={(v) => { setTaux2(v); setOk(false); }} />
-        </div>
-        {valide && (
-          <p className="hint">
-            Exemples : {[40, 100, 150, 200, 250].map((v) => `${v} € → ${eur(frais(v, propose))}`).join(' · ')}
-          </p>
-        )}
+        {saisie && actuel && propose && TYPES.map(({ type, titre, sous }) => (
+          <BlocBareme key={type} titre={titre} sous={sous}
+                      saisie={saisie[type]} propose={propose[type]} actuel={actuel[type]} disabled={desactive}
+                      onChange={(s) => { setSaisie({ ...saisie, [type]: s }); setOk(false); }} />
+        ))}
         {modifiable && modifie && (
           <>
             {allume && (
               <p className="page-error">
-                Avant d'allumer : la fonction stripe-client doit être déployée (elle ajoute le frais au débit), et le
-                cadre réglementaire de ce frais validé. Sinon l'app afficherait un frais que Stripe ne débiterait pas.
+                Avant d'allumer : le cadre réglementaire de ce frais doit être validé, et les emails de paiement
+                relus (ils ne montrent pas encore la ligne de protection).
               </p>
             )}
             <textarea value={motif} onChange={(e) => setMotif(e.target.value)}
-                      placeholder="Motif (journal) - ex. activation après validation par l'avocat." />
-            {!valide && (
+                      placeholder="Motif (journal) - ex. taux des documents ramenés à 2 % suite au retour du juridique." />
+            {!tousValides && (
               <p className="page-error">Il faut 0 ≤ seuil 1 &lt; seuil 2 ≤ {PLAFOND_VALEUR} € et des taux entre 0 et 15 %.</p>
             )}
             <div className="action-row" style={{ justifyContent: 'flex-end' }}>
               <button type="button" className="btn btn-sm" disabled={busy}
                       onClick={() => { charger(); setErreur(null); }}>Annuler</button>
-              <button type="button" className="btn btn-sm btn-primary" disabled={busy || !valide || !motif.trim()} onClick={enregistrer}>
+              <button type="button" className="btn btn-sm btn-primary" disabled={busy || !tousValides || !motif.trim()} onClick={enregistrer}>
                 {busy ? '…' : 'Valider'}
               </button>
             </div>
@@ -145,6 +148,38 @@ export function ProtectionValeurCard() {
         {ok && <p className="hint">Enregistré : l'app applique le nouveau réglage.</p>}
         {erreur && <p className="page-error">{erreur}</p>}
       </div>
+    </div>
+  );
+}
+
+function BlocBareme({
+  titre, sous, saisie, propose, actuel, disabled, onChange,
+}: {
+  titre: string; sous: string; saisie: Saisie; propose: Bareme; actuel: Bareme; disabled: boolean; onChange: (s: Saisie) => void;
+}) {
+  const avant = (champ: keyof Bareme, formate: (n: number) => string) =>
+    Math.abs(propose[champ] - actuel[champ]) > 1e-9 ? formate(actuel[champ]) : undefined;
+  return (
+    <div className="protection-bloc">
+      <h4 style={{ margin: '4px 0 2px' }}>{titre}</h4>
+      <p className="hint" style={{ margin: '0 0 8px' }}>{sous}</p>
+      <div className="poids-bornes">
+        <Champ label="Seuil 1" unite="€" aide="Aucun frais en dessous" value={saisie.seuil1} disabled={disabled}
+               avant={avant('seuil1', eur)} onChange={(v) => onChange({ ...saisie, seuil1: v })} />
+        <Champ label="Taux 1" unite="%" aide="Sur la part entre les deux seuils" value={saisie.taux1} disabled={disabled}
+               avant={avant('taux1', pct)} onChange={(v) => onChange({ ...saisie, taux1: v })} />
+      </div>
+      <div className="poids-bornes">
+        <Champ label="Seuil 2" unite="€" aide={`Le taux change ici (plafond ${PLAFOND_VALEUR} €)`} value={saisie.seuil2} disabled={disabled}
+               avant={avant('seuil2', eur)} onChange={(v) => onChange({ ...saisie, seuil2: v })} />
+        <Champ label="Taux 2" unite="%" aide="Sur la part au-dessus du seuil 2" value={saisie.taux2} disabled={disabled}
+               avant={avant('taux2', pct)} onChange={(v) => onChange({ ...saisie, taux2: v })} />
+      </div>
+      {valide(propose) && (
+        <p className="hint">
+          Exemples : {[40, 100, 150, 200, 250].map((v) => `${v} € → ${eur(frais(v, propose))}`).join(' · ')}
+        </p>
+      )}
     </div>
   );
 }
