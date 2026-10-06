@@ -1,3 +1,4 @@
+import { decimales } from '../lib/nombre';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../auth/AuthContext';
@@ -20,7 +21,7 @@ const TYPES: { type: Type; titre: string; sous: string }[] = [
   { type: 'colis', titre: 'Colis', sous: 'Valeur déclarée du colis' },
   { type: 'document', titre: 'Documents (enveloppes)', sous: 'Valeur déclarée de l\'ensemble des enveloppes' },
 ];
-const eur = (n: number) => `${n.toFixed(2).replace('.', ',').replace(/,00$/, '')} €`;
+const eur = (n: number) => `${decimales(n, 2).replace(/,00$/, '')} €`;
 const pct = (n: number) => `${Math.round(n * 1000) / 10} %`;
 
 function frais(valeur: number, b: Bareme): number {

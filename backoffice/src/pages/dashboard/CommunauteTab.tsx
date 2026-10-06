@@ -1,3 +1,4 @@
+import { decimales } from '../../lib/nombre';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ResponsiveContainer, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, LabelList } from 'recharts';
@@ -110,7 +111,7 @@ export function CommunauteTab() {
         <Kpi index={2} label="Téléphone vérifié" value={pct(s.telephone_verifie, s.total)} format={pourcent} hint={`${s.telephone_verifie} membre(s)`} />
         <Kpi index={3} label="Non vérifiés" value={s.aucune_verification} hint={`${pct(s.aucune_verification, s.total)} % des membres`} />
         <Kpi index={4} label="Réputation élevée" value={pct((s.niveaux.ambassadeur ?? 0) + (s.niveaux.legende ?? 0), s.total)} format={pourcent} hint={`${(s.niveaux.ambassadeur ?? 0) + (s.niveaux.legende ?? 0)} ambassadeurs ou légendes`} />
-        <Kpi index={5} label="Note moyenne" value={Number(s.avis.note_moyenne ?? 0)} format={(n) => `${n.toFixed(1)} / 5`} hint={`${s.avis.nb} avis`} />
+        <Kpi index={5} label="Note moyenne" value={Number(s.avis.note_moyenne ?? 0)} format={(n) => `${decimales(n, 1)} / 5`} hint={`${s.avis.nb} avis`} />
       </div>
 
       <div className="chart-card">

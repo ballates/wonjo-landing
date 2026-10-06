@@ -1,3 +1,4 @@
+import { decimales } from '../lib/nombre';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { chargerFicheTransaction } from '../lib/ficheTransaction';
@@ -112,7 +113,7 @@ export function TransactionModal({ demandeId, onClose }: { demandeId: string; on
         <div className="stats-row stats-row--compact">
           <div className="stat"><strong>{LABELS_TYPE_ENVOI[f.type_envoi ?? ''] ?? f.type_envoi ?? '-'}</strong><span>Type d'envoi</span></div>
           <div className="stat"><strong>{f.poids_kg ?? '-'} kg</strong><span>Poids</span></div>
-          <div className="stat"><strong>{f.service_fee != null ? `${Number(f.service_fee).toFixed(2)} €` : '-'}</strong><span>Commission Wonjo</span></div>
+          <div className="stat"><strong>{f.service_fee != null ? `${decimales(Number(f.service_fee), 2)} €` : '-'}</strong><span>Commission Wonjo</span></div>
           <div className="stat"><strong>{f.code_genere ? 'Oui' : 'Non'}</strong><span>Code livraison</span></div>
         </div>
 

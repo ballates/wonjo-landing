@@ -1,3 +1,4 @@
+import { decimales } from '../lib/nombre';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { StatutBadge } from '../components/Badge';
@@ -82,7 +83,7 @@ export function TransactionsPage() {
     },
     {
       key: 'montant', label: 'Montant', sortKey: 'montant_total', filterKey: 'montant', filterRange: true,
-      render: (t) => `${Number(t.montant_total).toFixed(2)} €`,
+      render: (t) => `${decimales(Number(t.montant_total), 2)} €`,
     },
     {
       key: 'statut_colis', label: 'Statut', sortKey: 'statut_colis', filterKey: 'statutColis',

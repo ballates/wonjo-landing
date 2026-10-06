@@ -1,3 +1,4 @@
+import { decimales } from '../../lib/nombre';
 import { useEffect, useMemo, useState } from 'react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { supabase } from '../../lib/supabase';
@@ -81,7 +82,7 @@ export function MarcheTab() {
         <Kpi index={0} label="Demandes" value={s.demandes} hint="de transport" />
         <Kpi index={1} label="Taux de livraison" value={tauxLivraison} format={pourcent} hint={`${s.livrees} livrées`} />
         <Kpi index={2} label="Taux d'annulation" value={tauxAnnulation} format={pourcent} hint={`${s.annulees} annulées`} />
-        <Kpi index={3} label="Délai moyen" value={Number(s.delai_moyen_jours ?? 0)} format={(n) => `${n.toFixed(1)} j`} hint="création → livraison" />
+        <Kpi index={3} label="Délai moyen" value={Number(s.delai_moyen_jours ?? 0)} format={(n) => `${decimales(n, 1)} j`} hint="création → livraison" />
         <Kpi index={4} label="Capacité couverte" value={capaciteCouverte} format={pourcent} hint={manque > 0 ? `Il manque ${manque} kg de capacité` : 'La demande est couverte'} />
         {voitEuros && <Kpi index={5} label="Panier moyen" value={Number(s.panier_moyen ?? 0)} format={euros} />}
       </div>

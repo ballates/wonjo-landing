@@ -1,3 +1,4 @@
+import { decimales } from '../lib/nombre';
 import { useEffect, useState } from 'react';
 import { Select } from '../components/Select';
 import {
@@ -504,7 +505,7 @@ function FinanceTab() {
           </p>
           <div className="stat-list stat-list--nowrap">
             <div><strong>{euros(commissionBrute)}</strong><span>Commission brute</span></div>
-            <div><strong>{euros(montantTaxe)}</strong><span>Taxe estimée ({(tauxTaxe * 100).toFixed(1)} %)</span></div>
+            <div><strong>{euros(montantTaxe)}</strong><span>Taxe estimée ({decimales(tauxTaxe * 100, 1)} %)</span></div>
             <div><strong>{euros(commissionNette)}</strong><span>Net</span></div>
           </div>
           {roles.includes('super_admin') && (

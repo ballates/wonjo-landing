@@ -1,3 +1,4 @@
+import { decimales } from '../lib/nombre';
 import { useEffect, useState } from 'react';
 import { Select } from '../components/Select';
 import { supabase } from '../lib/supabase';
@@ -317,7 +318,7 @@ function LitigeResolutionModal({ litige, onClose, onDone }: { litige: Litige; on
   const avant = litige.statut_avant_litige ?? '';
   const voyageurPossible = COLIS_REMIS.includes(avant) && litige.statut_paiement === 'escrow';
   const restitution = COLIS_CHEZ_VOYAGEUR.includes(avant);
-  const montant = `${Number(litige.montant_total).toFixed(2)} €`;
+  const montant = `${decimales(Number(litige.montant_total), 2)} €`;
 
   async function confirmer() {
     const m = motif.trim();
@@ -390,7 +391,7 @@ function LitigesTab() {
 
   const columns: Column<Litige>[] = [
     { key: 'colis', label: 'Colis', value: (l) => l.description_colis },
-    { key: 'montant', label: 'Montant', value: (l) => Number(l.montant_total), render: (l) => `${Number(l.montant_total).toFixed(2)} €` },
+    { key: 'montant', label: 'Montant', value: (l) => Number(l.montant_total), render: (l) => `${decimales(Number(l.montant_total), 2)} €` },
     { key: 'paiement', filter: 'options', label: 'Statut paiement', value: (l) => LABELS_PAIEMENT[l.statut_paiement] ?? l.statut_paiement },
     { key: 'conteste', label: 'Contesté le', value: (l) => l.conteste_at, filter: 'date', render: (l) => (l.conteste_at ? dateHeure(l.conteste_at) : '-') },
     { key: 'resolutions', label: 'Résolutions en attente', value: (l) => l.resolutions_en_attente },
