@@ -112,16 +112,6 @@ export function Layout() {
                   exit={{ opacity: 0, y: 8, scale: 0.97 }}
                   transition={{ duration: 0.15, ease: 'easeOut' }}
                 >
-                  <div className="me-menu-head">
-                    <Avatar src={profil?.avatar_url} nom={nom} size={44} />
-                    <span className="me-menu-id">
-                      <b>{nom}</b>
-                      <span>{email}</span>
-                    </span>
-                  </div>
-                  <div className="me-menu-roles">
-                    {roles.map((r) => <span key={r} className="badge badge-teal">{LABELS_ROLES[r]}</span>)}
-                  </div>
                   <button className="me-menu-item" role="menuitem" onClick={() => { setMenuOuvert(false); setProfilOuvert(true); }}>
                     <span className="nav-icon"><IconUser /></span>
                     <span>
