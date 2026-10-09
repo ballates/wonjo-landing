@@ -7,7 +7,7 @@ import { MfaEnrollPage } from './auth/MfaEnrollPage';
 import { MfaChallengePage } from './auth/MfaChallengePage';
 import { Layout } from './components/Layout';
 import {
-  peutEnvoyerEmails, peutGererAdmins, peutGererCorridors, peutModerer, peutVoirKyc, peutVoirLitiges,
+  peutEnvoyerEmails, peutGererAdmins, peutGererCorridors, peutModerer, peutVoirKyc, peutVoirLitiges, peutVoirTransactions,
 } from './lib/permissions';
 
 // Pages chargees a la demande : les ecrans de connexion n'embarquent plus
@@ -65,7 +65,7 @@ function Gate() {
             <Route element={<Layout />}>
               <Route index element={<DashboardPage />} />
               <Route path="moderation" element={<Protege si={(r) => peutModerer(r) || peutVoirLitiges(r)}><ModerationPage /></Protege>} />
-              <Route path="transactions" element={<Protege si={peutModerer}><TransactionsPage /></Protege>} />
+              <Route path="transactions" element={<Protege si={peutVoirTransactions}><TransactionsPage /></Protege>} />
               <Route path="avis" element={<Protege si={peutModerer}><AvisPage /></Protege>} />
               <Route path="kyc" element={<Protege si={peutVoirKyc}><KycPage /></Protege>} />
               <Route path="admins" element={<Protege si={(r) => peutGererAdmins(r) || !!profil?.peut_inviter}><AdminsPage /></Protege>} />

@@ -4,6 +4,8 @@ import { supabase } from '../lib/supabase';
 import { NomCorridor, NomZoneEnveloppe } from '../components/NomCorridor';
 import { PoidsColisCard } from '../components/PoidsColisCard';
 import { ProtectionValeurCard } from '../components/ProtectionValeurCard';
+import { ProtectionRenforceeCard } from '../components/ProtectionRenforceeCard';
+import { EnveloppeFormatsCard } from '../components/EnveloppeFormatsCard';
 
 interface PaysCorridor {
   code: string;
@@ -255,6 +257,7 @@ export function CorridorsSection() {
     <div className="corridors-section">
       <PoidsColisCard />
       <ProtectionValeurCard />
+      <ProtectionRenforceeCard />
 
       <div className="chart-card">
         <div className="chart-head">
@@ -343,6 +346,8 @@ export function CorridorsSection() {
           ))}
         </div>
       </div>
+
+      <EnveloppeFormatsCard />
 
       <div className="chart-card">
         <div className="chart-head">

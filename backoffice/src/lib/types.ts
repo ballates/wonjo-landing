@@ -108,6 +108,16 @@ export interface TransactionBloquee {
   signale_role: 'expediteur' | 'porteur' | null;
 }
 
+// [345] Marge de Wonjo sur une transaction payee (reservee a la finance).
+export interface MargeTransaction {
+  id: string;
+  commission: number;
+  protection: number;
+  stripe: number;
+  stripe_reel: boolean;
+  marge_nette: number;
+}
+
 export interface TransactionListe {
   id: string;
   description_colis: string | null;

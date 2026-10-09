@@ -2,7 +2,7 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
-import { LABELS_ROLES, peutEnvoyerEmails, peutGererAdmins, peutGererCorridors, peutModerer, peutVoirKyc, peutVoirLitiges } from '../lib/permissions';
+import { LABELS_ROLES, peutEnvoyerEmails, peutGererAdmins, peutGererCorridors, peutModerer, peutVoirKyc, peutVoirLitiges, peutVoirTransactions } from '../lib/permissions';
 import { useTheme } from '../lib/theme';
 import { brandMark } from './Brand';
 import { Avatar } from './Avatar';
@@ -55,7 +55,7 @@ export function Layout() {
     { to: '/', label: 'Tableau de bord', icon: <IconDashboard />, visible: true, end: true },
     { to: '/moderation', label: 'Confiance', icon: <IconShield />, visible: peutModerer(roles) || peutVoirLitiges(roles) },
     { to: '/kyc', label: 'KYC', icon: <IconId />, visible: peutVoirKyc(roles) },
-    { to: '/transactions', label: 'Transactions', icon: <IconExchange />, visible: peutModerer(roles) },
+    { to: '/transactions', label: 'Transactions', icon: <IconExchange />, visible: peutVoirTransactions(roles) },
     { to: '/avis', label: 'Avis', icon: <IconStar />, visible: peutModerer(roles) },
     { to: '/tarification', label: 'Tarification', icon: <IconTag />, visible: peutGererAdmins(roles) || peutGererCorridors(roles) },
     { to: '/emails', label: 'Emails', icon: <IconWmail />, visible: peutEnvoyerEmails(roles) },

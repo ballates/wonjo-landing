@@ -8,8 +8,11 @@ import { ConversationTransaction } from './ConversationTransaction';
 import { Modal } from './Modal';
 import { IconClose } from './Icons';
 import { useFicheCompte } from './FicheCompte';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../auth/AuthContext';
+import { peutModerer, peutVoirRevenus } from '../lib/permissions';
 import { LABELS_TYPE_DOCUMENT, LABELS_TYPE_ENVOI, dateHeure, libellesEvenement, premierMot } from '../lib/labels';
-import type { EvenementTimeline, FicheTransaction, PhotoConstat } from '../lib/types';
+import type { EvenementTimeline, FicheTransaction, MargeTransaction, PhotoConstat } from '../lib/types';
 
 interface EvenementAffiche { cle: string; label: string; date: string; role: string | null; photo?: PhotoConstat }
 
@@ -52,6 +55,21 @@ export function TransactionModal({ demandeId, onClose }: { demandeId: string; on
   const [error, setError] = useState<string | null>(null);
   const [photoOuverte, setPhotoOuverte] = useState<PhotoConstat | null>(null);
   const { ouvrir, modal } = useFicheCompte();
+  const { roles } = useAuth();
+  const voitMarge = peutVoirRevenus(roles);
+  // [355] La finance lit la fiche sans la conversation, la fiche des comptes ni le numero complet.
+  const moderateur = peutModerer(roles);
+  // undefined : en cours ; null : pas de paiement, donc pas de marge.
+  const [marge, setMarge] = useState<MargeTransaction | null | undefined>(undefined);
+
+  useEffect(() => {
+    if (!voitMarge) return;
+    let actif = true;
+    supabase.rpc('admin_marges_transactions', { p_ids: [demandeId] }).then(({ data }) => {
+      if (actif) setMarge(((data ?? []) as MargeTransaction[])[0] ?? null);
+    });
+    return () => { actif = false; };
+  }, [demandeId, voitMarge]);
 
   useEffect(() => {
     // Preche au survol du bouton "Fiche" (lib/ficheTransaction) : souvent
@@ -91,19 +109,19 @@ export function TransactionModal({ demandeId, onClose }: { demandeId: string; on
           <div className="modal-hero-people">
             <div className="modal-hero-party">
               <span className="modal-hero-role">Expéditeur</span>
-              <button type="button" className="modal-hero-chip" onClick={() => ouvrir(f.expediteur_id)}>
+              <button type="button" className="modal-hero-chip" onClick={() => ouvrir(f.expediteur_id)} disabled={!moderateur}>
                 <Avatar src={f.expediteur_photo} nom={f.expediteur_nom ?? ''} size={28} /> {premierMot(prenomExpediteur)}
               </button>
               <span className="modal-hero-addr">RDV départ · {f.lieu_remise_reception ?? 'non renseigné'}</span>
-              <span className="modal-hero-addr"><NumeroTelephone userId={f.expediteur_id} numero={f.expediteur_telephone} /></span>
+              <span className="modal-hero-addr">{moderateur ? <NumeroTelephone userId={f.expediteur_id} numero={f.expediteur_telephone} /> : (f.expediteur_telephone ?? '-')}</span>
             </div>
             <div className="modal-hero-party modal-hero-party--dest">
               <span className="modal-hero-role">Voyageur</span>
-              <button type="button" className="modal-hero-chip" onClick={() => ouvrir(f.porteur_id)}>
+              <button type="button" className="modal-hero-chip" onClick={() => ouvrir(f.porteur_id)} disabled={!moderateur}>
                 <Avatar src={f.porteur_photo} nom={f.porteur_nom ?? ''} size={28} /> {premierMot(prenomPorteur)}
               </button>
               <span className="modal-hero-addr">RDV arrivée · {f.lieu_remise_livraison ?? 'non renseignée'}</span>
-              <span className="modal-hero-addr"><NumeroTelephone userId={f.porteur_id} numero={f.porteur_telephone} /></span>
+              <span className="modal-hero-addr">{moderateur ? <NumeroTelephone userId={f.porteur_id} numero={f.porteur_telephone} /> : (f.porteur_telephone ?? '-')}</span>
             </div>
           </div>
         </div>
@@ -116,6 +134,25 @@ export function TransactionModal({ demandeId, onClose }: { demandeId: string; on
           <div className="stat"><strong>{f.service_fee != null ? `${decimales(Number(f.service_fee), 2)} €` : '-'}</strong><span>Commission Wonjo</span></div>
           <div className="stat"><strong>{f.code_genere ? 'Oui' : 'Non'}</strong><span>Code livraison</span></div>
         </div>
+
+        {voitMarge && marge !== undefined && (
+          <div className="info-rows">
+            <div className="info-row">
+              <span className="info-row-label">Marge Wonjo</span>
+              <span className="info-row-value">
+                {marge === null ? 'Aucun paiement encaissé : pas de marge.' : (
+                  <>
+                    <strong>{decimales(Number(marge.marge_nette), 2)} €</strong>
+                    {f.statut_paiement === 'rembourse'
+                      ? ' - perte : remboursé, Stripe garde ses frais'
+                      : ` = commission ${decimales(Number(marge.commission), 2)} € + protection ${decimales(Number(marge.protection), 2)} € - frais Stripe ${decimales(Number(marge.stripe), 2)} €`}
+                    {' '}<span className="hint">({marge.stripe_reel ? 'frais réels' : 'frais estimés'})</span>
+                  </>
+                )}
+              </span>
+            </div>
+          </div>
+        )}
 
         <div className="info-rows">
           <div className="info-row">
@@ -170,7 +207,7 @@ export function TransactionModal({ demandeId, onClose }: { demandeId: string; on
           </ul>
         </div>
 
-        <ConversationTransaction demandeId={f.id} />
+        {moderateur && <ConversationTransaction demandeId={f.id} />}
 
         {/* [297] URL fournie a l'origine par le membre : jamais un lien si
             elle n'est pas en https (un "javascript:" s'executerait au clic,

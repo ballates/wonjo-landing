@@ -1,3 +1,5 @@
+import { MinimumsZonesCard } from '../components/MinimumsZonesCard';
+import { AnnulationFraisCard } from '../components/AnnulationFraisCard';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -400,6 +402,8 @@ export function CommissionsSection() {
           </div>
         </div>
       )}
+
+      {tab === 'reglages' && <div style={{ marginTop: 16, display: 'grid', gap: 16 }}><MinimumsZonesCard /><AnnulationFraisCard /></div>}
 
       {tab === 'regles' && (
         <>

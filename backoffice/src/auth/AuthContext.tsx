@@ -184,7 +184,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signOut() {
     try { localStorage.removeItem(CLE_ACTIVITE); } catch { /* stockage indisponible */ }
-    await supabase.auth.signOut();
+    // 'local' : sans cela signOut() est GLOBAL et revoque toutes les sessions du compte,
+    // y compris celle de l'application sur le telephone.
+    await supabase.auth.signOut({ scope: 'local' });
     setStatus('signed_out');
     setRoles([]);
   }

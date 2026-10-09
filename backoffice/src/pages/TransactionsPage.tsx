@@ -8,7 +8,9 @@ import { TransactionModal } from '../components/TransactionModal';
 import { prechargementFiche } from '../lib/ficheTransaction';
 import { LABELS_PAIEMENT, LABELS_STATUT_COLIS, LABELS_TYPE_ENVOI, casserPrenom, clePaiementAffichee, dateHeure, premierMot } from '../lib/labels';
 import { useDebounce } from '../lib/useDebounce';
-import type { TransactionListe } from '../lib/types';
+import { useAuth } from '../auth/AuthContext';
+import { peutVoirRevenus } from '../lib/permissions';
+import type { MargeTransaction, TransactionListe } from '../lib/types';
 
 const PAGE_SIZE = 10;
 
@@ -28,6 +30,9 @@ const FILTRES: { cle: FiltreRapide; label: string; statuts: string[] }[] = [
 const OPTIONS_CODE_GENERE = [{ value: 'oui', label: 'Généré' }, { value: 'non', label: 'Non généré' }];
 
 export function TransactionsPage() {
+  const { roles } = useAuth();
+  const voitMarge = peutVoirRevenus(roles);
+  const [marges, setMarges] = useState<Record<string, MargeTransaction>>({});
   const [recherche, setRecherche] = useState('');
   const rechercheDebattue = useDebounce(recherche);
   const [statutColis, setStatutColis] = useState<string[]>([]);
@@ -64,6 +69,13 @@ export function TransactionsPage() {
       const lignes = (data ?? []) as (TransactionListe & { total_count?: number })[];
       setItems(lignes);
       setTotal(lignes[0]?.total_count ?? 0);
+      if (voitMarge && lignes.length > 0) {
+        supabase.rpc('admin_marges_transactions', { p_ids: lignes.map((l) => l.id) }).then(({ data: m }) => {
+          const index: Record<string, MargeTransaction> = {};
+          for (const l of (m ?? []) as MargeTransaction[]) index[l.id] = l;
+          setMarges(index);
+        });
+      }
     });
   }
   useEffect(load, [rechercheDebattue, statutColis, statutPaiement, typeEnvoi, codeGenere, montant, tri, page]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -85,6 +97,15 @@ export function TransactionsPage() {
       key: 'montant', label: 'Montant', sortKey: 'montant_total', filterKey: 'montant', filterRange: true,
       render: (t) => `${decimales(Number(t.montant_total), 2)} €`,
     },
+    ...(voitMarge ? [{
+      key: 'marge', label: 'Marge nette',
+      render: (t: TransactionListe) => {
+        const m = marges[t.id];
+        if (!m) return <span className="hint">-</span>;
+        const titre = `Commission ${decimales(Number(m.commission), 2)} € + protection ${decimales(Number(m.protection), 2)} € - frais Stripe ${decimales(Number(m.stripe), 2)} € (${m.stripe_reel ? 'montant réel' : 'estimé'})`;
+        return <span title={titre}>{m.stripe_reel ? '' : '~ '}{decimales(Number(m.marge_nette), 2)} €</span>;
+      },
+    } as ServerColumn<TransactionListe>] : []),
     {
       key: 'statut_colis', label: 'Statut', sortKey: 'statut_colis', filterKey: 'statutColis',
       filterOptions: Object.entries(LABELS_STATUT_COLIS).map(([value, label]) => ({ value, label })),

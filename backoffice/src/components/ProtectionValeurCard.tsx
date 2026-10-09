@@ -2,6 +2,7 @@ import { decimales } from '../lib/nombre';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../auth/AuthContext';
+import { signalerReglagesChange } from './ReglagesEnAttente';
 import { peutGererAdmins } from '../lib/permissions';
 
 // [318-320] Frais de protection de la valeur déclarée (app_config, fn_bareme_protection).
@@ -52,7 +53,7 @@ export function ProtectionValeurCard() {
   const [motif, setMotif] = useState('');
   const [busy, setBusy] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
-  const [ok, setOk] = useState(false);
+  const [ok, setOk] = useState<string | null>(null);
 
   function charger() {
     Promise.all([
@@ -87,48 +88,51 @@ export function ProtectionValeurCard() {
     const json = (b: Bareme) => ({ seuil_1: b.seuil1, seuil_2: b.seuil2, taux_1: b.taux1, taux_2: b.taux2 });
     setBusy(true);
     setErreur(null);
-    const { error } = await supabase.rpc('admin_definir_protection', {
+    const { data, error } = await supabase.rpc('admin_definir_protection', {
       p_actif: actif, p_colis: json(propose.colis), p_document: json(propose.document), p_motif: motif.trim(),
     });
     setBusy(false);
     if (error) { setErreur(error.message); return; }
     setMotif('');
-    setOk(true);
+    setOk(data === 'en_attente'
+      ? 'Demande enregistrée : un autre super admin doit la valider (encart « Changements de tarif à valider », en haut de la page Tarification). Le réglage actuel reste en vigueur.'
+      : 'Enregistré : l\'app applique le nouveau réglage.');
     charger();
+    signalerReglagesChange();
   }
 
   return (
     <div className="chart-card">
       <div className="chart-head">
         <div className="chart-head-titre">
-          <h3>Garantie de la valeur déclarée</h3>
+          <h3>Frais liés à la valeur déclarée</h3>
           {actuel && (
             <span className={`badge ${actuel.actif ? 'badge-green' : 'badge-muted'}`}>{actuel.actif ? 'Activée' : 'Éteinte'}</span>
           )}
         </div>
         <label className={`corridor-toggle ${actif ? 'is-on' : ''}`} title={actif ? 'Éteindre' : 'Allumer'}>
           <input type="checkbox" checked={actif} disabled={desactive}
-                 onChange={() => { setActif((v) => !v); setOk(false); }} />
+                 onChange={() => { setActif((v) => !v); setOk(null); }} />
           <span className="corridor-toggle-switch" />
         </label>
       </div>
       <p className="chart-sub">
-        Frais ajouté au paiement d'une expédition dont la valeur déclarée dépasse le premier seuil, par tranches
-        (aucun saut de prix à la frontière). Figé sur chaque demande à sa création. Éteint, aucun frais n'est
-        calculé ni affiché. Un taux à 0 % exempte le type concerné.
+        Frais ajoutés au paiement d'une expédition dont la valeur déclarée dépasse le premier seuil, par tranches
+        (aucun saut de prix à la frontière). Figés sur chaque demande à sa création. Éteints, aucun frais n'est
+        calculé ni affiché. Un taux à 0 % exempte le type concerné. Ce n'est pas une assurance : en cas de perte,
+        l'expéditeur est remboursé de ce qu'il a payé, frais compris, jamais de la valeur déclarée (CGU, article 7).
       </p>
       <div className="action-group motif-form">
         {saisie && actuel && propose && TYPES.map(({ type, titre, sous }) => (
           <BlocBareme key={type} titre={titre} sous={sous}
                       saisie={saisie[type]} propose={propose[type]} actuel={actuel[type]} disabled={desactive}
-                      onChange={(s) => { setSaisie({ ...saisie, [type]: s }); setOk(false); }} />
+                      onChange={(s) => { setSaisie({ ...saisie, [type]: s }); setOk(null); }} />
         ))}
         {modifiable && modifie && (
           <>
             {allume && (
               <p className="page-error">
-                Avant d'allumer : le cadre réglementaire de ce frais doit être validé, et les emails de paiement
-                relus (ils ne montrent pas encore la ligne de garantie).
+                Avant d'allumer : les emails de paiement doivent être relus (ils ne montrent pas encore cette ligne de frais).
               </p>
             )}
             <textarea value={motif} onChange={(e) => setMotif(e.target.value)}
@@ -146,7 +150,7 @@ export function ProtectionValeurCard() {
           </>
         )}
         {!modifiable && <p className="hint">Modifiable par un super admin.</p>}
-        {ok && <p className="hint">Enregistré : l'app applique le nouveau réglage.</p>}
+        {ok && <p className="hint">{ok}</p>}
         {erreur && <p className="page-error">{erreur}</p>}
       </div>
     </div>
@@ -185,7 +189,7 @@ function BlocBareme({
   );
 }
 
-function Champ({
+export function Champ({
   label, unite, aide, value, avant, disabled, onChange,
 }: {
   label: string; unite: string; aide: string; value: string; avant?: string; disabled: boolean; onChange: (v: string) => void;

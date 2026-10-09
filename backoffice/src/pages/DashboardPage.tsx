@@ -342,16 +342,47 @@ const ETAPES_PAIEMENT: { statut: string; label: string; sens: string; couleur: s
   { statut: 'libere', label: 'Libéré', sens: 'Colis livré, voyageur payé : transaction terminée.', couleur: 'var(--series-1)', commissionAcquise: true },
   { statut: 'escrow', label: 'En séquestre', sens: 'Payé par l\'expéditeur, retenu par Wonjo jusqu\'à la livraison.', couleur: 'var(--series-2)', commissionAcquise: true },
   { statut: 'en_attente', label: 'En attente de paiement', sens: 'Demande créée, l\'expéditeur n\'a pas encore payé.', couleur: 'var(--series-3)', commissionAcquise: false },
-  { statut: 'rembourse', label: 'Remboursé', sens: 'Argent rendu à l\'expéditeur, aucune commission gagnée.', couleur: 'var(--series-4)', commissionAcquise: false },
+  { statut: 'rembourse', label: 'Remboursé', sens: 'Argent rendu à l\'expéditeur, aucune commission gagnée (les frais Stripe, eux, sont perdus).', couleur: 'var(--series-4)', commissionAcquise: false },
 ];
 
 const COULEURS_TYPE_ENVOI: Record<string, string> = { colis: 'var(--teal)', document: 'var(--brown)', inconnu: 'var(--muted)' };
 
+// [344] Marge nette : commission + protection - frais Stripe (reels, sinon estimes).
+interface StatsMarge {
+  commission_acquise: number; commission_a_venir: number;
+  protection_acquise: number; protection_a_venir: number;
+  renforcee_acquise: number; renforcee_a_venir: number;
+  stripe_acquis: number; stripe_a_venir: number; stripe_perdu: number;
+  nb_reel: number; nb_estime: number; nb_livrees: number;
+  marge_nette_acquise: number; marge_nette_a_venir: number;
+  estimation_fixe: number; estimation_pct: number; frais_confirmes: boolean;
+}
+
+// [345] Les memes series que la commission brute, avec la marge nette a cote.
+interface RevenuJourMarge extends StatsRevenusJour { marge_nette: number }
+interface RepartitionTypeMarge extends RepartitionCommissionTypeEnvoi { marge_nette: number }
+interface RepartitionEtapeMarge { statut_paiement: string; nb: number; commission: number; marge_nette: number }
+type ModeFinance = 'nette' | 'brute';
+const CLE_MODE_FINANCE = 'bo.finance.mode';
+
+function modeFinanceMemorise(): ModeFinance {
+  try { return localStorage.getItem(CLE_MODE_FINANCE) === 'brute' ? 'brute' : 'nette'; } catch { return 'nette'; }
+}
+
 function FinanceTab() {
   const { roles } = useAuth();
-  const [revenus, setRevenus] = useState<StatsRevenusJour[]>([]);
+  const [marge, setMarge] = useState<StatsMarge | null>(null);
+  const [marge30, setMarge30] = useState<StatsMarge | null>(null);
+  const [revenus, setRevenus] = useState<RevenuJourMarge[]>([]);
   const [repartition, setRepartition] = useState<RepartitionTransaction[] | null>(null);
-  const [repartitionType, setRepartitionType] = useState<RepartitionCommissionTypeEnvoi[]>([]);
+  const [margesEtapes, setMargesEtapes] = useState<RepartitionEtapeMarge[]>([]);
+  const [repartitionType, setRepartitionType] = useState<RepartitionTypeMarge[]>([]);
+  const [mode, setMode] = useState<ModeFinance>(modeFinanceMemorise);
+  const [fraisFixeSaisi, setFraisFixeSaisi] = useState('');
+  const [fraisPctSaisi, setFraisPctSaisi] = useState('');
+  const [fraisConfirmes, setFraisConfirmes] = useState(false);
+  const [busyFrais, setBusyFrais] = useState(false);
+  const [erreurFrais, setErreurFrais] = useState<string | null>(null);
   const [annulations, setAnnulations] = useState<RepartitionAnnulations | null>(null);
   const [topAnnulateurs, setTopAnnulateurs] = useState<TopAnnulateur[]>([]);
   const [tauxTaxe, setTauxTaxe] = useState(0);
@@ -369,18 +400,56 @@ function FinanceTab() {
     });
   }
 
-  useEffect(() => {
-    supabase.rpc('admin_stats_revenus', { p_jours: 30 }).then(({ data, error: rpcError }) => {
+  function chargerMarges() {
+    supabase.rpc('admin_stats_revenus_marge', { p_jours: 30 }).then(({ data, error: rpcError }) => {
       if (rpcError) { setError(rpcError.message); return; }
-      setRevenus((data ?? []) as StatsRevenusJour[]);
+      setRevenus((data ?? []) as RevenuJourMarge[]);
     });
+    supabase.rpc('admin_stats_marge', { p_jours: null }).then(({ data, error: rpcError }) => {
+      if (rpcError) { setError(rpcError.message); return; }
+      const m = data as StatsMarge;
+      setMarge(m);
+      setFraisFixeSaisi(String(m.estimation_fixe));
+      setFraisPctSaisi(String(Math.round(m.estimation_pct * 100000) / 1000));
+      setFraisConfirmes(m.frais_confirmes);
+    });
+    supabase.rpc('admin_stats_marge', { p_jours: 30 }).then(({ data, error: rpcError }) => {
+      if (rpcError) { setError(rpcError.message); return; }
+      setMarge30(data as StatsMarge);
+    });
+    supabase.rpc('admin_repartition_marge').then(({ data, error: rpcError }) => {
+      if (rpcError) { setError(rpcError.message); return; }
+      setMargesEtapes((data ?? []) as RepartitionEtapeMarge[]);
+    });
+    supabase.rpc('admin_repartition_marge_type_envoi').then(({ data, error: rpcError }) => {
+      if (rpcError) { setError(rpcError.message); return; }
+      setRepartitionType((data ?? []) as RepartitionTypeMarge[]);
+    });
+  }
+
+  function choisirMode(m: ModeFinance) {
+    setMode(m);
+    try { localStorage.setItem(CLE_MODE_FINANCE, m); } catch { /* preference de confort seulement */ }
+  }
+
+  async function enregistrerFraisStripe() {
+    const fixe = Number(fraisFixeSaisi.replace(',', '.'));
+    const pct = Number(fraisPctSaisi.replace(',', '.'));
+    if (!Number.isFinite(fixe) || fixe < 0 || fixe > 2) { setErreurFrais('La part fixe doit être comprise entre 0 et 2 €.'); return; }
+    if (!Number.isFinite(pct) || pct < 0 || pct > 10) { setErreurFrais('Le pourcentage doit être compris entre 0 et 10 %.'); return; }
+    setBusyFrais(true);
+    setErreurFrais(null);
+    const { error: rpcError } = await supabase.rpc('admin_definir_frais_stripe', { p_fixe: fixe, p_pct: pct / 100, p_confirme: fraisConfirmes });
+    setBusyFrais(false);
+    if (rpcError) { setErreurFrais(rpcError.message); return; }
+    chargerMarges();
+  }
+
+  useEffect(() => {
+    chargerMarges();
     supabase.rpc('admin_repartition_transactions').then(({ data, error: rpcError }) => {
       if (rpcError) { setError(rpcError.message); return; }
       setRepartition((data ?? []) as RepartitionTransaction[]);
-    });
-    supabase.rpc('admin_repartition_commission_type_envoi').then(({ data, error: rpcError }) => {
-      if (rpcError) { setError(rpcError.message); return; }
-      setRepartitionType((data ?? []) as RepartitionCommissionTypeEnvoi[]);
     });
     supabase.rpc('admin_repartition_annulations').single().then(({ data, error: rpcError }) => {
       if (rpcError) { setError(rpcError.message); return; }
@@ -412,6 +481,9 @@ function FinanceTab() {
   const commissionEncaissee = val('libere', 'commission');
   const commissionAVenir = val('escrow', 'commission');
   const commission30j = revenus.reduce((s, r) => s + Number(r.commission), 0);
+  const net = mode === 'nette';
+  const margeEtape = (statut: string) => Number(margesEtapes.find((r) => r.statut_paiement === statut)?.marge_nette ?? 0);
+  const typesPositifs = repartitionType.map((r) => ({ ...r, valeur: Math.max(0, Number(net ? r.marge_nette : r.commission)) }));
   const totalTransactions = repartition.reduce((s, r) => s + Number(r.nb), 0);
   const payees = val('libere', 'nb') + val('escrow', 'nb');
   const totalMontant = repartition.reduce((s, r) => s + Number(r.montant), 0);
@@ -419,17 +491,105 @@ function FinanceTab() {
   const commissionBrute = commissionEncaissee + commissionAVenir;
   const montantTaxe = commissionBrute * tauxTaxe;
   const commissionNette = commissionBrute - montantTaxe;
-  const totalCommissionType = repartitionType.reduce((s, r) => s + Number(r.commission), 0);
+  const totalCommissionType = typesPositifs.reduce((s, r) => s + r.valeur, 0);
+  const serieJours = [...revenus].reverse().map((r) => ({
+    jour: r.jour, valeur: Number(net ? r.marge_nette : r.commission),
+  }));
 
   return (
     <section className="viz-root">
+      <div className="chart-head">
+        <p className="hint" style={{ margin: 0 }}>
+          {net
+            ? 'Chiffres en marge nette : la commission plus les frais de protection, moins les frais Stripe.'
+            : 'Chiffres en commission brute : avant les frais Stripe.'}
+        </p>
+        <div className="action-row" role="group" aria-label="Base de calcul des chiffres">
+          <button type="button" className={`chip-filter ${net ? 'on' : ''}`} aria-pressed={net} onClick={() => choisirMode('nette')}>Marge nette</button>
+          <button type="button" className={`chip-filter ${!net ? 'on' : ''}`} aria-pressed={!net} onClick={() => choisirMode('brute')}>Commission brute</button>
+        </div>
+      </div>
+
       <div className="cards">
-        <Kpi index={0} label="Commission encaissée" value={commissionEncaissee} format={euros} hint="Gagnée sur les transports terminés" />
-        <Kpi index={1} label="Commission à venir" value={commissionAVenir} format={euros} hint="Encaissée à la livraison" />
-        <Kpi index={2} label="Commission (30 jours)" value={commission30j} format={euros} hint="Transports terminés ce mois-ci" />
+        <Kpi index={0} label={net ? 'Marge nette encaissée' : 'Commission encaissée'}
+          value={net ? (marge?.marge_nette_acquise ?? 0) : commissionEncaissee} format={euros}
+          hint={net ? 'Transports terminés, remboursements déduits' : 'Gagnée sur les transports terminés'} />
+        <Kpi index={1} label={net ? 'Marge nette à venir' : 'Commission à venir'}
+          value={net ? (marge?.marge_nette_a_venir ?? 0) : commissionAVenir} format={euros}
+          hint={net ? 'Payé, retenu en séquestre' : 'Encaissée à la livraison'} />
+        <Kpi index={2} label={net ? 'Marge nette (30 jours)' : 'Commission (30 jours)'}
+          value={net ? (marge30?.marge_nette_acquise ?? 0) : commission30j} format={euros} hint="Transports terminés ce mois-ci" />
         <Kpi index={3} label="Transactions payées" value={payees} hint={`sur ${totalTransactions} demandes`} />
         <Kpi index={4} label="Remboursements" value={val('rembourse', 'montant')} format={euros} hint={`${val('rembourse', 'nb')} transaction(s)`} />
       </div>
+
+      {marge && (
+        <div className="chart-card">
+          <h3>Marge nette : ce que Wonjo garde vraiment</h3>
+          <p className="chart-sub">
+            La commission brute ne tient pas compte des frais de paiement. Stripe prélève des frais sur chaque paiement et ne les
+            rend pas sur un remboursement : sur un petit envoi, la commission peut être entièrement mangée.
+          </p>
+          <div className="cards">
+            <Kpi index={0} label="Marge nette acquise" value={marge.marge_nette_acquise} format={euros} hint="Transports terminés, tout l'historique" />
+            <Kpi index={1} label="Marge nette (30 jours)" value={marge30?.marge_nette_acquise ?? 0} format={euros} hint={`${marge30?.nb_livrees ?? 0} transport(s) terminé(s)`} />
+            <Kpi index={2} label="Marge nette à venir" value={marge.marge_nette_a_venir} format={euros} hint="Payé, en séquestre" />
+            <Kpi index={3} label="Marge par transport" value={marge.nb_livrees > 0 ? marge.marge_nette_acquise / marge.nb_livrees : 0} format={euros} hint="Moyenne, transports terminés" />
+          </div>
+          <div className="dt-wrap" style={{ marginTop: 14 }}>
+            <table>
+              <thead><tr><th>Poste</th><th>Acquis</th><th>À venir</th></tr></thead>
+              <tbody>
+                <tr><td>Commission</td><td>{euros(marge.commission_acquise)}</td><td>{euros(marge.commission_a_venir)}</td></tr>
+                <tr><td>Frais liés à la valeur déclarée (dont protection renforcée ci-dessous)</td><td>{euros(marge.protection_acquise)}</td><td>{euros(marge.protection_a_venir)}</td></tr>
+                <tr><td>Frais de paiement Stripe</td><td>− {euros(marge.stripe_acquis)}</td><td>− {euros(marge.stripe_a_venir)}</td></tr>
+                <tr><td>Frais Stripe perdus sur les remboursements</td><td>− {euros(marge.stripe_perdu)}</td><td className="hint">-</td></tr>
+                <tr><td><strong>Marge nette</strong></td><td><strong>{euros(marge.marge_nette_acquise)}</strong></td><td><strong>{euros(marge.marge_nette_a_venir)}</strong></td></tr>
+                <tr>
+                  <td className="hint">dont protection renforcée encaissée : à garder en réserve pour indemniser les casses</td>
+                  <td className="hint">{euros(marge.renforcee_acquise)}</td><td className="hint">{euros(marge.renforcee_a_venir)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p className="hint" style={{ marginTop: 10 }}>
+            Frais Stripe : {marge.nb_reel} paiement(s) avec le montant réel, {marge.nb_estime} {marge.frais_confirmes ? 'calculé(s) au taux de votre contrat' : 'estimé(s)'}
+            ({decimales(marge.estimation_fixe, 2)} € + {decimales(marge.estimation_pct * 100, 2)} % du montant débité).
+            {marge.nb_estime > 0 ? ' Le montant réel remplace ce calcul dès qu\'il est relevé.' : ''} Hors frais de virement vers les voyageurs et hors taxe.
+          </p>
+          {roles.includes('super_admin') && (
+            <div className="info-card" style={{ marginTop: 14 }}>
+              <p className="section-title">Frais Stripe appliqués quand le montant réel n'est pas connu</p>
+              <p className="hint" style={{ marginTop: 0 }}>
+                Par défaut une estimation prudente (0,25 € + 3,2 %). Quand vous connaîtrez les frais exacts de votre contrat Stripe, saisissez-les ici :
+                toute la marge nette est recalculée, les paiements dont le montant réel est déjà relevé ne changent pas.
+              </p>
+              <div className="inline-form inline-form--frais">
+                <label className="champ-frais">
+                  <span>Part fixe</span>
+                  <div className="suffix-input">
+                    <input type="text" inputMode="decimal" value={fraisFixeSaisi} onChange={(e) => setFraisFixeSaisi(e.target.value)} />
+                    <span>€</span>
+                  </div>
+                </label>
+                <label className="champ-frais">
+                  <span>Pourcentage du montant débité</span>
+                  <div className="suffix-input">
+                    <input type="text" inputMode="decimal" value={fraisPctSaisi} onChange={(e) => setFraisPctSaisi(e.target.value)} />
+                    <span>%</span>
+                  </div>
+                </label>
+                <label className="check-inline">
+                  <input type="checkbox" checked={fraisConfirmes} onChange={(e) => setFraisConfirmes(e.target.checked)} />
+                  Ce sont les frais de mon contrat
+                </label>
+                <button className="btn btn-primary" disabled={busyFrais} onClick={enregistrerFraisStripe}>Enregistrer</button>
+              </div>
+              {erreurFrais && <p className="page-error" style={{ marginTop: 8 }}>{erreurFrais}</p>}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="chart-card">
         <h3>Annulations après acceptation</h3>
@@ -469,14 +629,14 @@ function FinanceTab() {
 
       <div className="grid-2">
         <div className="chart-card">
-          <h3>D'où vient la commission</h3>
-          <p className="chart-sub">Répartition de la commission acquise ou engagée, par type d'envoi. Colis et Enveloppe sont les deux seuls types possibles.</p>
+          <h3>{net ? 'D\'où vient la marge nette' : 'D\'où vient la commission'}</h3>
+          <p className="chart-sub">Répartition {net ? 'de la marge nette' : 'de la commission'} acquise ou engagée, par type d'envoi. Colis et Enveloppe sont les deux seuls types possibles.</p>
           {totalCommissionType > 0 ? (
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
                 <Pie
-                  data={repartitionType}
-                  dataKey="commission"
+                  data={typesPositifs}
+                  dataKey="valeur"
                   nameKey="type_envoi"
                   cx="38%"
                   outerRadius={90}
@@ -484,7 +644,7 @@ function FinanceTab() {
                   label={({ percent }) => `${Math.round((percent ?? 0) * 100)} %`}
                   labelLine={false}
                 >
-                  {repartitionType.map((r) => (
+                  {typesPositifs.map((r) => (
                     <Cell key={r.type_envoi} fill={COULEURS_TYPE_ENVOI[r.type_envoi] ?? 'var(--muted)'} />
                   ))}
                 </Pie>
@@ -492,9 +652,9 @@ function FinanceTab() {
                 <Tooltip content={<VizTooltip />} formatter={(v, n) => [euros(Number(v)), LABELS_TYPE_ENVOI[String(n)] ?? String(n)]} />
               </PieChart>
             </ResponsiveContainer>
-          ) : <p className="hint">Pas encore de commission acquise à répartir.</p>}
+          ) : <p className="hint">{net ? 'Pas encore de marge nette à répartir.' : 'Pas encore de commission acquise à répartir.'}</p>}
           <p className="insight">
-            {repartitionType.map((r) => `${LABELS_TYPE_ENVOI[r.type_envoi] ?? r.type_envoi} : ${euros(Number(r.commission))} (${totalCommissionType ? Math.round((Number(r.commission) / totalCommissionType) * 100) : 0} %)`).join(' · ')}
+            {typesPositifs.map((r) => `${LABELS_TYPE_ENVOI[r.type_envoi] ?? r.type_envoi} : ${euros(Number(net ? r.marge_nette : r.commission))} (${totalCommissionType ? Math.round((r.valeur / totalCommissionType) * 100) : 0} %)`).join(' · ')}
           </p>
         </div>
 
@@ -504,9 +664,9 @@ function FinanceTab() {
             La société n'étant pas encore créée, le taux réel n'est pas connu : le taux ci-dessous reste à 0 % tant qu'il n'est pas renseigné, et ne change rien aux montants affichés ailleurs.
           </p>
           <div className="stat-list stat-list--nowrap">
-            <div><strong>{euros(commissionBrute)}</strong><span>Commission brute</span></div>
+            <div><strong>{euros(commissionBrute)}</strong><span>Commission brute (avant frais Stripe)</span></div>
             <div><strong>{euros(montantTaxe)}</strong><span>Taxe estimée ({decimales(tauxTaxe * 100, 1)} %)</span></div>
-            <div><strong>{euros(commissionNette)}</strong><span>Net</span></div>
+            <div><strong>{euros(commissionNette)}</strong><span>Net de taxe</span></div>
           </div>
           {roles.includes('super_admin') && (
             <div className="inline-form" style={{ marginTop: 14 }}>
@@ -536,7 +696,7 @@ function FinanceTab() {
         <div className="dt-wrap" style={{ marginTop: 14 }}>
           <table>
             <thead>
-              <tr><th>Étape</th><th>Ce que ça veut dire</th><th>Transactions</th><th>Montant du transport</th><th>Commission Wonjo</th></tr>
+              <tr><th>Étape</th><th>Ce que ça veut dire</th><th>Transactions</th><th>Montant du transport</th><th>Commission brute</th><th>Marge nette</th></tr>
             </thead>
             <tbody>
               {ETAPES_PAIEMENT.map((e) => (
@@ -550,11 +710,14 @@ function FinanceTab() {
                       : e.commissionAcquise ? <strong>{euros(val(e.statut, 'commission'))}</strong>
                         : <span className="hint">{euros(val(e.statut, 'commission'))} si payé</span>}
                   </td>
+                  <td>
+                    {e.statut === 'en_attente' ? <span className="hint">-</span> : <strong>{euros(margeEtape(e.statut))}</strong>}
+                  </td>
                 </tr>
               ))}
               {autres.map((r) => (
                 <tr key={r.statut_paiement}>
-                  <td>{r.statut_paiement}</td><td className="hint">-</td><td>{r.nb}</td><td>{euros(Number(r.montant))}</td><td>{euros(Number(r.commission))}</td>
+                  <td>{r.statut_paiement}</td><td className="hint">-</td><td>{r.nb}</td><td>{euros(Number(r.montant))}</td><td>{euros(Number(r.commission))}</td><td className="hint">-</td>
                 </tr>
               ))}
             </tbody>
@@ -564,7 +727,21 @@ function FinanceTab() {
 
       <div className="chart-card">
         <h3>Transports terminés, jour par jour (30 derniers jours)</h3>
-        <p className="chart-sub">Seulement les transactions libérées : colis livré et voyageur payé.</p>
+        <p className="chart-sub">
+          Seulement les transactions libérées : colis livré et voyageur payé. Le graphique suit le choix « {net ? 'Marge nette' : 'Commission brute'} » en haut de page ;
+          le tableau montre les deux. Les frais Stripe perdus sur les remboursements ne sont pas rattachés à un jour de livraison : ils sont comptés dans le bloc Marge nette.
+        </p>
+        {serieJours.length > 0 && (
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={serieJours} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+              <CartesianGrid stroke="var(--grid-line)" vertical={false} />
+              <XAxis dataKey="jour" tickFormatter={(v) => versDate(v).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })} tick={{ fontSize: 11, fill: 'var(--muted)' }} axisLine={{ stroke: 'var(--axis-line)' }} tickLine={false} minTickGap={24} />
+              <YAxis tickFormatter={(v) => euros(Number(v))} tick={{ fontSize: 11, fill: 'var(--muted)' }} axisLine={false} tickLine={false} width={56} />
+              <Tooltip content={<VizTooltip formatter={(v) => euros(Number(v))} />} cursor={{ fill: 'var(--hover)' }} labelFormatter={(v) => versDate(v as string).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long' })} />
+              <Bar dataKey="valeur" name={net ? 'Marge nette' : 'Commission brute'} fill={net ? 'var(--teal)' : 'var(--brown)'} radius={[4, 4, 0, 0]} maxBarSize={28} isAnimationActive={false} />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
         <DataTable
           rows={revenus}
           rowKey={(r) => r.jour}
@@ -573,7 +750,8 @@ function FinanceTab() {
           columns={[
             { key: 'jour', label: 'Jour', value: (r) => r.jour, filter: 'date', render: (r) => versDate(r.jour).toLocaleDateString('fr-FR') },
             { key: 'volume', label: 'Montant des transports', value: (r) => Number(r.volume_total), render: (r) => euros(Number(r.volume_total)) },
-            { key: 'commission', label: 'Commission Wonjo', value: (r) => Number(r.commission), render: (r) => <strong>{euros(Number(r.commission))}</strong> },
+            { key: 'commission', label: 'Commission brute', value: (r) => Number(r.commission), render: (r) => (net ? euros(Number(r.commission)) : <strong>{euros(Number(r.commission))}</strong>) },
+            { key: 'marge', label: 'Marge nette', value: (r) => Number(r.marge_nette), render: (r) => (net ? <strong>{euros(Number(r.marge_nette))}</strong> : euros(Number(r.marge_nette))) },
             { key: 'nb', label: 'Transactions', value: (r) => Number(r.nb_transactions) },
           ]}
         />

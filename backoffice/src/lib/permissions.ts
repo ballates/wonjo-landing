@@ -36,6 +36,12 @@ export function peutVoirRevenus(roles: AdminRole[]): boolean {
   return a(roles, 'super_admin', 'finance');
 }
 
+// [355] Page Transactions et fiche : la moderation, et la finance en lecture seule
+// (sans conversation privee, sans fiche de compte, telephones masques).
+export function peutVoirTransactions(roles: AdminRole[]): boolean {
+  return a(roles, 'super_admin', 'moderation', 'finance');
+}
+
 export function peutModerer(roles: AdminRole[]): boolean {
   return a(roles, 'super_admin', 'moderation');
 }
