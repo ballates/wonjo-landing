@@ -498,11 +498,11 @@ function FinanceTab() {
 
   return (
     <section className="viz-root">
-      <div className="chart-head">
+      <div className="chart-head finance-mode">
         <p className="hint" style={{ margin: 0 }}>
           {net
-            ? 'Chiffres en marge nette : la commission plus les frais de protection, moins les frais Stripe.'
-            : 'Chiffres en commission brute : avant les frais Stripe.'}
+            ? 'Marge nette : commission et frais de valeur déclarée, moins les frais Stripe.'
+            : 'Commission brute : avant les frais Stripe.'}
         </p>
         <div className="action-row" role="group" aria-label="Base de calcul des chiffres">
           <button type="button" className={`chip-filter ${net ? 'on' : ''}`} aria-pressed={net} onClick={() => choisirMode('nette')}>Marge nette</button>
@@ -513,7 +513,7 @@ function FinanceTab() {
       <div className="cards">
         <Kpi index={0} label={net ? 'Marge nette encaissée' : 'Commission encaissée'}
           value={net ? (marge?.marge_nette_acquise ?? 0) : commissionEncaissee} format={euros}
-          hint={net ? 'Transports terminés, remboursements déduits' : 'Gagnée sur les transports terminés'} />
+          hint={net ? 'Remboursements déduits' : 'Transports terminés'} />
         <Kpi index={1} label={net ? 'Marge nette à venir' : 'Commission à venir'}
           value={net ? (marge?.marge_nette_a_venir ?? 0) : commissionAVenir} format={euros}
           hint={net ? 'Payé, retenu en séquestre' : 'Encaissée à la livraison'} />
@@ -526,10 +526,7 @@ function FinanceTab() {
       {marge && (
         <div className="chart-card">
           <h3>Marge nette : ce que Wonjo garde vraiment</h3>
-          <p className="chart-sub">
-            La commission brute ne tient pas compte des frais de paiement. Stripe prélève des frais sur chaque paiement et ne les
-            rend pas sur un remboursement : sur un petit envoi, la commission peut être entièrement mangée.
-          </p>
+          <p className="chart-sub">Stripe garde ses frais, même sur un remboursement : un petit envoi peut ne rien rapporter.</p>
           <div className="cards">
             <Kpi index={0} label="Marge nette acquise" value={marge.marge_nette_acquise} format={euros} hint="Transports terminés, tout l'historique" />
             <Kpi index={1} label="Marge nette (30 jours)" value={marge30?.marge_nette_acquise ?? 0} format={euros} hint={`${marge30?.nb_livrees ?? 0} transport(s) terminé(s)`} />
@@ -553,17 +550,12 @@ function FinanceTab() {
             </table>
           </div>
           <p className="hint" style={{ marginTop: 10 }}>
-            Frais Stripe : {marge.nb_reel} paiement(s) avec le montant réel, {marge.nb_estime} {marge.frais_confirmes ? 'calculé(s) au taux de votre contrat' : 'estimé(s)'}
-            ({decimales(marge.estimation_fixe, 2)} € + {decimales(marge.estimation_pct * 100, 2)} % du montant débité).
-            {marge.nb_estime > 0 ? ' Le montant réel remplace ce calcul dès qu\'il est relevé.' : ''} Hors frais de virement vers les voyageurs et hors taxe.
+            Frais Stripe : {marge.nb_reel} réel(s), {marge.nb_estime} {marge.frais_confirmes ? 'au taux du contrat' : 'estimé(s)'} ({decimales(marge.estimation_fixe, 2)} € + {decimales(marge.estimation_pct * 100, 2)} %). Hors virements aux voyageurs et hors taxe.
           </p>
           {roles.includes('super_admin') && (
             <div className="info-card" style={{ marginTop: 14 }}>
               <p className="section-title">Frais Stripe appliqués quand le montant réel n'est pas connu</p>
-              <p className="hint" style={{ marginTop: 0 }}>
-                Par défaut une estimation prudente (0,25 € + 3,2 %). Quand vous connaîtrez les frais exacts de votre contrat Stripe, saisissez-les ici :
-                toute la marge nette est recalculée, les paiements dont le montant réel est déjà relevé ne changent pas.
-              </p>
+              <p className="hint" style={{ marginTop: 0 }}>Estimation prudente par défaut (0,25 € + 3,2 %) : saisissez ici les frais de votre contrat.</p>
               <div className="inline-form inline-form--frais">
                 <label className="champ-frais">
                   <span>Part fixe</span>
@@ -593,13 +585,11 @@ function FinanceTab() {
 
       <div className="chart-card">
         <h3>Annulations après acceptation</h3>
-        <p className="chart-sub">
-          Argent déjà prélevé puis remboursé : Stripe garde ses frais, donc perte réelle. À distinguer des annulations avant prélèvement, sans coût.
-        </p>
+        <p className="chart-sub">Argent prélevé puis remboursé : Stripe garde ses frais. Avant prélèvement, une annulation ne coûte rien.</p>
         {annulations && (
           <div className="stat-list stat-list--nowrap">
-            <div><strong>{annulations.nb_avant_charge}</strong><span>annulées avant charge (aucune perte)</span></div>
-            <div><strong>{annulations.nb_apres_charge}</strong><span>annulées après charge, remboursées</span></div>
+            <div><strong>{annulations.nb_avant_charge}</strong><span>avant prélèvement</span></div>
+            <div><strong>{annulations.nb_apres_charge}</strong><span>après prélèvement</span></div>
             <div><strong>{euros(annulations.montant_apres_charge)}</strong><span>montant remboursé</span></div>
             <div><strong>{euros(annulations.commission_perdue)}</strong><span>commission perdue</span></div>
           </div>
@@ -630,7 +620,7 @@ function FinanceTab() {
       <div className="grid-2">
         <div className="chart-card">
           <h3>{net ? 'D\'où vient la marge nette' : 'D\'où vient la commission'}</h3>
-          <p className="chart-sub">Répartition {net ? 'de la marge nette' : 'de la commission'} acquise ou engagée, par type d'envoi. Colis et Enveloppe sont les deux seuls types possibles.</p>
+          <p className="chart-sub">{net ? 'Marge nette' : 'Commission'} par type d'envoi : colis ou enveloppe.</p>
           {totalCommissionType > 0 ? (
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
@@ -660,12 +650,10 @@ function FinanceTab() {
 
         <div className="chart-card">
           <h3>Commission brute, taxe, net</h3>
-          <p className="chart-sub">
-            La société n'étant pas encore créée, le taux réel n'est pas connu : le taux ci-dessous reste à 0 % tant qu'il n'est pas renseigné, et ne change rien aux montants affichés ailleurs.
-          </p>
+          <p className="chart-sub">Taux à 0 % tant que la société n'est pas créée.</p>
           <div className="stat-list stat-list--nowrap">
-            <div><strong>{euros(commissionBrute)}</strong><span>Commission brute (avant frais Stripe)</span></div>
-            <div><strong>{euros(montantTaxe)}</strong><span>Taxe estimée ({decimales(tauxTaxe * 100, 1)} %)</span></div>
+            <div><strong>{euros(commissionBrute)}</strong><span>Brute</span></div>
+            <div><strong>{euros(montantTaxe)}</strong><span>Taxe {decimales(tauxTaxe * 100, 1)} %</span></div>
             <div><strong>{euros(commissionNette)}</strong><span>Net de taxe</span></div>
           </div>
           {roles.includes('super_admin') && (
@@ -682,9 +670,7 @@ function FinanceTab() {
 
       <div className="chart-card">
         <h3>Où en est l'argent des transports</h3>
-        <p className="chart-sub">
-          Le <b>montant du transport</b> revient au voyageur ; la <b>commission</b> est ce que gagne Wonjo en plus, payée par l'expéditeur.
-        </p>
+        <p className="chart-sub">Le <b>montant du transport</b> va au voyageur, la <b>commission</b> à Wonjo.</p>
         {totalMontant > 0 && (
           <div className="money-bar" role="img" aria-label="Répartition des montants par étape de paiement">
             {ETAPES_PAIEMENT.map((e) => {
@@ -727,10 +713,7 @@ function FinanceTab() {
 
       <div className="chart-card">
         <h3>Transports terminés, jour par jour (30 derniers jours)</h3>
-        <p className="chart-sub">
-          Seulement les transactions libérées : colis livré et voyageur payé. Le graphique suit le choix « {net ? 'Marge nette' : 'Commission brute'} » en haut de page ;
-          le tableau montre les deux. Les frais Stripe perdus sur les remboursements ne sont pas rattachés à un jour de livraison : ils sont comptés dans le bloc Marge nette.
-        </p>
+        <p className="chart-sub">Colis livrés et voyageurs payés. Les frais Stripe des remboursements sont dans le bloc Marge nette.</p>
         {serieJours.length > 0 && (
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={serieJours} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>

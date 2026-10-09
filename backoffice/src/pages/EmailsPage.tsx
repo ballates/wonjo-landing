@@ -360,6 +360,7 @@ export function EmailsPage() {
           <div className="page-head" style={{ marginBottom: 12 }}>
             <p className="chart-sub" style={{ margin: 0 }}>Des sujets/messages prêts à réutiliser, classés par catégorie. Chargez-en un depuis l'onglet Composer, modifiez-le si besoin, puis envoyez.</p>
             <div className="action-row">
+              <button className="btn btn-primary btn-sm" onClick={() => ouvrirNouveauModele(false)}><IconSquarePencil /> Nouveau modèle</button>
               {selectionModeles ? (
                 <>
                   <button className="btn btn-sm" onClick={() => setSelectionModeles(null)}>Annuler</button>
@@ -370,7 +371,6 @@ export function EmailsPage() {
               ) : (
                 <button className="icon-button icon-button-danger" title="Sélectionner des modèles à supprimer" aria-label="Sélectionner des modèles à supprimer" onClick={() => setSelectionModeles(new Set())}><IconTrash /></button>
               )}
-              <button className="btn btn-primary btn-sm" onClick={() => ouvrirNouveauModele(false)}><IconSquarePencil /> Nouveau modèle</button>
             </div>
           </div>
           {!modeles ? <p className="hint">Chargement…</p> : modeles.length === 0 ? <p className="hint">Aucun modèle enregistré pour l'instant.</p> : (

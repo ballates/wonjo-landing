@@ -72,82 +72,121 @@ export function SimulateurCard() {
 
   const optionsPays = pays.map((p) => ({ value: p.code, label: p.nom }));
   const perte = !!res && res.marge_commission_seule < 0;
+  const part = (n: number) => (res && res.debit > 0 ? Math.max(0, n) : 0);
+  const pourcent = (n: number) => `${Math.round(n * 1000) / 10} %`;
 
   return (
-    <div className="chart-card">
-      <div className="chart-head">
-        <div className="chart-head-titre"><h3>Simuler un envoi</h3></div>
-      </div>
-      <p className="chart-sub">
-        Le détail est calculé par le serveur avec les réglages en vigueur (commission, minimums, protections, frais Stripe).
-        Laissez le prix vide pour prendre le prix proposé par défaut (70 % du plafond).
-      </p>
-
-      <div className="action-row" style={{ marginBottom: 12 }}>
-        <button type="button" className={`chip-filter ${type === 'colis' ? 'on' : ''}`} onClick={() => setType('colis')}>Colis</button>
-        <button type="button" className={`chip-filter ${type === 'document' ? 'on' : ''}`} onClick={() => { setType('document'); setFragile(false); setRenforcee(false); }}>Enveloppes</button>
+    <div className="chart-card sim">
+      <div className="sim-tete">
+        <h3>Simuler un envoi</h3>
+        <p className="chart-sub">Calcul du serveur avec les réglages en vigueur. Prix vide : 70 % du plafond.</p>
       </div>
 
-      <div className="simu-grille">
-        <label className="champ-frais"><span>Départ</span>
-          <Select ariaLabel="Pays de départ" value={depart} options={optionsPays} onChange={setDepart} minWidth={180} /></label>
-        <label className="champ-frais"><span>Arrivée</span>
-          <Select ariaLabel="Pays d'arrivée" value={arrivee} options={optionsPays} onChange={setArrivee} minWidth={180} /></label>
-        {type === 'colis' ? (
-          <>
-            <label className="champ-frais"><span>Poids (0,5 à 23 kg)</span>
-              <div className="suffix-input"><input type="text" inputMode="decimal" value={poids} onChange={(e) => setPoids(e.target.value)} /><span>kg</span></div></label>
-            <label className="champ-frais"><span>Prix au kilo (voyageur)</span>
-              <div className="suffix-input"><input type="text" inputMode="decimal" placeholder="défaut" value={prixKilo} onChange={(e) => setPrixKilo(e.target.value)} /><span>€</span></div></label>
-          </>
-        ) : (
-          <>
-            <label className="champ-frais"><span>Nombre d'enveloppes</span>
-              <div className="suffix-input"><input type="text" inputMode="numeric" value={nbEnv} onChange={(e) => setNbEnv(e.target.value)} /><span>×</span></div></label>
-            <label className="champ-frais"><span>Prix par enveloppe (voyageur)</span>
-              <div className="suffix-input"><input type="text" inputMode="decimal" placeholder="défaut" value={prixEnv} onChange={(e) => setPrixEnv(e.target.value)} /><span>€</span></div></label>
-          </>
-        )}
-        <label className="champ-frais"><span>Valeur déclarée (max 250 €)</span>
-          <div className="suffix-input"><input type="text" inputMode="decimal" value={valeur} onChange={(e) => setValeur(e.target.value)} /><span>€</span></div></label>
-        <label className="champ-frais"><span>Commission</span>
-          <div className="suffix-input"><input type="text" inputMode="decimal" value={taux} onChange={(e) => setTaux(e.target.value)} /><span>%</span></div></label>
-        <label className="champ-frais"><span>Commission fixe</span>
-          <Select ariaLabel="Commission fixe" value={minimums} onChange={setMinimums} minWidth={180}
-                  options={[{ value: 'actuel', label: 'Réglage actuel' }, { value: 'oui', label: 'Comme si allumée' }, { value: 'non', label: 'Comme si éteinte' }]} /></label>
-        {type === 'colis' && (
-          <>
-            <label className="check-inline"><input type="checkbox" checked={fragile} onChange={(e) => { setFragile(e.target.checked); if (!e.target.checked) setRenforcee(false); }} /> Colis fragile</label>
-            <label className="check-inline"><input type="checkbox" checked={renforcee} disabled={!fragile} onChange={(e) => setRenforcee(e.target.checked)} /> Protection renforcée choisie</label>
-          </>
-        )}
-      </div>
-
-      {erreur && <p className="page-error" style={{ marginTop: 12 }}>{erreur}</p>}
-
-      {res && (
-        <>
-          <div className="dt-wrap" style={{ marginTop: 14 }}>
-            <table>
-              <tbody>
-                <tr><td>Le voyageur reçoit</td><td><strong>{euros(res.voyageur)}</strong>
-                  {res.prix_kilo != null && <span className="hint"> · {euros(res.prix_kilo)}/kg</span>}
-                  {res.prix_enveloppe != null && <span className="hint"> · {euros(res.prix_enveloppe)}/enveloppe</span>}</td></tr>
-                <tr><td>Commission Wonjo ({Math.round(res.taux * 1000) / 10} %)</td><td>{euros(res.commission)}{res.commission_fixe > 0 && <span className="hint"> · dont {euros(res.commission_fixe)} fixe</span>}</td></tr>
-                <tr><td>Frais liés à la valeur déclarée</td><td>{euros(res.protection)}</td></tr>
-                <tr><td>Protection renforcée</td><td>{euros(res.renforcee)}</td></tr>
-                <tr><td><strong>L'expéditeur paie</strong></td><td><strong>{euros(res.debit)}</strong></td></tr>
-                <tr><td>Frais Stripe</td><td>− {euros(res.stripe)} <span className="hint">(estimation des réglages ; carte européenne : {euros(res.stripe_ue)})</span></td></tr>
-                <tr><td>Commission seule, après Stripe</td><td className={res.marge_commission_seule < 0 ? 'texte-perte' : undefined}>{euros(res.marge_commission_seule)}</td></tr>
-                <tr><td>Marge (commission + protection de base − Stripe)</td><td><strong>{euros(res.marge_hors_reserve)}</strong></td></tr>
-                <tr><td>Réserve pour les casses (protection renforcée)</td><td>{euros(res.renforcee)}</td></tr>
-              </tbody>
-            </table>
+      <div className="sim-corps">
+        <div className="sim-saisie">
+          <div className="sim-segment" role="group" aria-label="Type d'envoi">
+            <button type="button" className={type === 'colis' ? 'on' : ''} onClick={() => setType('colis')}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z" /><path d="m3 8 9 5 9-5M12 13v8" /></svg>
+              Colis
+            </button>
+            <button type="button" className={type === 'document' ? 'on' : ''} onClick={() => { setType('document'); setFragile(false); setRenforcee(false); }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg>
+              Enveloppes
+            </button>
           </div>
-          {perte && <p className="page-error" style={{ marginTop: 10 }}>Wonjo perd de l'argent sur la commission de cet envoi : elle ne couvre pas les frais Stripe.</p>}
-          {res.avertissements.map((a) => <p key={a} className="hint">{a}</p>)}
-        </>
-      )}
+
+          <div className="sim-trajet">
+            <label className="champ-frais"><span>Départ</span>
+              <Select ariaLabel="Pays de départ" value={depart} options={optionsPays} onChange={setDepart} /></label>
+            <button type="button" className="sim-inverser" title="Inverser le trajet" aria-label="Inverser le trajet"
+                    onClick={() => { setDepart(arrivee); setArrivee(depart); }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M17 3l4 4-4 4" /><path d="M3 7h18" /><path d="M7 21l-4-4 4-4" /><path d="M21 17H3" /></svg>
+            </button>
+            <label className="champ-frais"><span>Arrivée</span>
+              <Select ariaLabel="Pays d'arrivée" value={arrivee} options={optionsPays} onChange={setArrivee} /></label>
+          </div>
+
+          <div className="sim-champs">
+            {type === 'colis' ? (
+              <>
+                <label className="champ-frais"><span>Poids</span>
+                  <div className="suffix-input"><input type="text" inputMode="decimal" value={poids} onChange={(e) => setPoids(e.target.value)} /><span>kg</span></div></label>
+                <label className="champ-frais"><span>Prix au kilo</span>
+                  <div className="suffix-input"><input type="text" inputMode="decimal" placeholder="défaut" value={prixKilo} onChange={(e) => setPrixKilo(e.target.value)} /><span>€</span></div></label>
+              </>
+            ) : (
+              <>
+                <label className="champ-frais"><span>Enveloppes</span>
+                  <div className="suffix-input"><input type="text" inputMode="numeric" value={nbEnv} onChange={(e) => setNbEnv(e.target.value)} /><span>×</span></div></label>
+                <label className="champ-frais"><span>Prix par enveloppe</span>
+                  <div className="suffix-input"><input type="text" inputMode="decimal" placeholder="défaut" value={prixEnv} onChange={(e) => setPrixEnv(e.target.value)} /><span>€</span></div></label>
+              </>
+            )}
+            <label className="champ-frais"><span>Valeur déclarée</span>
+              <div className="suffix-input"><input type="text" inputMode="decimal" value={valeur} onChange={(e) => setValeur(e.target.value)} /><span>€</span></div></label>
+            <label className="champ-frais"><span>Commission</span>
+              <div className="suffix-input"><input type="text" inputMode="decimal" value={taux} onChange={(e) => setTaux(e.target.value)} /><span>%</span></div></label>
+          </div>
+
+          <div className="champ-frais">
+            <span>Commission fixe</span>
+            <div className="sim-segment sim-segment--petit" role="group" aria-label="Commission fixe">
+              {([['actuel', 'Réglage actuel'], ['oui', 'Allumée'], ['non', 'Éteinte']] as [Minimums, string][]).map(([v, l]) => (
+                <button key={v} type="button" className={minimums === v ? 'on' : ''} onClick={() => setMinimums(v)}>{l}</button>
+              ))}
+            </div>
+          </div>
+
+          {type === 'colis' && (
+            <div className="sim-options">
+              <button type="button" className={`sim-option ${fragile ? 'on' : ''}`} aria-pressed={fragile}
+                      onClick={() => { setFragile(!fragile); if (fragile) setRenforcee(false); }}>Colis fragile</button>
+              <button type="button" className={`sim-option ${renforcee ? 'on' : ''}`} aria-pressed={renforcee} disabled={!fragile}
+                      onClick={() => setRenforcee(!renforcee)}>Protection renforcée</button>
+            </div>
+          )}
+        </div>
+
+        <div className={`sim-recu ${perte ? 'is-perte' : ''}`}>
+          {erreur && <p className="page-error">{erreur}</p>}
+          {!res && !erreur && <p className="hint">Renseignez une valeur déclarée pour lancer le calcul.</p>}
+          {res && (
+            <>
+              <span className="sim-recu-etiquette">L'expéditeur paie</span>
+              <strong className="sim-recu-total">{euros(res.debit)}</strong>
+              <div className="sim-barre" aria-hidden="true">
+                <span className="c-voyageur" style={{ flexGrow: part(res.voyageur) }} />
+                <span className="c-commission" style={{ flexGrow: part(res.commission) }} />
+                <span className="c-valeur" style={{ flexGrow: part(res.protection - res.renforcee) }} />
+                <span className="c-renforcee" style={{ flexGrow: part(res.renforcee) }} />
+              </div>
+              <ul className="sim-lignes">
+                <li><i className="c-voyageur" />Voyageur
+                  <span className="hint">{res.prix_kilo != null ? `${euros(res.prix_kilo)}/kg` : res.prix_enveloppe != null ? `${euros(res.prix_enveloppe)}/env.` : ''}</span>
+                  <b>{euros(res.voyageur)}</b></li>
+                <li><i className="c-commission" />Commission {pourcent(res.taux)}
+                  <span className="hint">{res.commission_fixe > 0 ? `dont ${euros(res.commission_fixe)} fixe` : ''}</span>
+                  <b>{euros(res.commission)}</b></li>
+                <li><i className="c-valeur" />Valeur déclarée<span /><b>{euros(res.protection - res.renforcee)}</b></li>
+                {res.renforcee > 0 && <li><i className="c-renforcee" />Protection renforcée<span /><b>{euros(res.renforcee)}</b></li>}
+              </ul>
+
+              <div className="sim-wonjo">
+                <span className="sim-recu-etiquette">Ce que Wonjo garde</span>
+                <ul className="sim-lignes">
+                  <li>Commission + valeur déclarée<span /><b>{euros(res.commission + res.protection - res.renforcee)}</b></li>
+                  <li>Frais Stripe<span className="hint">carte UE : {euros(res.stripe_ue)}</span><b>− {euros(res.stripe)}</b></li>
+                  <li className="sim-ligne-total">Marge<span /><b>{euros(res.marge_hors_reserve)}</b></li>
+                  <li>Commission seule, après Stripe<span /><b className={perte ? 'texte-perte' : undefined}>{euros(res.marge_commission_seule)}</b></li>
+                  {res.renforcee > 0 && <li>Réserve casses<span /><b>{euros(res.renforcee)}</b></li>}
+                </ul>
+              </div>
+              {perte && <p className="sim-alerte">La commission ne couvre pas les frais Stripe de cet envoi.</p>}
+              {res.avertissements.map((a) => <p key={a} className="sim-note">{a}</p>)}
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

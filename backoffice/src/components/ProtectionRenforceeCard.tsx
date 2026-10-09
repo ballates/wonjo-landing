@@ -96,12 +96,7 @@ export function ProtectionRenforceeCard() {
           <span className="corridor-toggle-switch" />
         </label>
       </div>
-      <p className="chart-sub">
-        Option proposée à l'expéditeur dont le colis est marqué fragile : en cas de casse constatée, il est indemnisé jusqu'à la valeur
-        déclarée. Le supplément s'ajoute à la protection de base ; il se calcule par tranches sur les mêmes seuils que la protection des colis
-        {actuel ? ` (${eur(actuel.bareme.seuil1)} et ${eur(actuel.bareme.seuil2)})` : ''}. Éteinte, l'option disparaît de l'app et rien n'est facturé.
-        Les sommes encaissées sont à garder en réserve pour indemniser les casses : elles figurent à part dans la carte « Marge nette » de Finance.
-      </p>
+      <p className="chart-sub">Supplément pour un colis fragile, par tranches de valeur déclarée. Éteinte, l'app ne le propose pas.</p>
       <div className="action-group motif-form">
         {saisie && (
           <div className="protection-bloc">

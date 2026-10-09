@@ -102,8 +102,8 @@ export function TransactionsPage() {
       render: (t: TransactionListe) => {
         const m = marges[t.id];
         if (!m) return <span className="hint">-</span>;
-        const titre = `Commission ${decimales(Number(m.commission), 2)} € + protection ${decimales(Number(m.protection), 2)} € - frais Stripe ${decimales(Number(m.stripe), 2)} € (${m.stripe_reel ? 'montant réel' : 'estimé'})`;
-        return <span title={titre}>{m.stripe_reel ? '' : '~ '}{decimales(Number(m.marge_nette), 2)} €</span>;
+        const titre = `Commission ${decimales(Number(m.commission), 2)} € + valeur déclarée ${decimales(Number(m.protection), 2)} € - frais Stripe ${decimales(Number(m.stripe), 2)} €`;
+        return <span title={titre}>{decimales(Number(m.marge_nette), 2)} €</span>;
       },
     } as ServerColumn<TransactionListe>] : []),
     {
@@ -133,13 +133,13 @@ export function TransactionsPage() {
       key: 'code', label: 'Code', filterKey: 'codeGenere', filterOptions: OPTIONS_CODE_GENERE,
       render: (t) => (t.code_genere ? 'Généré' : 'Non généré'),
     },
-    { key: 'creee', label: 'Créée le', sortKey: 'created_at', render: (t) => dateHeure(t.created_at) },
+    { key: 'creee', label: 'Créée le', sortKey: 'created_at', render: (t) => <span className="nowrap">{dateHeure(t.created_at)}</span> },
     { key: 'actions', label: '', render: (t) => <button className="btn btn-soft btn-sm" onClick={() => setOuverte(t.id)} {...prechargementFiche(t.id)}>Fiche</button>, width: 100 },
   ];
 
   if (error) return <p className="page-error">{error}</p>;
   return (
-    <div>
+    <div className="page-transactions">
       <div className="page-head">
         <div>
           <h1>Transactions</h1>

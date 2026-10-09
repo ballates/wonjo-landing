@@ -138,16 +138,17 @@ export function TransactionModal({ demandeId, onClose }: { demandeId: string; on
         {voitMarge && marge !== undefined && (
           <div className="info-rows">
             <div className="info-row">
-              <span className="info-row-label">Marge Wonjo</span>
+              <span className="info-row-label info-row-label--large">Marge Wonjo</span>
               <span className="info-row-value">
                 {marge === null ? 'Aucun paiement encaissé : pas de marge.' : (
-                  <>
+                  <span className="marge-ligne">
                     <strong>{decimales(Number(marge.marge_nette), 2)} €</strong>
-                    {f.statut_paiement === 'rembourse'
-                      ? ' - perte : remboursé, Stripe garde ses frais'
-                      : ` = commission ${decimales(Number(marge.commission), 2)} € + protection ${decimales(Number(marge.protection), 2)} € - frais Stripe ${decimales(Number(marge.stripe), 2)} €`}
-                    {' '}<span className="hint">({marge.stripe_reel ? 'frais réels' : 'frais estimés'})</span>
-                  </>
+                    <span className="marge-calcul">
+                      {f.statut_paiement === 'rembourse'
+                        ? 'Perte : remboursé, Stripe garde ses frais'
+                        : `Commission ${decimales(Number(marge.commission), 2)} € + valeur déclarée ${decimales(Number(marge.protection), 2)} € − Stripe ${decimales(Number(marge.stripe), 2)} €`}
+                    </span>
+                  </span>
                 )}
               </span>
             </div>

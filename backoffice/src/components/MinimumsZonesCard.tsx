@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../auth/AuthContext';
 import { signalerReglagesChange } from './ReglagesEnAttente';
 import { peutGererAdmins } from '../lib/permissions';
+import { ReglageTete } from './ReglageTete';
 
 // [353] Commission fixe de Wonjo par zone, ajoutee aux 10 % du prix du voyageur (colis
 // et enveloppes, une fois par demande). Le plancher du prix d'un colis a ete retire par
@@ -31,6 +32,7 @@ const NOMS: Record<string, string> = {
 
 const eur = (n: number) => `${n.toLocaleString('fr-FR', { minimumFractionDigits: n % 1 === 0 ? 0 : 2, maximumFractionDigits: 2 })} €`;
 const num = (v: string) => Number(v.replace(',', '.'));
+const PAS = 0.05;
 
 export function MinimumsZonesCard() {
   const { roles } = useAuth();
@@ -42,7 +44,6 @@ export function MinimumsZonesCard() {
   const [busy, setBusy] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [confirmation, setConfirmation] = useState(false);
 
   function charger() {
     supabase.rpc('admin_lister_tarifs_zones').then(({ data, error }) => {
@@ -50,7 +51,7 @@ export function MinimumsZonesCard() {
       const d = data as { actif: boolean; zones: Zone[] };
       setActif(d.actif);
       setZones(d.zones);
-      setSaisie(Object.fromEntries(d.zones.map((z) => [z.zone, { commission: String(z.commission_fixe) }])));
+      setSaisie(Object.fromEntries(d.zones.map((z) => [z.zone, { commission: Number(z.commission_fixe).toFixed(2) }])));
     });
   }
   useEffect(charger, []);
@@ -94,18 +95,18 @@ export function MinimumsZonesCard() {
     charger();
   }
 
-  async function basculer() {
-    if (actif === null) return;
-    if (!motif.trim()) { setErreur('Le motif est obligatoire (il est inscrit au journal).'); return; }
-    setBusy(true);
-    setErreur(null);
-    const { error } = await supabase.rpc('admin_definir_minimums_actifs', { p_actif: !actif, p_motif: motif.trim() });
-    setBusy(false);
-    if (error) { setErreur(error.message); return; }
-    setMotif('');
-    setConfirmation(false);
-    setMessage(!actif ? 'Commission fixe allumée : elle s\'applique aux nouvelles demandes.' : 'Commission fixe éteinte.');
+  async function basculer(allumer: boolean, m: string): Promise<string | null> {
+    const { error } = await supabase.rpc('admin_definir_minimums_actifs', { p_actif: allumer, p_motif: m });
+    if (error) return error.message;
+    setMessage(allumer ? 'Commission fixe allumée : elle s\'applique aux nouvelles demandes.' : 'Commission fixe éteinte : 10 % seulement.');
     charger();
+    return null;
+  }
+
+  function regler(z: Zone, valeur: number) {
+    const v = Math.min(Number(z.borne_max), Math.max(Number(z.borne_min), Math.round(valeur * 100) / 100));
+    setSaisie({ ...saisie, [z.zone]: { commission: v.toFixed(2) } });
+    setErreur(null);
   }
 
   // Exemple parlant : un colis de 0,5 kg a 3 EUR/kg, dans la zone la plus utilisee.
@@ -121,105 +122,86 @@ export function MinimumsZonesCard() {
   }, [zones, saisie]);
 
   return (
-    <div className="chart-card">
-      <div className="chart-head">
-        <div className="chart-head-titre">
-          <h3>Commission fixe par zone</h3>
-          {actif !== null && <span className={`badge ${actif ? 'badge-teal' : 'badge-muted'}`}>{actif ? 'Allumés' : 'Éteints'}</span>}
-        </div>
-      </div>
-      <p className="chart-sub">
-        Le voyageur touche toujours le prix qu'il a fixé (prix au kilo × poids). La commission de Wonjo est de 10 %
-        de ce prix, plus ce montant fixe une fois par envoi (colis et enveloppes). Ne s'applique qu'aux nouvelles
-        demandes. Le prix minimum au kilo que peut annoncer un voyageur se règle par corridor (page Corridors).
-      </p>
-
+    <div className="chart-card rg-carte">
+      <ReglageTete
+        titre="Commission fixe par zone"
+        sousTitre="10 % du prix du voyageur, plus ce montant une fois par envoi. Nouvelles demandes uniquement."
+        actif={actif}
+        etatOn="Allumée"
+        etatOff="Éteinte · 10 % seulement"
+        questionAllumer="Allumer la commission fixe pour toutes les nouvelles demandes ?"
+        questionEteindre="Éteindre la commission fixe (retour à 10 % seulement) ?"
+        modifiable={modifiable}
+        onConfirmer={basculer}
+      />
       {actif === false && (
-        <div className="insight-banner warn" style={{ marginBottom: 14 }}>
-          <div>
-            <p className="insight-oneline">
-              <strong>Éteints : </strong>à allumer une fois la mise à jour de l'app publiée. Les anciennes versions
-              afficheraient un prix inférieur au débit réel.
-            </p>
-          </div>
-        </div>
+        <p className="rg-note">À allumer une fois la mise à jour de l'app publiée : les anciennes versions afficheraient moins que le débit réel.</p>
       )}
 
-      <div style={{ overflowX: "auto" }}>
-        <table>
-          <thead>
-            <tr>
-              <th>Zone</th>
-              <th>Commission fixe</th>
-              <th>Bornes</th>
-              <th>Enveloppe (Pli)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {zones.map((z) => {
-              const s = saisie[z.zone] ?? { commission: '' };
-              const change = modifiees.some((m) => m.zone === z.zone);
-              return (
-                <tr key={z.zone} className={change ? 'is-modifie' : undefined}>
-                  <td>
-                    {NOMS[z.zone] ?? z.zone}
-                    {!z.zone_active && <span className="badge badge-muted" style={{ marginLeft: 8 }}>fermée</span>}
-                  </td>
-                  <td>
-                    <input type="text" inputMode="decimal" className="input-montant" value={s.commission.replace('.', ',')}
-                           disabled={!modifiable || busy} aria-label={`Commission fixe ${NOMS[z.zone] ?? z.zone}`}
-                           onChange={(e) => setSaisie({ ...saisie, [z.zone]: { ...s, commission: e.target.value.replace(',', '.').replace(/[^\d.]/g, '') } })} /> €
-                  </td>
-                  <td className="hint">{eur(Number(z.borne_min))} à {eur(Number(z.borne_max))}</td>
-                  <td className="hint">{z.enveloppe_min != null && z.enveloppe_max != null ? `${eur(Number(z.enveloppe_min))} à ${eur(Number(z.enveloppe_max))}` : '-'}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      <div className="rg-zones">
+        {zones.map((z) => {
+          const s = saisie[z.zone] ?? { commission: '' };
+          const v = num(s.commission);
+          const change = modifiees.some((m) => m.zone === z.zone);
+          const max = Number(z.borne_max);
+          const hors = Number.isFinite(v) && (v < Number(z.borne_min) || v > max);
+          const pct = max > 0 && Number.isFinite(v) ? Math.min(100, Math.max(0, (v / max) * 100)) : 0;
+          return (
+            <div key={z.zone} className={`rg-zone ${change ? 'is-modifie' : ''} ${!z.zone_active ? 'is-fermee' : ''} ${hors ? 'is-invalide' : ''}`}>
+              <div className="rg-zone-tete">
+                <span className="rg-zone-nom">{NOMS[z.zone] ?? z.zone}</span>
+              </div>
+              <div className="rg-zone-saisie">
+                <button type="button" className="poids-borne-btn" aria-label="Diminuer" disabled={!modifiable || busy || v <= Number(z.borne_min)} onClick={() => regler(z, v - PAS)}>−</button>
+                <label className="rg-zone-valeur">
+                  <input type="text" inputMode="decimal" value={s.commission.replace('.', ',')}
+                         disabled={!modifiable || busy} aria-label={`Commission fixe ${NOMS[z.zone] ?? z.zone}`}
+                         onChange={(e) => setSaisie({ ...saisie, [z.zone]: { commission: e.target.value.replace(',', '.').replace(/[^\d.]/g, '') } })} />
+                  <span>€</span>
+                </label>
+                <button type="button" className="poids-borne-btn" aria-label="Augmenter" disabled={!modifiable || busy || v >= max} onClick={() => regler(z, v + PAS)}>+</button>
+              </div>
+              <div className="rg-jauge" aria-hidden="true"><span style={{ width: `${pct}%` }} /></div>
+              <div className="rg-jauge-bornes"><span>{eur(Number(z.borne_min))}</span>{change ? <span className="rg-zone-avant">avant {eur(Number(z.commission_fixe))}</span> : <span>{v === 0 ? '10 % seulement' : ''}</span>}<span>{eur(max)}</span></div>
+              <span className="rg-zone-pied">
+                {!z.zone_active ? 'Zone fermée'
+                  : z.enveloppe_min != null && z.enveloppe_max != null ? `Pli : ${eur(Number(z.enveloppe_min))} à ${eur(Number(z.enveloppe_max))}` : 'Ouverte'}
+              </span>
+            </div>
+          );
+        })}
       </div>
 
       {exemple && (
-        <p className="chart-sub" style={{ marginTop: 12 }}>
-          <strong>Exemple Europe ↔ Afrique :</strong> un colis de 0,5 kg à 3 €/kg ;
-          le voyageur reçoit {eur(exemple.base)}, Wonjo prend {eur(exemple.commission)} et l'expéditeur paie {eur(exemple.total)}.
-        </p>
-      )}
-
-      {modifiable ? (
-        <div className="action-group motif-form" style={{ marginTop: 12 }}>
-          <textarea value={motif} onChange={(e) => { setMotif(e.target.value); setErreur(null); }}
-                    placeholder="Motif (journal) - ex. révision du pricing d'octobre, ou allumage avec l'OTA 1.6." />
-          {!valide && <p className="page-error">Commission fixe hors des bornes de sa zone (voir la colonne « Bornes »).</p>}
-          <div className="action-row" style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
-            {actif !== null && (
-              confirmation ? (
-                <span className="action-row">
-                  <span className="hint">{actif ? 'Éteindre la commission fixe ?' : 'Allumer pour tous les utilisateurs ?'}</span>
-                  <button type="button" className="btn btn-sm" disabled={busy} onClick={() => setConfirmation(false)}>Non</button>
-                  <button type="button" className={`btn btn-sm ${actif ? 'btn-danger-outline' : 'btn-primary'}`} disabled={busy || !motif.trim()} onClick={basculer}>Oui</button>
-                </span>
-              ) : (
-                <button type="button" className={`btn btn-sm ${actif ? 'btn-danger-outline' : ''}`} disabled={busy} onClick={() => setConfirmation(true)}>
-                  {actif ? 'Éteindre la commission fixe' : 'Allumer la commission fixe'}
-                </button>
-              )
-            )}
-            <span className="action-row">
-              {modifiees.length > 0 && (
-                <button type="button" className="btn btn-sm" disabled={busy} onClick={() => { charger(); setErreur(null); }}>Annuler</button>
-              )}
-              <button type="button" className="btn btn-sm btn-primary" disabled={busy || modifiees.length === 0 || !valide || !motif.trim()} onClick={enregistrer}>
-                {busy ? '…' : `Enregistrer${modifiees.length > 1 ? ` (${modifiees.length} zones)` : ''}`}
-              </button>
-            </span>
+        <div className="rg-exemple">
+          <span className="rg-exemple-titre">Exemple Europe ↔ Afrique · colis de 0,5 kg à 3 €/kg</span>
+          <div className="rg-exemple-barre" aria-hidden="true">
+            <span className="is-voyageur" style={{ flexGrow: exemple.base }} />
+            <span className="is-wonjo" style={{ flexGrow: exemple.commission }} />
+          </div>
+          <div className="rg-exemple-legende">
+            <span><i className="is-voyageur" />Voyageur <b>{eur(exemple.base)}</b></span>
+            <span><i className="is-wonjo" />Wonjo <b>{eur(exemple.commission)}</b></span>
+            <span>Expéditeur paie <b>{eur(exemple.total)}</b></span>
           </div>
         </div>
-      ) : (
-        <p className="hint">Modifiable par un super admin.</p>
       )}
-      {message && <p className="success-text">{message}</p>}
-      {erreur && <p className="page-error">{erreur}</p>}
+
+      {modifiable && modifiees.length > 0 && (
+        <div className="rg-barre-enregistrer">
+          <span className="rg-barre-compte">{modifiees.length} zone{modifiees.length > 1 ? 's' : ''} modifiée{modifiees.length > 1 ? 's' : ''}</span>
+          <input type="text" value={motif} placeholder="Motif (inscrit au journal)"
+                 onChange={(e) => { setMotif(e.target.value); setErreur(null); }} />
+          <button type="button" className="btn btn-sm" disabled={busy} onClick={() => { charger(); setErreur(null); setMotif(''); }}>Annuler</button>
+          <button type="button" className="btn btn-sm btn-primary" disabled={busy || !valide || !motif.trim()} onClick={enregistrer}>
+            {busy ? '…' : 'Enregistrer'}
+          </button>
+        </div>
+      )}
+      {!valide && <p className="page-error" style={{ marginTop: 10 }}>Une commission fixe sort des bornes de sa zone.</p>}
+      {!modifiable && <p className="hint" style={{ marginTop: 10 }}>Modifiable par un super admin.</p>}
+      {message && <p className="success-text" style={{ marginTop: 10 }}>{message}</p>}
+      {erreur && <p className="page-error" style={{ marginTop: 10 }}>{erreur}</p>}
     </div>
   );
 }

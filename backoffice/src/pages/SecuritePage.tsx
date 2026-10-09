@@ -117,7 +117,7 @@ export function SecuritePage({ integre = false }: { integre?: boolean }) {
           {!integre && <h1>Sécurité</h1>}
           <p className="page-sub" style={integre ? { margin: 0 } : undefined}>Relevés toutes les heures : une alerte veut dire qu'une règle semble contournée.</p>
         </div>
-        <div className="role-pills">
+        <div className="role-pills" role="group" aria-label="Vue">
           <button className={`role-pill ${vue === 'ouverts' ? 'is-on' : ''}`} onClick={() => setVue('ouverts')}>Ouverts</button>
           <button className={`role-pill ${vue === 'traites' ? 'is-on' : ''}`} onClick={() => setVue('traites')}>Historique</button>
         </div>

@@ -116,12 +116,7 @@ export function ProtectionValeurCard() {
           <span className="corridor-toggle-switch" />
         </label>
       </div>
-      <p className="chart-sub">
-        Frais ajoutés au paiement d'une expédition dont la valeur déclarée dépasse le premier seuil, par tranches
-        (aucun saut de prix à la frontière). Figés sur chaque demande à sa création. Éteints, aucun frais n'est
-        calculé ni affiché. Un taux à 0 % exempte le type concerné. Ce n'est pas une assurance : en cas de perte,
-        l'expéditeur est remboursé de ce qu'il a payé, frais compris, jamais de la valeur déclarée (CGU, article 7).
-      </p>
+      <p className="chart-sub">Par tranches au-delà du premier seuil, figés à la création. Pas une assurance (CGU, art. 7).</p>
       <div className="action-group motif-form">
         {saisie && actuel && propose && TYPES.map(({ type, titre, sous }) => (
           <BlocBareme key={type} titre={titre} sous={sous}

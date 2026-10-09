@@ -9,6 +9,7 @@ import { DataTable, type Column } from '../components/DataTable';
 import { aujourdhuiParis, dateHeure, nomComplet } from '../lib/labels';
 import { Kpi } from '../components/Kpi';
 import type { CompteRecherche } from '../lib/types';
+import { useDebounce } from '../lib/useDebounce';
 
 interface Parametres { actif: boolean; defaut: number; plafond: number; plancher: number; nb_super_admins: number; moi: string }
 interface Changement { id: string; type: 'defaut' | 'activation'; valeur: string; demande_par: string; demande_par_nom: string | null; created_at: string }
@@ -119,6 +120,9 @@ export function CommissionsSection() {
   const [simArrVille, setSimArrVille] = useState('');
   const [simArrPays, setSimArrPays] = useState('');
   const [simResultat, setSimResultat] = useState<number | null>(null);
+  const [simRecherche, setSimRecherche] = useState('');
+  const [simErreur, setSimErreur] = useState<string | null>(null);
+  const [simCharge, setSimCharge] = useState(false);
 
   function charger() {
     supabase.rpc('admin_commission_parametres').then(({ data, error: e }) => {
@@ -238,15 +242,28 @@ export function CommissionsSection() {
     });
   }
 
-  async function simuler() {
-    if (!simUser) { setError('Choisissez un membre à simuler.'); return; }
-    const { data, error: e } = await supabase.rpc('admin_commission_simuler', {
-      p_user_id: simUser, p_dep_ville: simDepVille || null, p_dep_pays: simDepPays || null,
-      p_arr_ville: simArrVille || null, p_arr_pays: simArrPays || null,
+  // Recalcule a chaque changement (membre, villes, pays), sans bouton.
+  const simCle = useDebounce(JSON.stringify([simUser, simDepVille, simDepPays, simArrVille, simArrPays]));
+  useEffect(() => {
+    const [u, dv, dp, av, ap] = JSON.parse(simCle) as string[];
+    if (!u) { setSimResultat(null); setSimErreur(null); return; }
+    setSimCharge(true);
+    supabase.rpc('admin_commission_simuler', {
+      p_user_id: u, p_dep_ville: dv || null, p_dep_pays: dp || null, p_arr_ville: av || null, p_arr_pays: ap || null,
+    }).then(({ data, error: e }) => {
+      setSimCharge(false);
+      if (e) { setSimErreur(e.message); setSimResultat(null); return; }
+      setSimErreur(null);
+      setSimResultat(Number(data));
     });
-    if (e) { setError(e.message); return; }
-    setSimResultat(Number(data));
-  }
+  }, [simCle]);
+
+  const simComptes = useMemo(() => {
+    const q = simRecherche.trim().toLowerCase();
+    if (!q) return [];
+    return comptes.filter((c) => `${c.prenom} ${c.nom} ${c.email}`.toLowerCase().includes(q)).slice(0, 6);
+  }, [comptes, simRecherche]);
+  const simMembre = comptes.find((c) => c.id === simUser) ?? null;
 
   const comptesFiltres = useMemo(() => {
     const q = rechercheMembre.trim().toLowerCase();
@@ -500,42 +517,104 @@ export function CommissionsSection() {
         </>
       )}
 
-      {tab === 'simulateur' && (
-        <div className="panel">
-          <p className="chart-sub">Quel taux paierait ce membre sur ce trajet aujourd'hui ?</p>
-          <div className="field-row">
-            <label className="field">
-              <span>Membre</span>
-              <Select
-                ariaLabel="Membre"
-                value={simUser}
-                onChange={setSimUser}
-                options={[{ value: '', label: 'Choisir un membre…' }, ...comptes.map((c) => ({ value: c.id, label: nomComplet(c.prenom, c.nom) || c.email, hint: c.email }))]}
-              />
-            </label>
-            <div className="field">
-              <span>Trajet</span>
-              <div className="lieu-row">
-                <input type="text" list="villes-dep" value={simDepVille} onChange={(e) => setSimDepVille(e.target.value)} placeholder="Ville de départ" />
-                <Select ariaLabel="Pays de départ" value={simDepPays} onChange={setSimDepPays} options={paysOptions} />
+      {tab === 'simulateur' && (() => {
+        const defaut = Number(params.defaut);
+        const taux = simResultat;
+        const reduit = taux !== null && taux < defaut;
+        const exemple = 20;
+        const nomPays = (code: string) => (code ? paysOptions.find((o) => o.value === code)?.label ?? code : 'Partout');
+        return (
+        <div className="chart-card sim">
+          <div className="sim-tete">
+            <h3>Quel taux paierait ce membre ?</h3>
+            <p className="chart-sub">Le taux que le serveur appliquerait aujourd'hui à ce membre, sur ce trajet.</p>
+          </div>
+          <div className="sim-corps">
+            <div className="sim-saisie">
+              <div className="champ-frais">
+                <span>Membre</span>
+                {simMembre ? (
+                  <div className="simc-membre">
+                    <Avatar src={simMembre.photo_url} nom={nomComplet(simMembre.prenom, simMembre.nom)} size={40} />
+                    <div className="simc-membre-texte">
+                      <strong>{nomComplet(simMembre.prenom, simMembre.nom) || simMembre.email}</strong>
+                      <span>{simMembre.email}</span>
+                    </div>
+                    <button type="button" className="btn btn-sm" onClick={() => { setSimUser(''); setSimRecherche(''); }}>Changer</button>
+                  </div>
+                ) : (
+                  <div className="simc-recherche">
+                    <input type="search" value={simRecherche} autoFocus onChange={(e) => setSimRecherche(e.target.value)}
+                           placeholder="Nom, prénom ou e-mail…" aria-label="Rechercher un membre" />
+                    {simComptes.length > 0 && (
+                      <ul className="simc-resultats">
+                        {simComptes.map((c) => (
+                          <li key={c.id}>
+                            <button type="button" onClick={() => setSimUser(c.id)}>
+                              <Avatar src={c.photo_url} nom={nomComplet(c.prenom, c.nom)} size={30} />
+                              <span className="simc-membre-texte"><strong>{nomComplet(c.prenom, c.nom) || c.email}</strong><span>{c.email}</span></span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {simRecherche.trim() && simComptes.length === 0 && <p className="hint">Aucun membre trouvé.</p>}
+                  </div>
+                )}
               </div>
-              <div className="lieu-row" style={{ marginTop: 8 }}>
-                <input type="text" list="villes-arr" value={simArrVille} onChange={(e) => setSimArrVille(e.target.value)} placeholder="Ville d'arrivée" />
-                <Select ariaLabel="Pays d'arrivée" value={simArrPays} onChange={setSimArrPays} options={paysOptions} />
+
+              <div className="champ-frais">
+                <span>Trajet <i className="simc-facultatif">facultatif, vide = partout</i></span>
+                <div className="simc-trajet">
+                  <div className="simc-lieu">
+                    <Select ariaLabel="Pays de départ" value={simDepPays} onChange={setSimDepPays} options={paysOptions} />
+                    <input type="text" list="sim-villes-dep" value={simDepVille} onChange={(e) => setSimDepVille(e.target.value)} placeholder="Ville de départ" />
+                    <datalist id="sim-villes-dep">{villesPour(simDepPays).map((v) => <option key={v} value={v} />)}</datalist>
+                  </div>
+                  <button type="button" className="sim-inverser" title="Inverser le trajet" aria-label="Inverser le trajet"
+                          onClick={() => { setSimDepPays(simArrPays); setSimArrPays(simDepPays); setSimDepVille(simArrVille); setSimArrVille(simDepVille); }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M17 3l4 4-4 4" /><path d="M3 7h18" /><path d="M7 21l-4-4 4-4" /><path d="M21 17H3" /></svg>
+                  </button>
+                  <div className="simc-lieu">
+                    <Select ariaLabel="Pays d'arrivée" value={simArrPays} onChange={setSimArrPays} options={paysOptions} />
+                    <input type="text" list="sim-villes-arr" value={simArrVille} onChange={(e) => setSimArrVille(e.target.value)} placeholder="Ville d'arrivée" />
+                    <datalist id="sim-villes-arr">{villesPour(simArrPays).map((v) => <option key={v} value={v} />)}</datalist>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="action-row" style={{ alignItems: 'center' }}>
-            <button className="btn" onClick={simuler}>Simuler</button>
-            {simResultat !== null && (
-              <span className="sim-result">
-                Taux appliqué : <strong>{pct(simResultat)}</strong>
-                {!params.actif && ' (commissions personnalisées inactives : 10 % pour tous)'}
-              </span>
-            )}
+
+            <div className={`sim-recu simc-recu ${reduit ? 'is-reduit' : ''}`}>
+              {!params.actif && <p className="rg-note" style={{ margin: '0 0 12px' }}>Commissions personnalisées inactives : 10 % pour tous.</p>}
+              {simErreur && <p className="page-error">{simErreur}</p>}
+              {!simUser && !simErreur && (
+                <div className="simc-vide">
+                  <span className="simc-vide-icone" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 4-6 8-6s8 2 8 6" /></svg>
+                  </span>
+                  <p>Choisissez un membre pour voir son taux.</p>
+                </div>
+              )}
+              {simUser && taux !== null && !simErreur && (
+                <>
+                  <span className="sim-recu-etiquette">Taux appliqué{simCharge ? '…' : ''}</span>
+                  <strong className="sim-recu-total">{pct(taux)}</strong>
+                  <span className={`badge ${reduit ? 'badge-green' : 'badge-muted'}`} style={{ alignSelf: 'flex-start' }}>
+                    {reduit ? `Réduit, au lieu de ${pct(defaut)}` : 'Taux par défaut'}
+                  </span>
+                  <div className="simc-jauge" aria-hidden="true"><span style={{ width: `${defaut > 0 ? Math.min(100, (taux / defaut) * 100) : 0}%` }} /></div>
+                  <ul className="sim-lignes" style={{ marginTop: 8 }}>
+                    <li>Sur un transport de {exemple} €<span /><b>{(exemple * taux).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</b></li>
+                    {reduit && <li>Économie pour ce membre<span /><b className="simc-gain">− {(exemple * (defaut - taux)).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</b></li>}
+                    <li>Trajet<span /><b>{[simDepVille || nomPays(simDepPays), simArrVille || nomPays(simArrPays)].join(' → ')}</b></li>
+                  </ul>
+                </>
+              )}
+            </div>
           </div>
         </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
