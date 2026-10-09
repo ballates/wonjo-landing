@@ -41,6 +41,7 @@ export const LABELS_ACTIONS: Record<string, string> = {
   valider_kyc: 'a approuvé la vérification d\'identité',
   rejeter_kyc: 'a rejeté la vérification d\'identité',
   traiter_signalement: 'a traité un signalement',
+  traiter_signal_securite: 'a traité un signal de sécurité',
   changer_role_admin: 'a changé le rôle d\'un administrateur',
   desactiver_admin: 'a désactivé un administrateur',
   reactiver_admin: 'a réactivé un administrateur',

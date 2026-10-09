@@ -2,7 +2,7 @@ import { decimales } from '../lib/nombre';
 import { useEffect, useState } from 'react';
 import { Select } from '../components/Select';
 import { supabase } from '../lib/supabase';
-import { StatutBadge } from '../components/Badge';
+import { Badge, StatutBadge } from '../components/Badge';
 import { Avatar } from '../components/Avatar';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
@@ -11,9 +11,9 @@ import { DataTable, type Column } from '../components/DataTable';
 import { ServerTable, type ServerColumn } from '../components/ServerTable';
 import { Modal } from '../components/Modal';
 import { useFicheCompte, VoirFicheButton } from '../components/FicheCompte';
-import { LABELS_NIVEAU, LABELS_PAIEMENT, LABELS_STATUT_COLIS, LABELS_STATUT_KYC, LABELS_STATUT_SIGNALEMENT, casserNom, casserPrenom, dateHeure, depuis, nomComplet } from '../lib/labels';
+import { LABELS_NIVEAU, LABELS_PAIEMENT, LABELS_STATUT_COLIS, LABELS_STATUT_KYC, LABELS_STATUT_SIGNALEMENT, casserNom, casserPrenom, dateHeure, dateSeule, depuis, nomComplet } from '../lib/labels';
 import { useDebounce } from '../lib/useDebounce';
-import type { CompteRecherche, Litige, Signalement } from '../lib/types';
+import type { CompteRecherche, Litige, Signalement, TransactionBloquee } from '../lib/types';
 
 const PAGE_SIZE_COMPTES = 10;
 
@@ -21,7 +21,10 @@ type Tab = 'comptes' | 'signalements' | 'litiges';
 
 export function ModerationPage() {
   const location = useLocation();
-  const ongletDemande = (location.state as { tab?: Tab } | null)?.tab;
+  // [335] ?onglet=litiges : lien de l'e-mail d'arbitrage, qui ne peut pas
+  // transporter d'etat de navigation.
+  const ongletUrl = new URLSearchParams(location.search).get('onglet') as Tab | null;
+  const ongletDemande = (location.state as { tab?: Tab } | null)?.tab ?? ongletUrl ?? undefined;
   const { roles } = useAuth();
   // [301] La finance n'accede qu'aux litiges (pas aux comptes ni aux signalements).
   const moderateur = peutModerer(roles);
@@ -396,6 +399,11 @@ function LitigesTab() {
     { key: 'conteste', label: 'Contesté le', value: (l) => l.conteste_at, filter: 'date', render: (l) => (l.conteste_at ? dateHeure(l.conteste_at) : '-') },
     { key: 'resolutions', label: 'Résolutions en attente', value: (l) => l.resolutions_en_attente },
     {
+      key: 'arbitrage', label: 'Arbitrage', value: (l) => l.arbitrage_demande_at ?? '', render: (l) => l.arbitrage_demande_at
+        ? <Badge tone="danger">Demandé par {l.arbitrage_demande_role === 'expediteur' ? 'l\'expéditeur' : 'le voyageur'}, {depuis(l.arbitrage_demande_at)}</Badge>
+        : l.ouvert_par_wonjo ? <Badge tone="amber">Ouvert par Wonjo</Badge> : <span className="hint">-</span>,
+    },
+    {
       key: 'actions', label: 'Parties', render: (l) => !peutModerer(roles) ? <span className="hint">-</span> : (
         <div className="action-row">
           <button className="btn btn-soft btn-sm" onClick={() => ouvrir(l.expediteur_id)}>Expéditeur</button>
@@ -414,13 +422,164 @@ function LitigesTab() {
   if (!items) return <p className="loading-state">Chargement…</p>;
   return (
     <>
-      <DataTable rows={items} columns={columns} rowKey={(l) => l.id} initialSort={{ key: 'conteste', dir: 'desc' }} emptyText="Aucun litige en cours." />
+      <p className="hint">Les litiges dont une partie a demandé l'arbitrage passent en premier : les fonds sont bloqués et l'app leur annonce une réponse sous 5 jours ouvrés.</p>
+      <DataTable rows={items} columns={columns} rowKey={(l) => l.id} initialSort={{ key: 'arbitrage', dir: 'desc' }} emptyText="Aucun litige en cours." />
+      <DossiersBloques onChange={charger} />
       {modal}
       {aTrancher && (
         <LitigeResolutionModal
           litige={aTrancher}
           onClose={() => setATrancher(null)}
           onDone={() => { setATrancher(null); charger(); }}
+        />
+      )}
+    </>
+  );
+}
+
+// [335] Transactions que les parties ne peuvent pas debloquer seules : une
+// restitution qui n'aboutit pas, un depart ou une arrivee jamais declares.
+// Les conditions sont reverifiees par la base ; ici elles servent a expliquer.
+const LABELS_MOTIF_BLOQUE: Record<TransactionBloquee['motif'], string> = {
+  restitution: 'Restitution en cours',
+  depart_non_declare: 'Départ non déclaré',
+  arrivee_non_declaree: 'Arrivée non déclarée',
+};
+
+function joursDepuis(iso: string | null): number {
+  return iso ? Math.floor((Date.now() - new Date(iso).getTime()) / 86400000) : 0;
+}
+
+type ActionBloque = { dossier: TransactionBloquee; type: 'clore' | 'litige' };
+
+function DossierBloqueModal({ action, onClose, onDone }: { action: ActionBloque; onClose: () => void; onDone: () => void }) {
+  const { dossier, type } = action;
+  const [issue, setIssue] = useState<'colis_rendu' | 'colis_non_rendu' | null>(null);
+  const [motif, setMotif] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const montant = `${decimales(Number(dossier.montant_total), 2)} €`;
+
+  async function confirmer() {
+    const m = motif.trim();
+    if (type === 'clore' && !issue) { setError('Indiquez si le colis a été rendu.'); return; }
+    if (!m) { setError('Le motif est obligatoire.'); return; }
+    setBusy(true);
+    setError(null);
+    const { error: rpcError } = type === 'clore'
+      ? await supabase.rpc('admin_clore_restitution', { p_demande_id: dossier.id, p_issue: issue, p_motif: m })
+      : await supabase.rpc('admin_ouvrir_litige', { p_demande_id: dossier.id, p_motif: m });
+    setBusy(false);
+    if (rpcError) { setError(rpcError.message); return; }
+    onDone();
+  }
+
+  return (
+    <Modal onClose={onClose}>
+      <h2 className="modal-title">{type === 'clore' ? 'Clore la restitution' : 'Ouvrir un litige'}</h2>
+      <div className="modal-body">
+        <p className="hint">Colis : {dossier.description_colis} · {montant} · {LABELS_MOTIF_BLOQUE[dossier.motif]} {dossier.depuis ? `depuis le ${dateSeule(dossier.depuis)}` : ''}</p>
+        {type === 'clore' ? (
+          <>
+            <p className="hint">Photo du voyageur : {dossier.photo_voyageur ? 'oui' : 'non'} · confirmation de l'expéditeur : {dossier.photo_expediteur ? 'oui' : 'non'}. Dans les deux cas l'expéditeur est remboursé et la transaction est close : le choix ci-dessous sert à la trace et au message envoyé aux parties.</p>
+            <div className="segmented" role="radiogroup" aria-label="Issue">
+              <button role="radio" aria-checked={issue === 'colis_rendu'} className={issue === 'colis_rendu' ? 'on' : ''} onClick={() => setIssue('colis_rendu')}>
+                <b>Colis rendu</b>
+                <span>Le colis est revenu à l'expéditeur, mais la restitution n'a pas été confirmée dans l'app.</span>
+              </button>
+              <button role="radio" aria-checked={issue === 'colis_non_rendu'} className={issue === 'colis_non_rendu' ? 'on' : ''} onClick={() => setIssue('colis_non_rendu')}>
+                <b>Restitution impossible</b>
+                <span>Voyageur ou expéditeur injoignable, rendez-vous jamais tenu : la restitution n'aboutira pas.</span>
+              </button>
+            </div>
+          </>
+        ) : (
+          <p className="hint">La transaction passe en litige, fonds bloqués. Les deux parties sont prévenues et peuvent proposer une solution ; sans accord, tranchez ensuite depuis la liste des litiges (le colis étant chez le voyageur, un remboursement passera par une restitution).</p>
+        )}
+        <div className="action-group motif-form">
+          <label htmlFor="motif-bloque">Motif : il sera envoyé aux deux parties dans leur conversation</label>
+          <textarea id="motif-bloque" value={motif} onChange={(e) => setMotif(e.target.value)} placeholder={type === 'clore'
+            ? 'Ex. le voyageur ne répond plus depuis 3 semaines malgré nos relances.'
+            : 'Ex. arrivée prévue le 2 octobre, toujours pas déclarée, le voyageur ne répond pas à l\'expéditeur.'} />
+        </div>
+        {error && <p className="page-error">{error}</p>}
+        <div className="action-row" style={{ justifyContent: 'flex-end' }}>
+          <button className="btn" disabled={busy} onClick={onClose}>Annuler</button>
+          <button className="btn btn-danger" disabled={busy || (type === 'clore' && !issue)} onClick={confirmer}>
+            {busy ? '…' : type === 'clore' ? 'Clore et rembourser l\'expéditeur' : 'Ouvrir le litige'}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+function DossiersBloques({ onChange }: { onChange: () => void }) {
+  const { roles } = useAuth();
+  const [items, setItems] = useState<TransactionBloquee[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [action, setAction] = useState<ActionBloque | null>(null);
+  const { ouvrir, modal } = useFicheCompte();
+
+  function charger() {
+    supabase.rpc('admin_lister_transactions_bloquees').then(({ data, error: rpcError }) => {
+      if (rpcError) { setError(rpcError.message); return; }
+      setItems((data ?? []) as TransactionBloquee[]);
+    });
+  }
+  useEffect(charger, []);
+
+  const columns: Column<TransactionBloquee>[] = [
+    { key: 'motif', filter: 'options', label: 'Situation', value: (d) => LABELS_MOTIF_BLOQUE[d.motif] },
+    {
+      key: 'depuis', label: 'Depuis', value: (d) => d.depuis ?? '', render: (d) => {
+        const j = joursDepuis(d.depuis);
+        const urgent = d.motif === 'restitution' ? j > 14 : true;
+        return <Badge tone={urgent ? 'danger' : 'amber'}>{d.depuis ? `${j} j` : '-'}</Badge>;
+      },
+    },
+    {
+      key: 'signale', label: 'Signalement', value: (d) => d.signale_at ?? '', render: (d) => d.signale_at
+        ? <Badge tone="danger">Signalé par {d.signale_role === 'expediteur' ? 'l\'expéditeur' : 'le voyageur'}, {depuis(d.signale_at)}</Badge>
+        : <span className="hint">-</span>,
+    },
+    { key: 'colis', label: 'Colis', value: (d) => d.description_colis },
+    { key: 'montant', label: 'Montant', value: (d) => Number(d.montant_total), render: (d) => `${decimales(Number(d.montant_total), 2)} €` },
+    {
+      key: 'photos', label: 'Photos de restitution', value: (d) => Number(d.photo_voyageur) + Number(d.photo_expediteur),
+      render: (d) => d.motif !== 'restitution' ? <span className="hint">-</span>
+        : `${d.photo_voyageur ? 'voyageur ✓' : 'voyageur ✗'} · ${d.photo_expediteur ? 'expéditeur ✓' : 'expéditeur ✗'}`,
+    },
+    {
+      key: 'parties', label: 'Parties', render: (d) => !peutModerer(roles) ? <span className="hint">-</span> : (
+        <div className="action-row">
+          <button className="btn btn-soft btn-sm" onClick={() => ouvrir(d.expediteur_id)}>Expéditeur</button>
+          <button className="btn btn-soft btn-sm" onClick={() => ouvrir(d.porteur_id)}>Voyageur</button>
+        </div>
+      ),
+    },
+    ...(peutVoirRevenus(roles) ? [{
+      key: 'agir', label: '', width: 170, render: (d: TransactionBloquee) => (
+        <button className="btn btn-soft btn-sm" onClick={() => setAction({ dossier: d, type: d.motif === 'restitution' ? 'clore' : 'litige' })}>
+          {d.motif === 'restitution' ? 'Clore la restitution' : 'Ouvrir un litige'}
+        </button>
+      ),
+    }] : []),
+  ];
+
+  if (error) return <p className="page-error">{error}</p>;
+  if (!items) return <p className="loading-state">Chargement…</p>;
+  return (
+    <>
+      <p className="section-title" style={{ marginTop: 28 }}>Dossiers bloqués hors litige</p>
+      <p className="hint">Restitutions en cours (urgentes au-delà de 14 jours) et transports dont le départ ou l'arrivée n'est pas déclaré plus de 3 jours après la date prévue, ou dès qu'un membre les signale (l'expéditeur pour un transport en retard, le voyageur pour un colis que l'expéditeur ne vient pas récupérer). À ces stades, l'expéditeur ne peut pas ouvrir de litige lui-même.</p>
+      <DataTable rows={items} columns={columns} rowKey={(d) => d.id} initialSort={{ key: 'signale', dir: 'desc' }} emptyText="Aucun dossier bloqué." />
+      {modal}
+      {action && (
+        <DossierBloqueModal
+          action={action}
+          onClose={() => setAction(null)}
+          onDone={() => { setAction(null); charger(); onChange(); }}
         />
       )}
     </>

@@ -24,6 +24,7 @@ const AdminsPage = page(() => import('./pages/AdminsPage'), 'AdminsPage');
 const JournalPage = page(() => import('./pages/JournalPage'), 'JournalPage');
 const EmailsPage = page(() => import('./pages/EmailsPage'), 'EmailsPage');
 const TarificationPage = page(() => import('./pages/TarificationPage'), 'TarificationPage');
+const SecuritePage = page(() => import('./pages/SecuritePage'), 'SecuritePage');
 
 // Meme regle que le menu (Layout) : une URL tapee a la main (#/admins...)
 // renvoie au tableau de bord au lieu d'afficher une page en erreur. Le
@@ -70,6 +71,7 @@ function Gate() {
               <Route path="kyc" element={<Protege si={peutVoirKyc}><KycPage /></Protege>} />
               <Route path="admins" element={<Protege si={(r) => peutGererAdmins(r) || !!profil?.peut_inviter}><AdminsPage /></Protege>} />
               <Route path="journal" element={<Protege si={peutGererAdmins}><JournalPage /></Protege>} />
+              <Route path="securite" element={<Protege si={peutGererAdmins}><SecuritePage /></Protege>} />
               <Route path="emails" element={<Protege si={peutEnvoyerEmails}><EmailsPage /></Protege>} />
               <Route path="tarification" element={<Protege si={peutGererCorridors}><TarificationPage /></Protege>} />
               <Route path="commissions" element={<Navigate to="/tarification" replace />} />

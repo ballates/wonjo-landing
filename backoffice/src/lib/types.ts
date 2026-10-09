@@ -83,6 +83,29 @@ export interface Litige {
   conteste_at: string | null;
   conteste_par: string | null;
   resolutions_en_attente: number;
+  // [335] Arbitrage demande par une partie, et litige ouvert par Wonjo.
+  arbitrage_demande_at: string | null;
+  arbitrage_demande_role: 'expediteur' | 'porteur' | null;
+  ouvert_par_wonjo: boolean;
+}
+
+// [335] Transactions que les parties ne peuvent pas debloquer seules
+// (admin_lister_transactions_bloquees).
+export interface TransactionBloquee {
+  id: string;
+  motif: 'restitution' | 'depart_non_declare' | 'arrivee_non_declaree';
+  depuis: string | null;
+  statut_colis: string;
+  statut_paiement: string;
+  description_colis: string | null;
+  montant_total: number;
+  expediteur_id: string;
+  porteur_id: string;
+  photo_voyageur: boolean;
+  photo_expediteur: boolean;
+  // [337] Blocage signale par une partie.
+  signale_at: string | null;
+  signale_role: 'expediteur' | 'porteur' | null;
 }
 
 export interface TransactionListe {
