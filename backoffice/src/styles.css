@@ -1781,3 +1781,29 @@ tr.is-modifie td { background: var(--accent-soft); }
 .simc-recu.is-reduit .simc-jauge span { background: var(--green); }
 .simc-gain { color: var(--badge-green-fg) !important; }
 @media (max-width: 560px) { .simc-trajet { grid-template-columns: 1fr; } .simc-trajet .sim-inverser { justify-self: center; transform: rotate(90deg); } }
+.selection-bar-hint { opacity: 0.65; font-weight: 500; }
+.selection-bar-note {
+  flex: 1 1 220px; min-width: 0; height: 34px; padding: 0 12px; font-size: 13px;
+  background: color-mix(in srgb, var(--bg) 12%, transparent) !important; color: var(--bg) !important; border-color: transparent !important;
+}
+.selection-bar-note::placeholder { color: color-mix(in srgb, var(--bg) 60%, transparent); }
+.selection-bar > span:first-child { white-space: nowrap; }
+.selection-bar .action-row { flex-wrap: nowrap; }
+@media (max-width: 860px) { .selection-bar > span:first-child { white-space: normal; } .selection-bar .action-row { flex-wrap: wrap; } }
+
+/* Dossier bloque : clore une restitution / ouvrir un litige */
+.dossier-resume { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--border); }
+.dossier-resume > strong { font-size: 15px; color: var(--ink); }
+.dossier-puces { display: flex; flex-wrap: wrap; gap: 6px; }
+.dossier-puce { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); font-size: 12px; font-weight: 600; color: var(--text); }
+.dossier-puce.is-ok { background: var(--badge-green-bg); color: var(--badge-green-fg); border-color: transparent; }
+.dossier-puce.is-ko { background: var(--badge-danger-bg); color: var(--badge-danger-fg); border-color: transparent; }
+.dossier-effets ul { list-style: none; margin: 0 0 8px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.dossier-effets li { display: flex; gap: 10px; align-items: flex-start; }
+.dossier-effets li > div { display: flex; flex-direction: column; gap: 1px; font-size: 13px; }
+.dossier-effets li b { color: var(--ink); }
+.dossier-effets li span:not(.dossier-effet-ic) { color: var(--muted); font-size: 12.5px; }
+.dossier-effet-ic { flex: none; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 8px; background: var(--accent-soft); color: var(--accent-ink); }
+.dossier-effets li.is-ok .dossier-effet-ic { background: var(--badge-green-bg); color: var(--badge-green-fg); }
+.dossier-effets li.is-ko .dossier-effet-ic { background: var(--badge-danger-bg); color: var(--badge-danger-fg); }
+.section-title .hint { margin-left: 6px; }

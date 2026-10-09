@@ -142,7 +142,7 @@ export function TransactionModal({ demandeId, onClose }: { demandeId: string; on
               <span className="info-row-value">
                 {marge === null ? 'Aucun paiement encaissé : pas de marge.' : (
                   <span className="marge-ligne">
-                    <strong>{decimales(Number(marge.marge_nette), 2)} €</strong>
+                    <strong className={Number(marge.marge_nette) < 0 ? 'texte-perte' : undefined}>{decimales(Number(marge.marge_nette), 2)} €</strong>
                     <span className="marge-calcul">
                       {f.statut_paiement === 'rembourse'
                         ? 'Perte : remboursé, Stripe garde ses frais'

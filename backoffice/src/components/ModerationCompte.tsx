@@ -71,6 +71,9 @@ interface Publication {
   masque_motif: string | null;
 }
 
+// Les deux plus recentes suffisent ici : l'historique complet est dans Transactions.
+const NB_PUBLICATIONS = 2;
+
 export function PublicationsCompte({ userId }: { userId: string }) {
   const [items, setItems] = useState<Publication[] | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -101,13 +104,16 @@ export function PublicationsCompte({ userId }: { userId: string }) {
 
   return (
     <div>
-      <p className="section-title">Publications <span className="hint">: trajets et demandes de colis</span></p>
+      <p className="section-title">
+        Dernières publications
+        {items && items.length > NB_PUBLICATIONS && <span className="hint">{NB_PUBLICATIONS} sur {items.length}</span>}
+      </p>
       {erreur && <p className="page-error">{erreur}</p>}
       {items === null && <p className="hint">Chargement…</p>}
       {items && items.length === 0 && <p className="hint">Aucune publication.</p>}
       {items && items.length > 0 && (
         <ul className="publications-admin">
-          {items.map((p) => (
+          {items.slice(0, NB_PUBLICATIONS).map((p) => (
             <li key={p.id} className={p.masque_at ? 'is-masquee' : ''}>
               <div>
                 <strong>{p.type === 'annonce' ? 'Trajet' : 'Colis'} · {p.trajet || '-'}</strong>

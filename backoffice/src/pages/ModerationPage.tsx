@@ -552,46 +552,87 @@ function DossierBloqueModal({ action, onClose, onDone }: { action: ActionBloque;
     onDone();
   }
 
+  const jours = joursDepuis(dossier.depuis);
+  const Coche = ({ ok }: { ok: boolean }) => (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {ok ? <path d="M20 6 9 17l-5-5" /> : <path d="M18 6 6 18M6 6l12 12" />}
+    </svg>
+  );
+
   return (
     <Modal onClose={onClose}>
       <h2 className="modal-title">{type === 'clore' ? 'Clore la restitution' : 'Ouvrir un litige'}</h2>
       <div className="modal-body">
-        <p className="hint">Colis : {dossier.description_colis} · {montant} · {LABELS_MOTIF_BLOQUE[dossier.motif]} {dossier.depuis ? `depuis le ${dateSeule(dossier.depuis)}` : ''}</p>
+        <div className="dossier-resume">
+          <strong>{dossier.description_colis || 'Colis'}</strong>
+          <div className="dossier-puces">
+            <span className="dossier-puce">{montant}</span>
+            <span className="dossier-puce">
+              {LABELS_MOTIF_BLOQUE[dossier.motif]}{dossier.depuis ? ` depuis le ${dateSeule(dossier.depuis)} · ${jours} j` : ''}
+            </span>
+            {type === 'clore' && (
+              <>
+                <span className={`dossier-puce ${dossier.photo_voyageur ? 'is-ok' : 'is-ko'}`}><Coche ok={!!dossier.photo_voyageur} /> Photo du voyageur</span>
+                <span className={`dossier-puce ${dossier.photo_expediteur ? 'is-ok' : 'is-ko'}`}><Coche ok={!!dossier.photo_expediteur} /> Confirmation de l'expéditeur</span>
+              </>
+            )}
+          </div>
+        </div>
+
         {type === 'clore' ? (
           <>
-            <p className="hint">Photo du voyageur : {dossier.photo_voyageur ? 'oui' : 'non'} · confirmation de l'expéditeur : {dossier.photo_expediteur ? 'oui' : 'non'}.</p>
-            <div className="signalement-resume">
-              <b>Dans les deux cas, voici ce qui se passe</b>
-              <span>La transaction est annulée et l'expéditeur est remboursé de {montant} : Wonjo demande le remboursement à Stripe aussitôt (un contrôle automatique le refait chaque heure si besoin). Le délai bancaire de quelques jours est celui de Stripe.</span>
-              <span>Le voyageur n'est pas payé. Les deux parties reçoivent votre motif dans leur conversation.</span>
-              <span>Wonjo ne récupère pas le colis : s'il n'est pas revenu, c'est aux parties de le régler entre elles, hors plateforme.</span>
-              <span>Le choix ci-dessous ne change donc pas l'argent : il sert à la trace et au message envoyé aux parties.</span>
+            <div className="dossier-effets">
+              <p className="section-title">Ce qui va se passer</p>
+              <ul>
+                <li className="is-ok"><span className="dossier-effet-ic"><Coche ok /></span>
+                  <div><b>L'expéditeur est remboursé de {montant}</b><span>Demande à Stripe immédiate, quelques jours de délai bancaire.</span></div></li>
+                <li className="is-ko"><span className="dossier-effet-ic"><Coche ok={false} /></span>
+                  <div><b>Le voyageur n'est pas payé</b><span>La transaction est annulée.</span></div></li>
+                <li><span className="dossier-effet-ic">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                </span>
+                  <div><b>Votre message part aux deux parties</b><span>Dans leur conversation.</span></div></li>
+              </ul>
+              <p className="hint">Wonjo ne récupère pas le colis : s'il n'est pas revenu, les parties le règlent entre elles.</p>
             </div>
-            <div className="segmented" role="radiogroup" aria-label="Issue">
-              <button role="radio" aria-checked={issue === 'colis_rendu'} className={issue === 'colis_rendu' ? 'on' : ''} onClick={() => setIssue('colis_rendu')}>
-                <b>Colis rendu</b>
-                <span>Le colis est bien revenu à l'expéditeur, mais la restitution n'a pas été confirmée dans l'app. Le message dit que la restitution est close.</span>
-              </button>
-              <button role="radio" aria-checked={issue === 'colis_non_rendu'} className={issue === 'colis_non_rendu' ? 'on' : ''} onClick={() => setIssue('colis_non_rendu')}>
-                <b>Restitution impossible</b>
-                <span>Voyageur ou expéditeur injoignable, rendez-vous jamais tenu : le colis n'est pas revenu. Le message dit que la restitution n'a pas pu aboutir.</span>
-              </button>
+
+            <div>
+              <p className="section-title">Le colis est-il revenu ? <span className="hint">ne change rien à l'argent, seulement au message</span></p>
+              <div className="segmented" role="radiogroup" aria-label="Issue">
+                <button role="radio" aria-checked={issue === 'colis_rendu'} className={issue === 'colis_rendu' ? 'on' : ''} onClick={() => setIssue('colis_rendu')}>
+                  <b>Oui, il est rendu</b>
+                  <span>Revenu à l'expéditeur, sans confirmation dans l'app.</span>
+                </button>
+                <button role="radio" aria-checked={issue === 'colis_non_rendu'} className={issue === 'colis_non_rendu' ? 'on' : ''} onClick={() => setIssue('colis_non_rendu')}>
+                  <b>Non, restitution impossible</b>
+                  <span>Partie injoignable ou rendez-vous jamais tenu.</span>
+                </button>
+              </div>
             </div>
           </>
         ) : (
-          <p className="hint">La transaction passe en litige, fonds bloqués. Les deux parties sont prévenues et peuvent proposer une solution ; sans accord, tranchez ensuite depuis la liste des litiges (le colis étant chez le voyageur, un remboursement passera par une restitution).</p>
+          <div className="dossier-effets">
+            <p className="section-title">Ce qui va se passer</p>
+            <ul>
+              <li><span className="dossier-effet-ic"><Coche ok={false} /></span>
+                <div><b>Fonds bloqués, transaction en litige</b><span>Les deux parties sont prévenues et peuvent proposer une solution.</span></div></li>
+              <li><span className="dossier-effet-ic"><Coche ok /></span>
+                <div><b>Sans accord, vous tranchez</b><span>Depuis la liste des litiges ; un remboursement passera par une restitution.</span></div></li>
+            </ul>
+          </div>
         )}
-        <div className="action-group motif-form">
-          <label htmlFor="motif-bloque">Motif : il sera envoyé aux deux parties dans leur conversation</label>
+
+        <div className="motif-form">
+          <label htmlFor="motif-bloque">Message aux deux parties</label>
           <textarea id="motif-bloque" value={motif} onChange={(e) => setMotif(e.target.value)} placeholder={type === 'clore'
             ? 'Ex. le voyageur ne répond plus depuis 3 semaines malgré nos relances.'
-            : 'Ex. arrivée prévue le 2 octobre, toujours pas déclarée, le voyageur ne répond pas à l\'expéditeur.'} />
+            : 'Ex. arrivée prévue le 2 octobre, toujours pas déclarée, le voyageur ne répond pas.'} />
         </div>
         {error && <p className="page-error">{error}</p>}
         <div className="action-row" style={{ justifyContent: 'flex-end' }}>
           <button className="btn" disabled={busy} onClick={onClose}>Annuler</button>
-          <button className="btn btn-danger" disabled={busy || (type === 'clore' && !issue)} onClick={confirmer}>
-            {busy ? '…' : type === 'clore' ? 'Clore et rembourser l\'expéditeur' : 'Ouvrir le litige'}
+          <button className="btn btn-danger" disabled={busy || (type === 'clore' && !issue) || !motif.trim()} onClick={confirmer}>
+            {busy ? '…' : type === 'clore' ? `Clore et rembourser ${montant}` : 'Ouvrir le litige'}
           </button>
         </div>
       </div>

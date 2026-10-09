@@ -23,10 +23,12 @@ export function SecuritePage({ integre = false }: { integre?: boolean }) {
   const [transaction, setTransaction] = useState<string | null>(null);
   const [selection, setSelection] = useState<Set<string>>(new Set());
   const [retrait, setRetrait] = useState(false);
+  const [noteRetrait, setNoteRetrait] = useState('');
   const { ouvrir, modal } = useFicheCompte();
 
   const charger = useCallback(() => {
     setSignaux(null);
+    setNoteRetrait('');
     setError(null);
     setSelection(new Set());
     supabase.rpc('admin_lister_signaux_securite', { p_traites: vue === 'traites' }).then(({ data, error: e }) => {
@@ -40,11 +42,21 @@ export function SecuritePage({ integre = false }: { integre?: boolean }) {
 
   async function retirerSelection() {
     setRetrait(true);
-    const { error: e } = await supabase.rpc('admin_masquer_signaux_securite', { p_ids: [...selection] });
+    const { error: e } = vue === 'traites'
+      ? await supabase.rpc('admin_masquer_signaux_securite', { p_ids: [...selection] })
+      : await supabase.rpc('admin_retirer_signaux_ouverts', { p_ids: [...selection], p_note: noteRetrait.trim() });
     setRetrait(false);
     if (e) { setError(e.message); return; }
+    setNoteRetrait('');
     charger();
   }
+
+  // Les alertes ne se retirent pas en lot (357) : elles ne sont jamais cochees.
+  const choisir = (ids: Set<string>) => {
+    if (vue === 'traites') { setSelection(ids); return; }
+    const alertes = new Set((signaux ?? []).filter((x) => x.gravite === 'alerte').map((x) => x.id));
+    setSelection(new Set([...ids].filter((id) => !alertes.has(id))));
+  };
 
   function ouvrirCible(s: SignalSecurite) {
     const c = cibleSignal(s);
@@ -139,18 +151,23 @@ export function SecuritePage({ integre = false }: { integre?: boolean }) {
           rowKey={(s) => s.id}
           initialSort={{ key: 'date', dir: 'desc' }}
           pageSize={10}
-          {...(vue === 'traites' ? { selected: selection, onSelectedChange: setSelection } : {})}
+          selected={selection}
+          onSelectedChange={choisir}
           emptyText={vue === 'ouverts' ? 'Aucun signal à traiter. Les contrôles n\'ont rien relevé.' : 'Aucun signal traité.'}
         />
       )}
 
-      {vue === 'traites' && selection.size > 0 && (
+      {selection.size > 0 && (
         <div className="selection-bar">
-          <span>{selection.size} signal(aux) sélectionné(s)</span>
+          <span>{selection.size} signal(aux) sélectionné(s){vue === 'ouverts' && <span className="selection-bar-hint"> · alertes exclues</span>}</span>
+          {vue === 'ouverts' && (
+            <input type="text" className="selection-bar-note" value={noteRetrait} onChange={(e) => setNoteRetrait(e.target.value)}
+                   placeholder="Note (ex. migrations du jour, rien d'anormal)" aria-label="Note de retrait" />
+          )}
           <div className="action-row">
             <button className="btn btn-sm" disabled={retrait} onClick={() => setSelection(new Set())}>Tout désélectionner</button>
-            <button className="btn btn-danger btn-sm" disabled={retrait} onClick={retirerSelection}>
-              {retrait ? '…' : 'Retirer de l\'historique'}
+            <button className="btn btn-danger btn-sm" disabled={retrait || (vue === 'ouverts' && noteRetrait.trim().length < 3)} onClick={retirerSelection}>
+              {retrait ? '…' : vue === 'ouverts' ? 'Traiter et retirer' : 'Retirer de l\'historique'}
             </button>
           </div>
         </div>

@@ -103,7 +103,7 @@ export function TransactionsPage() {
         const m = marges[t.id];
         if (!m) return <span className="hint">-</span>;
         const titre = `Commission ${decimales(Number(m.commission), 2)} € + valeur déclarée ${decimales(Number(m.protection), 2)} € - frais Stripe ${decimales(Number(m.stripe), 2)} €`;
-        return <span title={titre}>{decimales(Number(m.marge_nette), 2)} €</span>;
+        return <span title={titre} className={Number(m.marge_nette) < 0 ? 'texte-perte' : undefined}>{decimales(Number(m.marge_nette), 2)} €</span>;
       },
     } as ServerColumn<TransactionListe>] : []),
     {
