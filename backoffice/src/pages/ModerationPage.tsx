@@ -35,7 +35,7 @@ export function ModerationPage() {
       <div className="page-head">
         <div>
           <h1>Signalements & litiges</h1>
-          <p className="page-sub">Consulter un compte, le bloquer ou le débloquer, traiter les signalements et les litiges.</p>
+          <p className="page-sub">Comptes, signalements et litiges.</p>
         </div>
       </div>
       <div className="tabs">
@@ -244,13 +244,7 @@ function SignalementsTab() {
   useEffect(load, [statut]); // eslint-disable-line react-hooks/exhaustive-deps
   const { ouvrir, modal } = useFicheCompte(load);
 
-  async function traiter(id: string, nouveauStatut: string) {
-    const note = window.prompt('Note (facultative) :');
-    if (note === null) return;
-    const { error: rpcError } = await supabase.rpc('admin_traiter_signalement', { p_id: id, p_statut: nouveauStatut, p_note: note || null });
-    if (rpcError) { alert(rpcError.message); return; }
-    load();
-  }
+  const [aTraiter, setATraiter] = useState<{ signalement: Signalement; decision: DecisionSignalement } | null>(null);
 
   const columns: Column<Signalement>[] = [
     { key: 'raison', filter: 'options', label: 'Raison', value: (s) => s.raison },
@@ -261,11 +255,13 @@ function SignalementsTab() {
       key: 'actions', label: 'Actions', render: (s) => (
         <div className="action-row">
           <VoirFicheButton onClick={() => ouvrir(s.cible_id)} />
-          {s.statut === 'nouveau' && <button className="btn btn-sm" onClick={() => traiter(s.id, 'en_cours')}>Prendre en charge</button>}
+          {s.statut === 'nouveau' && (
+            <button className="btn btn-sm" title="Vous le suivez : il passe dans la file « En cours »" onClick={() => setATraiter({ signalement: s, decision: 'en_cours' })}>Prendre en charge</button>
+          )}
           {s.statut !== 'clos_sans_suite' && s.statut !== 'clos_action_prise' && (
             <>
-              <button className="btn btn-sm btn-soft" onClick={() => traiter(s.id, 'clos_sans_suite')}>Clore sans suite</button>
-              <button className="btn btn-sm btn-soft-success" onClick={() => traiter(s.id, 'clos_action_prise')}>Clore - action prise</button>
+              <button className="btn btn-sm btn-soft" title="Le signalement ne demande aucune intervention" onClick={() => setATraiter({ signalement: s, decision: 'clos_sans_suite' })}>Rien à faire</button>
+              <button className="btn btn-sm btn-soft-success" title="Vous avez agi (compte bloqué, contact, avertissement…) : le dossier est clos" onClick={() => setATraiter({ signalement: s, decision: 'clos_action_prise' })}>Action menée</button>
             </>
           )}
         </div>
@@ -301,7 +297,89 @@ function SignalementsTab() {
         />
       )}
       {modal}
+      {aTraiter && (
+        <SignalementDecisionModal
+          signalement={aTraiter.signalement}
+          decision={aTraiter.decision}
+          onClose={() => setATraiter(null)}
+          onDone={() => { setATraiter(null); load(); }}
+        />
+      )}
     </>
+  );
+}
+
+// Traitement d'un signalement : remplace window.prompt, dont la boite native du
+// navigateur ne disait pas ce que chaque bouton signifie. Cloturer est un
+// classement INTERNE : personne n'est prevenu, aucun compte n'est bloque (le
+// blocage se fait depuis la fiche du compte), la note n'est lisible que des admins.
+type DecisionSignalement = 'en_cours' | 'clos_sans_suite' | 'clos_action_prise';
+
+const TEXTES_DECISION: Record<DecisionSignalement, { titre: string; explication: string; bouton: string; placeholder: string; ton: string }> = {
+  en_cours: {
+    titre: 'Prendre en charge ce signalement',
+    explication: 'Vous indiquez que vous vous en occupez. Le signalement passe dans la file « En cours » et reste ouvert tant que vous ne l\'avez pas clos.',
+    bouton: 'Prendre en charge',
+    placeholder: 'Ex. j\'écris au membre signalé avant de décider.',
+    ton: 'btn-primary',
+  },
+  clos_sans_suite: {
+    titre: 'Clore : rien à faire',
+    explication: 'Le signalement ne justifie aucune intervention (infondé, déjà réglé, malentendu). Le dossier est classé.',
+    bouton: 'Clore sans suite',
+    placeholder: 'Ex. conflit personnel entre deux membres, aucune règle enfreinte.',
+    ton: 'btn-primary',
+  },
+  clos_action_prise: {
+    titre: 'Clore : action menée',
+    explication: 'Vous avez agi à la suite de ce signalement (compte bloqué, avertissement, contact avec le membre…). Le dossier est classé avec la mention « action prise ».',
+    bouton: 'Clore : action menée',
+    placeholder: 'Ex. compte bloqué 30 jours après deux signalements concordants.',
+    ton: 'btn-primary',
+  },
+};
+
+function SignalementDecisionModal({ signalement, decision, onClose, onDone }: {
+  signalement: Signalement; decision: DecisionSignalement; onClose: () => void; onDone: () => void;
+}) {
+  const [note, setNote] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const t = TEXTES_DECISION[decision];
+
+  async function confirmer() {
+    setBusy(true);
+    setError(null);
+    const { error: rpcError } = await supabase.rpc('admin_traiter_signalement', {
+      p_id: signalement.id, p_statut: decision, p_note: note.trim() || null,
+    });
+    setBusy(false);
+    if (rpcError) { setError(rpcError.message); return; }
+    onDone();
+  }
+
+  return (
+    <Modal onClose={onClose} narrow>
+      <h2 className="modal-title">{t.titre}</h2>
+      <div className="modal-body">
+        <div className="signalement-resume">
+          <b>{signalement.raison}</b>
+          {signalement.details && <span>{signalement.details}</span>}
+          <span className="hint">Reçu le {dateHeure(signalement.created_at)}</span>
+        </div>
+        <p className="hint">{t.explication}</p>
+        <p className="hint">Classement interne : ni le membre signalé ni la personne qui a signalé ne sont prévenus, et aucun compte n'est bloqué. Pour bloquer un compte, ouvrez sa fiche.</p>
+        <div className="action-group motif-form">
+          <label htmlFor="note-signalement">Note interne (facultative)</label>
+          <textarea id="note-signalement" value={note} onChange={(e) => setNote(e.target.value)} placeholder={t.placeholder} />
+        </div>
+        {error && <p className="page-error">{error}</p>}
+        <div className="action-row" style={{ justifyContent: 'flex-end' }}>
+          <button className="btn" disabled={busy} onClick={onClose}>Annuler</button>
+          <button className={`btn ${t.ton}`} disabled={busy} onClick={confirmer}>{busy ? '…' : t.bouton}</button>
+        </div>
+      </div>
+    </Modal>
   );
 }
 
@@ -422,7 +500,7 @@ function LitigesTab() {
   if (!items) return <p className="loading-state">Chargement…</p>;
   return (
     <>
-      <p className="hint">Les litiges dont une partie a demandé l'arbitrage passent en premier : les fonds sont bloqués et l'app leur annonce une réponse sous 5 jours ouvrés.</p>
+      <p className="hint">Arbitrages demandés en premier : réponse promise sous 5 jours ouvrés.</p>
       <DataTable rows={items} columns={columns} rowKey={(l) => l.id} initialSort={{ key: 'arbitrage', dir: 'desc' }} emptyText="Aucun litige en cours." />
       <DossiersBloques onChange={charger} />
       {modal}
@@ -481,15 +559,22 @@ function DossierBloqueModal({ action, onClose, onDone }: { action: ActionBloque;
         <p className="hint">Colis : {dossier.description_colis} · {montant} · {LABELS_MOTIF_BLOQUE[dossier.motif]} {dossier.depuis ? `depuis le ${dateSeule(dossier.depuis)}` : ''}</p>
         {type === 'clore' ? (
           <>
-            <p className="hint">Photo du voyageur : {dossier.photo_voyageur ? 'oui' : 'non'} · confirmation de l'expéditeur : {dossier.photo_expediteur ? 'oui' : 'non'}. Dans les deux cas l'expéditeur est remboursé et la transaction est close : le choix ci-dessous sert à la trace et au message envoyé aux parties.</p>
+            <p className="hint">Photo du voyageur : {dossier.photo_voyageur ? 'oui' : 'non'} · confirmation de l'expéditeur : {dossier.photo_expediteur ? 'oui' : 'non'}.</p>
+            <div className="signalement-resume">
+              <b>Dans les deux cas, voici ce qui se passe</b>
+              <span>La transaction est annulée et l'expéditeur est remboursé de {montant} : Wonjo demande le remboursement à Stripe aussitôt (un contrôle automatique le refait chaque heure si besoin). Le délai bancaire de quelques jours est celui de Stripe.</span>
+              <span>Le voyageur n'est pas payé. Les deux parties reçoivent votre motif dans leur conversation.</span>
+              <span>Wonjo ne récupère pas le colis : s'il n'est pas revenu, c'est aux parties de le régler entre elles, hors plateforme.</span>
+              <span>Le choix ci-dessous ne change donc pas l'argent : il sert à la trace et au message envoyé aux parties.</span>
+            </div>
             <div className="segmented" role="radiogroup" aria-label="Issue">
               <button role="radio" aria-checked={issue === 'colis_rendu'} className={issue === 'colis_rendu' ? 'on' : ''} onClick={() => setIssue('colis_rendu')}>
                 <b>Colis rendu</b>
-                <span>Le colis est revenu à l'expéditeur, mais la restitution n'a pas été confirmée dans l'app.</span>
+                <span>Le colis est bien revenu à l'expéditeur, mais la restitution n'a pas été confirmée dans l'app. Le message dit que la restitution est close.</span>
               </button>
               <button role="radio" aria-checked={issue === 'colis_non_rendu'} className={issue === 'colis_non_rendu' ? 'on' : ''} onClick={() => setIssue('colis_non_rendu')}>
                 <b>Restitution impossible</b>
-                <span>Voyageur ou expéditeur injoignable, rendez-vous jamais tenu : la restitution n'aboutira pas.</span>
+                <span>Voyageur ou expéditeur injoignable, rendez-vous jamais tenu : le colis n'est pas revenu. Le message dit que la restitution n'a pas pu aboutir.</span>
               </button>
             </div>
           </>
@@ -572,7 +657,7 @@ function DossiersBloques({ onChange }: { onChange: () => void }) {
   return (
     <>
       <p className="section-title" style={{ marginTop: 28 }}>Dossiers bloqués hors litige</p>
-      <p className="hint">Restitutions en cours (urgentes au-delà de 14 jours) et transports dont le départ ou l'arrivée n'est pas déclaré plus de 3 jours après la date prévue, ou dès qu'un membre les signale (l'expéditeur pour un transport en retard, le voyageur pour un colis que l'expéditeur ne vient pas récupérer). À ces stades, l'expéditeur ne peut pas ouvrir de litige lui-même.</p>
+      <p className="hint">Restitutions en cours et transports en retard, ou signalés par un membre.</p>
       <DataTable rows={items} columns={columns} rowKey={(d) => d.id} initialSort={{ key: 'signale', dir: 'desc' }} emptyText="Aucun dossier bloqué." />
       {modal}
       {action && (

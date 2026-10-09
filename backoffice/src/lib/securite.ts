@@ -276,3 +276,50 @@ export function cibleSignal(s: SignalSecurite): { kind: 'compte' | 'transaction'
   if (typeof d.admin_id === 'string') return { kind: 'compte', id: d.admin_id };
   return null;
 }
+
+// Titre court et accentue par type. Les titres du serveur sont ceux d'un
+// journal (sans accents, parfois longs) : on affiche celui-ci a la place.
+const TITRES: Record<string, string> = {
+  argent_incoherent: 'Argent et colis incohérents',
+  escrow_sans_stripe: 'Fonds détenus sans paiement Stripe',
+  livre_sans_preuve: 'Livraison sans aucune preuve',
+  identite_sans_kyc: 'Badge vérifié sans identité approuvée',
+  telephone_incoherent: 'Téléphone vérifié sans badge',
+  garde_desactivee: 'Protection de la base coupée',
+  admin_sans_trace: 'Administrateur sans invitation',
+  fonds_sous_contestation: 'Fonds libérés sous contestation',
+  compteurs_hors_norme: 'Compteurs de réputation trop élevés',
+  droits_modifies: 'Configuration modifiée',
+  ip_proche_plafond: 'Adresse IP proche d\'un plafond',
+  rafale_inscriptions: 'Rafale d\'inscriptions',
+  refus_en_rafale: 'Appels refusés en rafale',
+  lectures_massives: 'Lectures de données en masse',
+  sondage_admin: 'Fonctions d\'administration sondées',
+  fonction_refusee: 'Appel refusé sur une fonction',
+  connexions_echouees: 'Échecs de connexion en série',
+  connexion_suspecte: 'Connexion suspecte après des échecs',
+  erreurs_serveur: 'Erreurs serveur',
+  erreurs_base: 'Requêtes refusées par la base',
+  auth_en_rafale: 'Inscriptions ou réinitialisations en rafale',
+  collecte_arretee: 'Collecte des logs arrêtée',
+  codes_qr_epuises: 'Codes QR épuisés',
+};
+
+// Pour « configuration modifiee », le serveur precise ce qui a bouge dans son titre.
+const CHANGEMENTS: Array<[RegExp, string]> = [
+  [/droits d.execution/i, 'Droits d\'exécution des fonctions modifiés'],
+  [/taches planifiees/i, 'Tâches planifiées modifiées'],
+  [/policies|politiques/i, 'Règles d\'accès aux données modifiées'],
+  [/triggers|gardes/i, 'Protections de la base modifiées'],
+  [/fonctions/i, 'Fonctions critiques modifiées'],
+  [/buckets|stockage/i, 'Stockage de fichiers modifié'],
+  [/admin/i, 'Administrateurs modifiés'],
+];
+
+export function titreSignal(s: SignalSecurite): string {
+  if (s.type === 'droits_modifies') {
+    const trouve = CHANGEMENTS.find(([re]) => re.test(s.titre));
+    if (trouve) return trouve[1];
+  }
+  return TITRES[s.type] ?? s.titre;
+}

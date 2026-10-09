@@ -299,7 +299,7 @@ export function CommissionsSection() {
           <div>
             <p className="insight-oneline">
               <strong>Double validation : </strong>
-              vous êtes seul super admin, invitez-en un second depuis Administration, sinon vos baisses de commission resteront en attente.
+              invitez un second super admin (Administration), sinon vos baisses restent en attente.
             </p>
           </div>
         </div>
@@ -327,7 +327,7 @@ export function CommissionsSection() {
       {tab === 'aValider' && (
         nbEnAttente === 0 ? <p className="empty-state">Rien à valider pour le moment.</p> : (
         <div className="panel pending-panel">
-          <p className="chart-sub">Ces changements n'ont aucun effet tant qu'un autre super admin ne les a pas approuvés.</p>
+          <p className="chart-sub">Sans effet tant qu'un autre super admin ne les a pas approuvés.</p>
           <ul className="pending-list">
             {changements.map((c) => (
               <li key={c.id}>
@@ -378,8 +378,8 @@ export function CommissionsSection() {
               <h3>Commissions personnalisées : {params.actif ? 'actives' : 'inactives'}</h3>
               <p className="chart-sub">
                 {params.actif
-                  ? 'Les règles s\'appliquent aux nouvelles demandes. Une demande garde toujours le taux calculé à sa création.'
-                  : <>Toutes les demandes sont à 10 % tant que c'est inactif.<br />Dès l'activation, l'app affiche instantanément le taux réel, sans reconnexion ni rechargement.</>}
+                  ? 'Les règles s\'appliquent aux nouvelles demandes ; chaque demande garde son taux.'
+                  : <>Toutes les demandes sont à 10 % tant que c'est inactif.<br />L'app affiche le vrai taux dès l'activation.</>}
               </p>
             </div>
             <button className={`btn ${params.actif ? 'btn-danger-outline' : 'btn-primary'}`} disabled={busy} onClick={basculer}>
@@ -389,7 +389,7 @@ export function CommissionsSection() {
 
           <div className="panel">
             <h3>Taux par défaut</h3>
-            <p className="chart-sub">S'applique par défaut à tout le monde (sauf règle plus avantageuse) ; une baisse doit être validée par un autre super admin, une hausse s'applique tout de suite. Dans les deux cas, l'app se met à jour instantanément.</p>
+            <p className="chart-sub">Taux de base, sauf règle plus avantageuse. Une baisse doit être validée par un autre super admin.</p>
             <div className="inline-form">
               <div className="suffix-input">
                 <input type="text" inputMode="decimal" value={defautSaisi} onChange={(e) => setDefautSaisi(e.target.value)} aria-label="Taux par défaut" />
@@ -488,7 +488,7 @@ export function CommissionsSection() {
 
           <div className="panel">
             <h3>Toutes les règles</h3>
-            <p className="chart-sub">Désactiver une règle ne change pas les demandes déjà créées, qui gardent leur taux.</p>
+            <p className="chart-sub">Désactiver une règle ne change pas les demandes déjà créées.</p>
             {!regles ? <p className="hint">Chargement…</p> : (
               <DataTable rows={regles} columns={colonnes} rowKey={(r) => r.id} emptyText="Aucune règle pour l'instant." searchPlaceholder="Rechercher une règle…" />
             )}
@@ -498,7 +498,7 @@ export function CommissionsSection() {
 
       {tab === 'simulateur' && (
         <div className="panel">
-          <p className="chart-sub">Quel taux paierait ce membre aujourd'hui sur ce trajet ?</p>
+          <p className="chart-sub">Quel taux paierait ce membre sur ce trajet aujourd'hui ?</p>
           <div className="field-row">
             <label className="field">
               <span>Membre</span>

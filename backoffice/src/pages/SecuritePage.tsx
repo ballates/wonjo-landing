@@ -7,7 +7,7 @@ import { TransactionModal } from '../components/TransactionModal';
 import { useFicheCompte } from '../components/FicheCompte';
 import { dateHeure } from '../lib/labels';
 import {
-  LABELS_GRAVITE, TONS_GRAVITE, cibleSignal, ficheSignal, resumeSignal, type SignalSecurite,
+  LABELS_GRAVITE, TONS_GRAVITE, cibleSignal, ficheSignal, resumeSignal, titreSignal, type SignalSecurite,
 } from '../lib/securite';
 
 type Vue = 'ouverts' | 'traites';
@@ -48,18 +48,33 @@ export function SecuritePage() {
       value: (s) => LABELS_GRAVITE[s.gravite],
       render: (s) => <Badge tone={TONS_GRAVITE[s.gravite]}>{LABELS_GRAVITE[s.gravite]}</Badge>,
     },
-    { key: 'date', label: 'Détecté', value: (s) => s.detecte_at, filter: 'date', width: 170, render: (s) => dateHeure(s.detecte_at) },
-    { key: 'titre', label: 'Signal', value: (s) => s.titre },
-    { key: 'detail', label: 'Détail', value: (s) => resumeSignal(s), render: (s) => resumeSignal(s) },
-    ...(vue === 'traites' ? [{
-      key: 'note', label: 'Traité', value: (s: SignalSecurite) => `${s.traite_par_nom ?? ''} ${s.note ?? ''}`,
-      render: (s: SignalSecurite) => (
-        <span>
-          {s.traite_at ? dateHeure(s.traite_at) : ''}{s.traite_par_nom ? ` · ${s.traite_par_nom}` : ' · automatique'}
-          {s.note ? <><br /><span style={{ color: 'var(--muted)' }}>{s.note}</span></> : null}
-        </span>
+    { key: 'date', label: 'Détecté', value: (s) => s.detecte_at, filter: 'date', width: 150, render: (s) => dateHeure(s.detecte_at) },
+    {
+      key: 'signal', label: 'Signal', value: (s) => `${titreSignal(s)} ${resumeSignal(s)}`,
+      render: (s) => (
+        <div className="signal-cell">
+          <b>{titreSignal(s)}</b>
+          <span>{resumeSignal(s)}</span>
+        </div>
       ),
-    } as Column<SignalSecurite>] : []),
+    },
+    ...(vue === 'traites' ? [
+      {
+        key: 'traite', label: 'Traité', width: 190, value: (s: SignalSecurite) => s.traite_at ?? '', filter: 'date' as const,
+        render: (s: SignalSecurite) => (
+          <div className="signal-cell">
+            <b>{s.traite_par_nom ? `Par ${s.traite_par_nom}` : 'Refermé automatiquement'}</b>
+            <span>{s.traite_at ? dateHeure(s.traite_at) : ''}</span>
+          </div>
+        ),
+      } as Column<SignalSecurite>,
+      {
+        key: 'note', label: 'Note', value: (s: SignalSecurite) => s.note ?? '',
+        render: (s: SignalSecurite) => s.note
+          ? <span className="signal-note" title={s.note}>{s.note}</span>
+          : <span className="hint">{s.traite_par_nom ? 'Aucune note' : 'La situation est revenue à la normale'}</span>,
+      } as Column<SignalSecurite>,
+    ] : []),
     {
       key: 'actions', label: '', width: 150,
       render: (s) => (
@@ -76,11 +91,7 @@ export function SecuritePage() {
       <div className="page-head">
         <div>
           <h1>Sécurité</h1>
-          <p className="page-sub">
-            Ce que la surveillance a relevé, toutes les heures. Un signal d'<strong>alerte</strong> veut dire qu'une règle semble
-            avoir été contournée ; les autres sont à relire. L'absence de signal ne prouve pas l'absence d'attaque : elle prouve
-            seulement que les contrôles ci-dessous n'ont rien vu.
-          </p>
+          <p className="page-sub">Relevés toutes les heures : une alerte veut dire qu'une règle semble contournée.</p>
         </div>
         <div className="role-pills">
           <button className={`role-pill ${vue === 'ouverts' ? 'is-on' : ''}`} onClick={() => setVue('ouverts')}>Ouverts</button>
@@ -88,9 +99,9 @@ export function SecuritePage() {
         </div>
       </div>
 
-      {decompte && (
+      {decompte && vue === 'ouverts' && (
         <div className="cards">
-          <div className="card"><span className="card-value">{decompte.alerte}</span><span className="card-label">Alertes ouvertes</span></div>
+          <div className="card"><span className="card-value">{decompte.alerte}</span><span className="card-label">Alertes à traiter</span></div>
           <div className="card"><span className="card-value">{decompte.a_verifier}</span><span className="card-label">À vérifier</span></div>
           <div className="card"><span className="card-value">{decompte.a_surveiller}</span><span className="card-label">À surveiller</span></div>
         </div>
@@ -103,7 +114,7 @@ export function SecuritePage() {
           columns={colonnes}
           rowKey={(s) => s.id}
           initialSort={{ key: 'date', dir: 'desc' }}
-          emptyText={vue === 'ouverts' ? 'Aucun signal ouvert. Les contrôles n\'ont rien relevé.' : 'Aucun signal traité.'}
+          emptyText={vue === 'ouverts' ? 'Aucun signal à traiter. Les contrôles n\'ont rien relevé.' : 'Aucun signal traité.'}
         />
       )}
 
@@ -112,7 +123,14 @@ export function SecuritePage() {
           signal={courant}
           modifiable={vue === 'ouverts'}
           onClose={() => setCourant(null)}
-          onTraite={() => { setCourant(null); charger(); }}
+          onTraite={() => {
+            // Le decompte baisse tout de suite ; le rechargement le confirme.
+            const g = courant.gravite;
+            setDecompte((d) => d ? { ...d, [g]: Math.max(0, d[g] - 1) } : d);
+            setSignaux((l) => l ? l.filter((x) => x.id !== courant.id) : l);
+            setCourant(null);
+            charger();
+          }}
         />
       )}
       {transaction && <TransactionModal demandeId={transaction} onClose={() => setTransaction(null)} />}
@@ -144,11 +162,16 @@ function DetailSignal({ signal, modifiable, onClose, onTraite }: {
       <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div>
           <Badge tone={TONS_GRAVITE[signal.gravite]}>{LABELS_GRAVITE[signal.gravite]}</Badge>
-          <h2 style={{ margin: '8px 0 2px' }}>{signal.titre}</h2>
+          <h2 style={{ margin: '8px 0 2px' }}>{titreSignal(signal)}</h2>
           <p className="page-sub" style={{ margin: 0 }}>Détecté le {dateHeure(signal.detecte_at)} · {resumeSignal(signal)}</p>
         </div>
 
-        {fiche.sens && <p style={{ margin: 0 }}>{fiche.sens}</p>}
+        {fiche.sens && (
+          <div>
+            <strong>Ce que ça veut dire</strong>
+            <p style={{ margin: '4px 0 0' }}>{fiche.sens}</p>
+          </div>
+        )}
 
         {signal.type === 'droits_modifies' && (
           <div style={{ display: 'grid', gap: 10 }}>
@@ -180,7 +203,7 @@ function DetailSignal({ signal, modifiable, onClose, onTraite }: {
 
         {fiche.conduite.length > 0 && (
           <div>
-            <strong>Que faire</strong>
+            <strong>Ce qu'il faut faire</strong>
             <ol style={{ margin: '6px 0 0', paddingLeft: 20, display: 'grid', gap: 4 }}>
               {fiche.conduite.map((c) => <li key={c}>{c}</li>)}
             </ol>
@@ -198,8 +221,7 @@ function DetailSignal({ signal, modifiable, onClose, onTraite }: {
               />
             </label>
             <p className="page-sub" style={{ margin: 0 }}>
-              Traiter un signal le range dans l'historique et l'inscrit au journal des actions. Une anomalie d'état
-              traitée ne sera plus signalée tant que la même transaction ou le même compte est concerné.
+              Le signal passe dans l'Historique et la décision est inscrite au journal des actions.
             </p>
             {erreur && <p className="page-error">{erreur}</p>}
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>

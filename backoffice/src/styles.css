@@ -1392,3 +1392,12 @@ button.lien { background: none; border: none; padding: 0; font: inherit; color: 
 .poids-plage-bande { position: absolute; top: 0; bottom: 0; border-radius: 999px; background: var(--brand-gradient); transition: left 0.2s ease, width 0.2s ease; }
 .poids-plage.is-invalide .poids-plage-piste { background: rgba(229,72,77,0.25); }
 .poids-plage-graduations { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.signalement-resume { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); font-size: 14px; }
+.signalement-resume b { color: var(--ink); }
+.signalement-resume span { overflow-wrap: anywhere; }
+
+.signal-cell { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.signal-cell b { color: var(--ink); font-size: 14px; }
+.signal-cell span { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.signal-note { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-size: 13px; }

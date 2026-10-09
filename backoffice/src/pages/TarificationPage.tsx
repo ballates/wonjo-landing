@@ -13,7 +13,7 @@ export function TarificationPage() {
       <div className="page-head">
         <div>
           <h1>Tarification</h1>
-          <p className="page-sub">Commissions, plafonds de prix par corridor et pays/villes desservis.</p>
+          <p className="page-sub">Commissions et plafonds de prix par corridor.</p>
         </div>
       </div>
 
