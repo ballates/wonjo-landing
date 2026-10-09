@@ -14,7 +14,7 @@ const LABELS_CIBLE: Record<string, string> = {
   commission: 'Commissions',
 };
 
-export function JournalPage() {
+export function JournalPage({ integre = false }: { integre?: boolean }) {
   const [items, setItems] = useState<EntreeJournal[] | null>(null);
   const [chargeEnEntier, setChargeEnEntier] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,12 +56,16 @@ export function JournalPage() {
 
   return (
     <div>
-      <div className="page-head">
-        <div>
-          <h1>Actions</h1>
-          <p className="page-sub">Toutes les actions d'administration, avec leur auteur. Ce journal ne peut être ni modifié ni effacé.</p>
-        </div>
-      </div>
+      {integre
+        ? <p className="page-sub" style={{ marginTop: 0 }}>Toutes les actions d'administration, avec leur auteur. Ce journal ne peut être ni modifié ni effacé.</p>
+        : (
+          <div className="page-head">
+            <div>
+              <h1>Actions</h1>
+              <p className="page-sub">Toutes les actions d'administration, avec leur auteur. Ce journal ne peut être ni modifié ni effacé.</p>
+            </div>
+          </div>
+        )}
       {error && <p className="page-error">{error}</p>}
       {!items ? <p className="loading-state">Chargement…</p> : (
         <DataTable rows={items} columns={columns} rowKey={(e) => e.id} initialSort={{ key: 'date', dir: 'desc' }} emptyText="Aucune action enregistrée." onSearchChange={surRecherche} />

@@ -389,7 +389,7 @@ export function CommissionsSection() {
 
           <div className="panel">
             <h3>Taux par défaut</h3>
-            <p className="chart-sub">Taux de base, sauf règle plus avantageuse. Une baisse doit être validée par un autre super admin.</p>
+            <p className="chart-sub">Une baisse doit être validée par un autre super admin.</p>
             <div className="inline-form">
               <div className="suffix-input">
                 <input type="text" inputMode="decimal" value={defautSaisi} onChange={(e) => setDefautSaisi(e.target.value)} aria-label="Taux par défaut" />

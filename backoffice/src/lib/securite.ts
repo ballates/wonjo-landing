@@ -323,3 +323,44 @@ export function titreSignal(s: SignalSecurite): string {
   }
   return TITRES[s.type] ?? s.titre;
 }
+
+// Premiere phrase d'une explication : l'essentiel, sans le reste.
+export function phraseCourte(texte: string): string {
+  const i = texte.search(/[.!?](\s|$)/);
+  return i === -1 ? texte : texte.slice(0, i + 1);
+}
+
+// Pourquoi le signal est sorti : le code HTTP quand il y en a un, et la raison
+// en clair. Les codes sont ceux qui definissent le signal (un « refus » est par
+// construction un 401 ou un 403) ; le detail 401/403 n'est pas conserve.
+export interface Cause { code: string; raison: string; ton: 'danger' | 'amber' | 'muted' }
+
+const CAUSES: Record<string, Cause> = {
+  refus_en_rafale: { code: '401 / 403', raison: 'Appels refusés : pas connecté ou droit manquant', ton: 'danger' },
+  sondage_admin: { code: '401 / 403', raison: 'Fonctions d\'administration appelées sans droit', ton: 'danger' },
+  fonction_refusee: { code: '401 / 403', raison: 'Appel refusé : secret ou signature invalide', ton: 'danger' },
+  connexions_echouees: { code: '400', raison: 'Mot de passe incorrect, plusieurs fois', ton: 'amber' },
+  connexion_suspecte: { code: '200', raison: 'Connexion réussie juste après des échecs', ton: 'danger' },
+  lectures_massives: { code: '200', raison: 'Lectures autorisées, mais en volume anormal', ton: 'amber' },
+  erreurs_serveur: { code: '5xx', raison: 'Erreur côté serveur, pas une attaque en soi', ton: 'amber' },
+  erreurs_base: { code: 'Base', raison: 'Requêtes refusées par les droits ou nos gardes', ton: 'amber' },
+  auth_en_rafale: { code: 'Auth', raison: 'Trop d\'inscriptions ou de réinitialisations', ton: 'amber' },
+  ip_proche_plafond: { code: 'Plafond', raison: 'Une adresse approche nos limites d\'envoi', ton: 'muted' },
+  rafale_inscriptions: { code: 'Inscr.', raison: 'Beaucoup de comptes créés en peu de temps', ton: 'amber' },
+  codes_qr_epuises: { code: 'QR', raison: 'Série de codes épuisée : rencontre non aboutie', ton: 'muted' },
+  collecte_arretee: { code: 'Logs', raison: 'La collecte horaire ne tourne plus', ton: 'danger' },
+  droits_modifies: { code: 'Config', raison: 'Droits ou fonctions changés : normal après migration', ton: 'muted' },
+  garde_desactivee: { code: 'Règle', raison: 'Une protection de la base est coupée', ton: 'danger' },
+  argent_incoherent: { code: 'Règle', raison: 'Argent et colis dans un état impossible', ton: 'danger' },
+  escrow_sans_stripe: { code: 'Règle', raison: 'Fonds détenus sans paiement réel', ton: 'danger' },
+  livre_sans_preuve: { code: 'Règle', raison: 'Livraison sans photo, code ni décision', ton: 'danger' },
+  identite_sans_kyc: { code: 'Règle', raison: 'Badge vérifié sans identité approuvée', ton: 'danger' },
+  telephone_incoherent: { code: 'Règle', raison: 'Téléphone vérifié sans badge', ton: 'amber' },
+  admin_sans_trace: { code: 'Règle', raison: 'Administrateur ajouté hors du back-office', ton: 'danger' },
+  fonds_sous_contestation: { code: 'Règle', raison: 'Fonds libérés malgré une contestation', ton: 'danger' },
+  compteurs_hors_norme: { code: 'Règle', raison: 'Compteur plus haut que les livraisons constatées', ton: 'amber' },
+};
+
+export function causeSignal(s: SignalSecurite): Cause {
+  return CAUSES[s.type] ?? { code: '-', raison: 'Voir le détail', ton: 'muted' };
+}

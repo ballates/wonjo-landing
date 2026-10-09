@@ -7,25 +7,28 @@ import { TransactionModal } from '../components/TransactionModal';
 import { useFicheCompte } from '../components/FicheCompte';
 import { dateHeure } from '../lib/labels';
 import {
-  LABELS_GRAVITE, TONS_GRAVITE, cibleSignal, ficheSignal, resumeSignal, titreSignal, type SignalSecurite,
+  LABELS_GRAVITE, TONS_GRAVITE, causeSignal, cibleSignal, ficheSignal, phraseCourte, resumeSignal, titreSignal, type SignalSecurite,
 } from '../lib/securite';
 
 type Vue = 'ouverts' | 'traites';
 
 interface Decompte { alerte: number; a_verifier: number; a_surveiller: number }
 
-export function SecuritePage() {
+export function SecuritePage({ integre = false }: { integre?: boolean }) {
   const [vue, setVue] = useState<Vue>('ouverts');
   const [signaux, setSignaux] = useState<SignalSecurite[] | null>(null);
   const [decompte, setDecompte] = useState<Decompte | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [courant, setCourant] = useState<SignalSecurite | null>(null);
   const [transaction, setTransaction] = useState<string | null>(null);
+  const [selection, setSelection] = useState<Set<string>>(new Set());
+  const [retrait, setRetrait] = useState(false);
   const { ouvrir, modal } = useFicheCompte();
 
   const charger = useCallback(() => {
     setSignaux(null);
     setError(null);
+    setSelection(new Set());
     supabase.rpc('admin_lister_signaux_securite', { p_traites: vue === 'traites' }).then(({ data, error: e }) => {
       if (e) { setError(e.message); return; }
       setSignaux((data ?? []) as SignalSecurite[]);
@@ -34,6 +37,14 @@ export function SecuritePage() {
   }, [vue]);
 
   useEffect(() => { charger(); }, [charger]);
+
+  async function retirerSelection() {
+    setRetrait(true);
+    const { error: e } = await supabase.rpc('admin_masquer_signaux_securite', { p_ids: [...selection] });
+    setRetrait(false);
+    if (e) { setError(e.message); return; }
+    charger();
+  }
 
   function ouvrirCible(s: SignalSecurite) {
     const c = cibleSignal(s);
@@ -57,6 +68,19 @@ export function SecuritePage() {
           <span>{resumeSignal(s)}</span>
         </div>
       ),
+    },
+    {
+      key: 'cause', label: 'Cause', filter: 'options', width: 230,
+      value: (s) => causeSignal(s).code,
+      render: (s) => {
+        const c = causeSignal(s);
+        return (
+          <div className="signal-cell">
+            <span><Badge tone={c.ton}>{c.code}</Badge></span>
+            <span>{c.raison}</span>
+          </div>
+        );
+      },
     },
     ...(vue === 'traites' ? [
       {
@@ -90,8 +114,8 @@ export function SecuritePage() {
     <div>
       <div className="page-head">
         <div>
-          <h1>Sécurité</h1>
-          <p className="page-sub">Relevés toutes les heures : une alerte veut dire qu'une règle semble contournée.</p>
+          {!integre && <h1>Sécurité</h1>}
+          <p className="page-sub" style={integre ? { margin: 0 } : undefined}>Relevés toutes les heures : une alerte veut dire qu'une règle semble contournée.</p>
         </div>
         <div className="role-pills">
           <button className={`role-pill ${vue === 'ouverts' ? 'is-on' : ''}`} onClick={() => setVue('ouverts')}>Ouverts</button>
@@ -114,8 +138,22 @@ export function SecuritePage() {
           columns={colonnes}
           rowKey={(s) => s.id}
           initialSort={{ key: 'date', dir: 'desc' }}
+          pageSize={10}
+          {...(vue === 'traites' ? { selected: selection, onSelectedChange: setSelection } : {})}
           emptyText={vue === 'ouverts' ? 'Aucun signal à traiter. Les contrôles n\'ont rien relevé.' : 'Aucun signal traité.'}
         />
+      )}
+
+      {vue === 'traites' && selection.size > 0 && (
+        <div className="selection-bar">
+          <span>{selection.size} signal(aux) sélectionné(s)</span>
+          <div className="action-row">
+            <button className="btn btn-sm" disabled={retrait} onClick={() => setSelection(new Set())}>Tout désélectionner</button>
+            <button className="btn btn-danger btn-sm" disabled={retrait} onClick={retirerSelection}>
+              {retrait ? '…' : 'Retirer de l\'historique'}
+            </button>
+          </div>
+        </div>
       )}
 
       {courant && (
@@ -146,7 +184,9 @@ function DetailSignal({ signal, modifiable, onClose, onTraite }: {
   const [busy, setBusy] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
   const fiche = ficheSignal(signal.type);
+  const cause = causeSignal(signal);
   const d = signal.details as { ajoutes?: string[]; retires?: string[] };
+  const aDuTechnique = signal.type === 'droits_modifies' || Array.isArray(signal.details.chemins) || Array.isArray(signal.details.messages);
 
   async function traiter() {
     setBusy(true);
@@ -159,70 +199,86 @@ function DetailSignal({ signal, modifiable, onClose, onTraite }: {
 
   return (
     <Modal onClose={onClose} wide>
-      <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div>
-          <Badge tone={TONS_GRAVITE[signal.gravite]}>{LABELS_GRAVITE[signal.gravite]}</Badge>
-          <h2 style={{ margin: '8px 0 2px' }}>{titreSignal(signal)}</h2>
-          <p className="page-sub" style={{ margin: 0 }}>Détecté le {dateHeure(signal.detecte_at)} · {resumeSignal(signal)}</p>
+      <div className="signal-modal">
+        <div className="signal-modal-tete">
+          <span style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <Badge tone={TONS_GRAVITE[signal.gravite]}>{LABELS_GRAVITE[signal.gravite]}</Badge>
+            <Badge tone={cause.ton}>{cause.code}</Badge>
+          </span>
+          <h2>{titreSignal(signal)}</h2>
+          <p className="page-sub" style={{ margin: 0 }}>Détecté le {dateHeure(signal.detecte_at)}</p>
         </div>
 
-        {fiche.sens && (
-          <div>
-            <strong>Ce que ça veut dire</strong>
-            <p style={{ margin: '4px 0 0' }}>{fiche.sens}</p>
+        <div className="signal-modal-corps">
+          <div className="signal-bloc signal-bloc--rouge">
+            <b>Ce qui s'est passé</b>
+            <span>{resumeSignal(signal)}</span>
+            <span>{cause.raison}.</span>
           </div>
-        )}
 
-        {signal.type === 'droits_modifies' && (
-          <div style={{ display: 'grid', gap: 10 }}>
-            {(d.ajoutes?.length ?? 0) > 0 && (
-              <div>
-                <strong>Ajouté ou modifié</strong>
-                <pre style={{ whiteSpace: 'pre-wrap', fontSize: 12, margin: '4px 0 0', maxHeight: 180, overflow: 'auto' }}>{d.ajoutes!.join('\n')}</pre>
-              </div>
-            )}
-            {(d.retires?.length ?? 0) > 0 && (
-              <div>
-                <strong>Retiré ou ancienne valeur</strong>
-                <pre style={{ whiteSpace: 'pre-wrap', fontSize: 12, margin: '4px 0 0', maxHeight: 180, overflow: 'auto' }}>{d.retires!.join('\n')}</pre>
-              </div>
-            )}
-          </div>
-        )}
+          {fiche.sens && (
+            <div className="signal-bloc signal-bloc--ambre">
+              <b>Ce que ça veut dire</b>
+              <span>{phraseCourte(fiche.sens)}</span>
+            </div>
+          )}
 
-        {(Array.isArray(signal.details.chemins) || Array.isArray(signal.details.messages)) && (
-          <div>
-            <strong>{Array.isArray(signal.details.messages) ? 'Messages les plus fréquents' : 'Chemins refusés'}</strong>
-            <pre style={{ whiteSpace: 'pre-wrap', fontSize: 12, margin: '4px 0 0', maxHeight: 160, overflow: 'auto' }}>
-              {Array.isArray(signal.details.messages)
-                ? (signal.details.messages as { message: string; n: number }[]).map((m) => `${m.n} × ${m.message}`).join('\n')
-                : (signal.details.chemins as string[]).join('\n')}
-            </pre>
-          </div>
-        )}
+          {fiche.conduite.length > 0 && (
+            <div className="signal-bloc signal-bloc--vert">
+              <b>Ce qu'il faut faire</b>
+              <ol>
+                {fiche.conduite.map((c) => <li key={c}>{c}</li>)}
+              </ol>
+            </div>
+          )}
 
-        {fiche.conduite.length > 0 && (
-          <div>
-            <strong>Ce qu'il faut faire</strong>
-            <ol style={{ margin: '6px 0 0', paddingLeft: 20, display: 'grid', gap: 4 }}>
-              {fiche.conduite.map((c) => <li key={c}>{c}</li>)}
-            </ol>
-          </div>
-        )}
+          {aDuTechnique && (
+            <details className="signal-technique">
+              <summary>Voir le détail technique</summary>
+              {signal.type === 'droits_modifies' && (
+                <>
+                  {(d.ajoutes?.length ?? 0) > 0 && (
+                    <><strong>Ajouté ou modifié</strong><pre>{d.ajoutes!.join('\n')}</pre></>
+                  )}
+                  {(d.retires?.length ?? 0) > 0 && (
+                    <><strong>Retiré ou ancienne valeur</strong><pre>{d.retires!.join('\n')}</pre></>
+                  )}
+                </>
+              )}
+              {(Array.isArray(signal.details.chemins) || Array.isArray(signal.details.messages)) && (
+                <>
+                  <strong>{Array.isArray(signal.details.messages) ? 'Messages les plus fréquents' : 'Chemins refusés'}</strong>
+                  <pre>
+                    {Array.isArray(signal.details.messages)
+                      ? (signal.details.messages as { message: string; n: number }[]).map((m) => `${m.n} × ${m.message}`).join('\n')
+                      : (signal.details.chemins as string[]).join('\n')}
+                  </pre>
+                </>
+              )}
+            </details>
+          )}
+
+          {!modifiable && (
+            <div className="signal-bloc">
+              <b>Traité</b>
+              <span>
+                {signal.traite_at ? dateHeure(signal.traite_at) : '-'}
+                {signal.traite_par_nom ? ` par ${signal.traite_par_nom}` : ', refermé automatiquement'}
+              </span>
+              {signal.note && <span>{signal.note}</span>}
+            </div>
+          )}
+        </div>
 
         {modifiable ? (
-          <>
-            <label style={{ display: 'grid', gap: 6 }}>
-              <strong>Note de traitement (obligatoire)</strong>
-              <textarea
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="Ex. migration 334 appliquée à 14 h, changement attendu."
-              />
-            </label>
-            <p className="page-sub" style={{ margin: 0 }}>
-              Le signal passe dans l'Historique et la décision est inscrite au journal des actions.
-            </p>
+          <div className="signal-modal-pied">
+            <label htmlFor="note-signal"><strong>Note de traitement</strong> (obligatoire)</label>
+            <textarea
+              id="note-signal"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Ex. migrations 335 à 337 appliquées, changement attendu."
+            />
             {erreur && <p className="page-error">{erreur}</p>}
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button className="btn btn-soft btn-sm" onClick={onClose}>Fermer</button>
@@ -230,12 +286,13 @@ function DetailSignal({ signal, modifiable, onClose, onTraite }: {
                 {busy ? '…' : 'Marquer comme traité'}
               </button>
             </div>
-          </>
+          </div>
         ) : (
-          <p className="page-sub" style={{ margin: 0 }}>
-            Traité le {signal.traite_at ? dateHeure(signal.traite_at) : '-'}
-            {signal.traite_par_nom ? ` par ${signal.traite_par_nom}` : ' automatiquement'}{signal.note ? ` : ${signal.note}` : ''}
-          </p>
+          <div className="signal-modal-pied">
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button className="btn btn-soft btn-sm" onClick={onClose}>Fermer</button>
+            </div>
+          </div>
         )}
       </div>
     </Modal>

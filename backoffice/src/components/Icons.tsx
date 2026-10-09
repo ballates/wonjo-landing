@@ -62,3 +62,5 @@ export const IconSquarePencil = () => (
     <path d="M18.4 2.6a2 2 0 0 1 2.8 2.8L11 15.6 7 17l1.4-4L18.4 2.6z" />
   </Svg>
 );
+export const IconUser = () => <Svg><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></Svg>;
+export const IconChevronUp = () => <Svg size={14}><polyline points="18 15 12 9 6 15" /></Svg>;
