@@ -9,10 +9,22 @@ import { Avatar } from './Avatar';
 import { ProfilModal } from './ProfilModal';
 import {
   IconDashboard, IconExchange, IconId, IconLock, IconLogout, IconMoon, IconPanelClose, IconPanelOpen,
-  IconWmail, IconTag, IconShield, IconStar, IconSun, IconUsers, IconUser, IconChevronUp,
+  IconWmail, IconTag, IconShield, IconStar, IconSun, IconUsers, IconUser, IconChevronUp, IconMenu, IconClose,
 } from './Icons';
 
 const STORAGE_KEY = 'wonjo-backoffice-sidebar-collapsed';
+const REQUETE_MOBILE = '(max-width: 860px)';
+
+function useEstMobile() {
+  const [mobile, setMobile] = useState(() => window.matchMedia(REQUETE_MOBILE).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(REQUETE_MOBILE);
+    const maj = () => setMobile(mq.matches);
+    mq.addEventListener('change', maj);
+    return () => mq.removeEventListener('change', maj);
+  }, []);
+  return mobile;
+}
 
 export function Layout() {
   const { signOut, roles, email, profil } = useAuth();
@@ -37,8 +49,17 @@ export function Layout() {
     };
   }, [menuOuvert]);
 
-  useEffect(() => { setMenuOuvert(false); }, [location.pathname]);
-  const [collapsed, setCollapsed] = useState(() => {
+  const estMobile = useEstMobile();
+  const [tiroirOuvert, setTiroirOuvert] = useState(false);
+  useEffect(() => { setMenuOuvert(false); setTiroirOuvert(false); }, [location.pathname]);
+  useEffect(() => { if (!estMobile) setTiroirOuvert(false); }, [estMobile]);
+  useEffect(() => {
+    if (!tiroirOuvert) return;
+    function echap(e: KeyboardEvent) { if (e.key === 'Escape') setTiroirOuvert(false); }
+    window.addEventListener('keydown', echap);
+    return () => window.removeEventListener('keydown', echap);
+  }, [tiroirOuvert]);
+  const [collapsedPref, setCollapsed] = useState(() => {
     try { return localStorage.getItem(STORAGE_KEY) === '1'; } catch { return false; }
   });
 
@@ -50,6 +71,8 @@ export function Layout() {
     });
   }
 
+  // Sur mobile le menu est un tiroir plein : jamais replie.
+  const collapsed = collapsedPref && !estMobile;
   const nom = profil?.nom ?? email ?? '';
   const liens = [
     { to: '/', label: 'Tableau de bord', icon: <IconDashboard />, visible: true, end: true },
@@ -64,23 +87,54 @@ export function Layout() {
   const accesAdmin = peutGererAdmins(roles) || !!profil?.peut_inviter;
 
   return (
-    <div className="layout">
+    <div className={`layout ${estMobile ? 'is-mobile' : ''}`}>
+      {estMobile && (
+        <header className="mobile-topbar">
+          <button className="icon-button" onClick={() => setTiroirOuvert(true)} aria-label="Ouvrir le menu" aria-expanded={tiroirOuvert}>
+            <IconMenu />
+          </button>
+          <span className="mobile-topbar-brand"><img src={brandMark} alt="" /><span className="sidebar-wordmark">WONJO</span></span>
+          <button className="mobile-topbar-me" onClick={() => setProfilOuvert(true)} aria-label="Mon profil">
+            <Avatar src={profil?.avatar_url} nom={nom} size={32} />
+          </button>
+        </header>
+      )}
+      <AnimatePresence>
+        {estMobile && tiroirOuvert && (
+          <motion.div
+            className="sidebar-backdrop"
+            onClick={() => setTiroirOuvert(false)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          />
+        )}
+      </AnimatePresence>
       <motion.nav
-        className={`sidebar ${collapsed ? 'collapsed' : ''}`}
-        animate={{ width: collapsed ? 76 : 248 }}
+        className={`sidebar ${collapsed ? 'collapsed' : ''} ${estMobile ? 'sidebar--tiroir' : ''}`}
+        initial={false}
+        animate={estMobile ? { width: 272, x: tiroirOuvert ? 0 : -290 } : { width: collapsed ? 76 : 248, x: 0 }}
         transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+        aria-hidden={estMobile && !tiroirOuvert ? true : undefined}
       >
         <div className="sidebar-head">
           <span className="sidebar-logo"><img src={brandMark} alt="Wonjo" /></span>
           {!collapsed && <span className="sidebar-wordmark">WONJO</span>}
-          <button
-            className="icon-button"
-            onClick={toggleSidebar}
-            title={collapsed ? 'Déplier le menu' : 'Replier le menu'}
-            aria-label={collapsed ? 'Déplier le menu' : 'Replier le menu'}
-          >
-            {collapsed ? <IconPanelOpen /> : <IconPanelClose />}
-          </button>
+          {estMobile ? (
+            <button className="icon-button" onClick={() => setTiroirOuvert(false)} title="Fermer le menu" aria-label="Fermer le menu">
+              <IconClose />
+            </button>
+          ) : (
+            <button
+              className="icon-button"
+              onClick={toggleSidebar}
+              title={collapsed ? 'Déplier le menu' : 'Replier le menu'}
+              aria-label={collapsed ? 'Déplier le menu' : 'Replier le menu'}
+            >
+              {collapsed ? <IconPanelOpen /> : <IconPanelClose />}
+            </button>
+          )}
         </div>
 
         <div className="sidebar-nav">

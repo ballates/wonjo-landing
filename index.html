@@ -208,6 +208,7 @@
   @keyframes auroraFloat { 0% { transform: translate(-6%, -4%) scale(1); } 100% { transform: translate(8%, 6%) scale(1.12); } }
   .hero .wrap { position: relative; z-index: 2; }
   .hero-grid { display: grid; grid-template-columns: 1fr; gap: 44px; align-items: center; }
+  .hero-grid > * { min-width: 0; }
 
   .hero-eyebrow {
     display: inline-flex; align-items: center; gap: 9px;
@@ -524,7 +525,7 @@
 
   /* TRUST */
   .trust { background: var(--surface); }
-  .trust-grid { display: grid; grid-template-columns: 1fr; gap: 22px; }
+  .trust-grid { display: grid; grid-template-columns: 1fr; gap: 22px; max-width: 860px; margin: 0 auto; }
   .trust-item {
     text-align: center; padding: 34px 26px; border-radius: 24px;
     border: 1px solid var(--line); position: relative; overflow: hidden;
@@ -537,6 +538,9 @@
   .trust-item.green { border-color: rgba(29,158,117,0.18); }
   .trust-item.teal  { border-color: rgba(74,136,150,0.18); }
   .trust-item.terra { border-color: rgba(125,78,46,0.18); }
+  .trust-item.amber::before { background: linear-gradient(180deg, rgba(245,166,35,0.14), rgba(245,166,35,0.04)); }
+  .trust-item.amber { border-color: rgba(245,166,35,0.22); }
+  .trust-item.amber .trust-stat b { color: #C47F00; }
   .trust-item > * { position: relative; z-index: 1; }
   .trust-item:hover { transform: translateY(-6px); box-shadow: 0 22px 48px -20px rgba(45,30,20,0.30); }
   .trust-icon {
@@ -547,9 +551,10 @@
   .trust-icon.shield  { background: rgba(29,158,117,0.14); color: #1D9E75; }
   .trust-icon.badge   { background: rgba(74,136,150,0.14); color: #4A8896; }
   .trust-icon.support { background: rgba(125,78,46,0.14);  color: #7D4E2E; }
+  .trust-icon.helpdesk { background: rgba(245,166,35,0.16); color: #C47F00; }
   .trust-item:hover .trust-icon { animation: iconBounce .6s ease; }
   @keyframes iconBounce { 0%,100% { transform: translateY(0); } 30% { transform: translateY(-11px); } 55% { transform: translateY(-3px); } 75% { transform: translateY(-6px); } }
-  .trust-stat { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-bottom: 10px; }
+  .trust-stat { display: flex; flex-direction: column; align-items: center; gap: 9px; margin-bottom: 12px; }
   .trust-stat b { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 2.1rem; font-weight: 800; letter-spacing: -.03em; line-height: 1; }
   .trust-stat span { font-size: .8rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
   .trust-item.green .trust-stat b { color: #15835f; }
@@ -704,13 +709,53 @@
     .hero-ctas .pill { flex: 0 1 auto; min-width: 0; white-space: nowrap; padding: 12px 16px; font-size: 0.9rem; }
     .wcx-city { font-size: 16px; }
   }
+  @media (max-width: 420px) {
+    .hero-ctas { flex-wrap: wrap; }
+    .hero-ctas .pill { flex: 1 1 100%; justify-content: center; }
+  }
+  @media (max-width: 719px) {
+    .trust-grid { gap: 14px; }
+    .trust-grid .trust-item {
+      display: grid; grid-template-columns: 52px 1fr; column-gap: 14px; align-items: center;
+      text-align: left; padding: 18px 16px;
+    }
+    .trust-grid .trust-icon { grid-row: 1 / span 3; width: 52px; height: 52px; border-radius: 16px; margin: 0; align-self: start; }
+    .trust-grid .trust-icon svg { width: 28px; height: 28px; }
+    .trust-grid .trust-stat { flex-direction: row; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+    .trust-grid .trust-stat b { font-size: 1.5rem; }
+    .trust-grid .trust-stat span { font-size: .66rem; white-space: nowrap; }
+    .trust-grid .trust-item h3 { font-size: 1.02rem; margin-bottom: 2px; }
+    .trust-grid .trust-item p { font-size: .86rem; line-height: 1.45; }
+  }
+  @media (max-width: 400px) {
+    .trust-grid .trust-item { grid-template-columns: 44px 1fr; column-gap: 12px; padding: 16px 14px; }
+    .trust-grid .trust-icon { width: 44px; height: 44px; border-radius: 14px; }
+    .trust-grid .trust-icon svg { width: 24px; height: 24px; }
+    .trust-grid .trust-item p { font-size: .8rem; white-space: nowrap; }
+  }
+  @media (max-width: 345px) {
+    .trust-grid .trust-item { padding: 14px 12px; column-gap: 10px; }
+    .trust-grid .trust-stat b { font-size: 1.3rem; }
+    .trust-grid .trust-stat span { font-size: .58rem; }
+    .trust-grid .trust-item p { font-size: .74rem; }
+  }
 
   @media (min-width: 720px) {
     .steps { grid-template-columns: repeat(3,1fr); max-width: none; }
-    .trust-grid { grid-template-columns: repeat(3,1fr); }
+    .trust-grid { grid-template-columns: repeat(2,1fr); }
     .pricing-grid { grid-template-columns: repeat(3,1fr); }
     .price-card.featured { transform: scale(1.04); z-index: 1; }
     .price-card.featured:hover { transform: scale(1.04) translateY(-6px); }
+  }
+  @media (min-width: 1080px) {
+    .wrap-large { max-width: 1240px; }
+    .trust-grid { grid-template-columns: repeat(4,1fr); max-width: none; gap: 18px; }
+    .trust-grid .trust-item { padding: 30px 18px; }
+    .trust-grid .trust-item p { font-size: 0.92rem; }
+  }
+  @media (min-width: 1080px) and (max-width: 1239px) {
+    .trust-grid .trust-item { padding: 28px 12px; }
+    .trust-grid .trust-item p { font-size: 0.83rem; }
   }
   @media (min-width: 900px) {
     .nav-links, .nav-cta { display: flex; }
@@ -730,6 +775,15 @@
   .faq-item[open] .faq-ic::after { transform: scaleY(0); }
   .faq-item[open] summary { color: var(--teal); }
   .faq-answer { padding: 0 0 22px; color: var(--muted); line-height: 1.6; }
+  .faq-q-ic { flex-shrink: 0; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; transition: transform .25s ease; }
+  .faq-q-ic.teal { background: rgba(74,136,150,0.13); color: #4A8896; }
+  .faq-q-ic.green { background: rgba(29,158,117,0.13); color: #1D9E75; }
+  .faq-q-ic.amber { background: rgba(245,166,35,0.16); color: #C47F00; }
+  .faq-q-ic.brown { background: rgba(125,78,46,0.12); color: #7D4E2E; }
+  .faq-item summary:hover .faq-q-ic, .faq-item[open] .faq-q-ic { transform: scale(1.06); }
+  .faq-q { flex: 1; min-width: 0; }
+  .faq-answer { padding-left: 56px; }
+  @media (max-width: 560px) { .faq-answer { padding-left: 0; } }
   .faq-answer p { margin: 0; }
 </style>
 <script type="application/ld+json">
@@ -804,7 +858,7 @@
       <div class="hero-grid">
         <div class="hero-copy">
           <h1 class="reveal">Vos <span class="hl">colis<svg class="hl-underline" viewBox="0 0 140 18" preserveAspectRatio="none" aria-hidden="true"><path d="M4 12 C 36 4, 104 4, 136 10"/></svg></span> voyagent avec des personnes de confiance</h1>
-          <p class="subtitle reveal">Wonjo met en relation expéditeurs et voyageurs en Europe et entre l'Europe et l'Afrique. Jusqu'à 70&nbsp;% d'économies, paiement bloqué jusqu'à la livraison, identités vérifiées.</p>
+          <p class="subtitle reveal">Wonjo met en relation expéditeurs et voyageurs en Europe et entre l'Europe et l'Afrique. Jusqu'à 70% d'économies, paiement bloqué jusqu'à la livraison, identités vérifiées.</p>
 
           <div class="hero-ctas reveal">
             <a class="pill pill-amber" href="#beta">Rejoindre la bêta
@@ -818,7 +872,10 @@
             <p class="hero-counter">Plus de <b><span class="count" data-count-to="500">0</span><span class="plus">+</span></b> envois facilités</p>
             -->
             <div class="hero-trust">
-              <small><b>Bêta en cours</b><br>identité vérifiée pour chaque membre</small>
+              <div class="avatars" aria-hidden="true">
+                <span class="a1"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></svg></span><span class="a2"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></svg></span><span class="a3"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></svg></span><span class="a4">+</span>
+              </div>
+              <small><b>Nos bêta-testeurs</b><br>testent l'app en ce moment</small>
             </div>
           </div>
         </div>
@@ -1133,24 +1190,29 @@
 
   <!-- CONFIANCE -->
   <section class="section">
-    <div class="wrap">
+    <div class="wrap wrap-large">
       <h2 class="reveal">La confiance avant tout</h2>
       <p class="section-sub reveal">Chaque étape est vérifiée, de la remise à la livraison.</p>
       <div class="trust-grid">
         <div class="trust-item green reveal">
           <div class="trust-icon shield"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></div>
           <div class="trust-stat"><b>0&nbsp;€</b><span>versé avant la livraison</span></div>
-          <h3>Paiement bloqué</h3><p>Votre paiement est bloqué jusqu'à la livraison. Le voyageur n'est payé qu'une fois le colis livré.</p>
+          <h3>Paiement bloqué</h3><p>Le voyageur est payé à la livraison</p>
         </div>
         <div class="trust-item teal reveal">
           <div class="trust-icon badge"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></svg></div>
           <div class="trust-stat"><b>2 min</b><span>pour le KYC</span></div>
-          <h3>Identité vérifiée</h3><p>KYC obligatoire pour chaque utilisateur : voyageurs et expéditeurs.</p>
+          <h3>Identité vérifiée</h3><p>Tous les membres sont vérifiés</p>
+        </div>
+        <div class="trust-item amber reveal">
+          <div class="trust-icon helpdesk"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg></div>
+          <div class="trust-stat"><b>&lt;&nbsp;24&nbsp;h</b><span>pour une réponse</span></div>
+          <h3>Support réactif</h3><p>Notre équipe répond sous 24&nbsp;h</p>
         </div>
         <div class="trust-item terra reveal">
-          <div class="trust-icon support"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></svg></div>
-          <div class="trust-stat"><b>5&nbsp;j</b><span>ouvrés pour trancher</span></div>
-          <h3>Litiges arbitrés</h3><p>Un désaccord se règle d'abord entre vous. Sans accord, Wonjo tranche, photos de remise et de livraison à l'appui.</p>
+          <div class="trust-icon support"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg></div>
+          <div class="trust-stat"><b>2&nbsp;j</b><span>ouvrés pour trancher</span></div>
+          <h3>Désaccords réglés</h3><p>Wonjo tranche, preuves à l'appui</p>
         </div>
       </div>
     </div>
@@ -1170,10 +1232,10 @@
           <span class="price-badge available">Disponible</span>
           <h3>Particulier</h3>
           <div class="price-amount price-amount--text">Sans abonnement</div>
-          <p class="price-sub">10 % par envoi, payés par l'expéditeur. Voyageurs : 0 % de commission.</p>
+          <p class="price-sub">Commission de 10% payée par l'expéditeur, aucune pour le voyageur.</p>
           <p class="price-desc">Pour les particuliers, expéditeurs comme voyageurs :</p>
           <ul class="price-features">
-            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Voyageurs : vous gardez 100 % de vos gains</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Voyageurs : vous gardez 100% de vos gains</li>
             <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Paiement sécurisé jusqu'à la livraison</li>
             <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Identité vérifiée (KYC obligatoire)</li>
             <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Remise du colis confirmée par QR code</li>
@@ -1252,31 +1314,31 @@
       <p class="section-sub reveal">Tout ce qu'il faut savoir avant d'envoyer ou de transporter un colis.</p>
       <div class="faq-list">
         <details class="faq-item reveal">
-          <summary>Comment fonctionne Wonjo ?<span class="faq-ic" aria-hidden="true"></span></summary>
+          <summary><span class="faq-q-ic teal" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="faq-q">Comment fonctionne Wonjo ?</span><span class="faq-ic" aria-hidden="true"></span></summary>
           <div class="faq-answer"><p>Wonjo met en relation des expéditeurs qui veulent envoyer un colis et des voyageurs qui ont de la place dans leurs bagages. Le voyageur transporte le colis et le paiement n'est libéré qu'après la livraison confirmée.</p></div>
         </details>
         <details class="faq-item reveal">
-          <summary>Mon paiement est-il sécurisé ?<span class="faq-ic" aria-hidden="true"></span></summary>
+          <summary><span class="faq-q-ic green" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span><span class="faq-q">Mon paiement est-il sécurisé ?</span><span class="faq-ic" aria-hidden="true"></span></summary>
           <div class="faq-answer"><p>Oui. Votre paiement est bloqué jusqu'à la livraison et n'est versé au voyageur qu'après sa confirmation, grâce à un code à 4 chiffres. Si le transport n'a pas lieu, vous êtes remboursé selon les conditions générales d'utilisation. Tous les utilisateurs passent une vérification d'identité (KYC).</p></div>
         </details>
         <details class="faq-item reveal">
-          <summary>Combien coûte un envoi ?<span class="faq-ic" aria-hidden="true"></span></summary>
-          <div class="faq-answer"><p>Sans abonnement pour les particuliers : une commission de 10 % est payée par l'expéditeur, avec le prix du transport. Si le transport n'a pas lieu, vous êtes remboursé selon les conditions générales d'utilisation. Le voyageur, lui, garde 100 % du prix du transport. Même avec la commission, vous pouvez économiser jusqu'à 70 % par rapport aux solutions classiques.</p></div>
+          <summary><span class="faq-q-ic amber" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg></span><span class="faq-q">Combien coûte un envoi ?</span><span class="faq-ic" aria-hidden="true"></span></summary>
+          <div class="faq-answer"><p>Sans abonnement pour les particuliers : une commission de 10% est payée par l'expéditeur, avec le prix du transport. Si le transport n'a pas lieu, vous êtes remboursé selon les conditions générales d'utilisation. Le voyageur, lui, garde 100% du prix du transport. Même avec la commission, vous pouvez économiser jusqu'à 70% par rapport aux solutions classiques.</p></div>
         </details>
         <details class="faq-item reveal">
-          <summary>Quels trajets sont disponibles ?<span class="faq-ic" aria-hidden="true"></span></summary>
+          <summary><span class="faq-q-ic teal" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></svg></span><span class="faq-q">Quels trajets sont disponibles ?</span><span class="faq-ic" aria-hidden="true"></span></summary>
           <div class="faq-answer"><p>Des envois entre pays européens, et entre l'Europe et l'Afrique : toute l'Europe de l'Ouest (France, Belgique, Suisse, Royaume-Uni, Allemagne, Italie, Espagne, Portugal, Pays-Bas) est déjà connectée à l'Afrique de l'Ouest, l'Afrique Centrale et l'Afrique du Nord, avec de nouveaux itinéraires ajoutés régulièrement.</p></div>
         </details>
         <details class="faq-item reveal">
-          <summary>Comment devenir voyageur et gagner de l'argent ?<span class="faq-ic" aria-hidden="true"></span></summary>
+          <summary><span class="faq-q-ic brown" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2"/><path d="M8 18V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v14"/><path d="M10 20h4"/><circle cx="16" cy="20" r="2"/><circle cx="8" cy="20" r="2"/></svg></span><span class="faq-q">Comment devenir voyageur et gagner de l'argent ?</span><span class="faq-ic" aria-hidden="true"></span></summary>
           <div class="faq-answer"><p>Inscrivez-vous, vérifiez votre identité, puis publiez votre trajet avec l'espace disponible et votre prix au kilo. Vous êtes payé après chaque livraison confirmée.</p></div>
         </details>
         <details class="faq-item reveal">
-          <summary>Que se passe-t-il en cas de litige ?<span class="faq-ic" aria-hidden="true"></span></summary>
-          <div class="faq-answer"><p>Un système de litige intégré vous permet de trouver un accord avec l'autre partie. Sans accord, Wonjo tranche sous 5 jours ouvrés. Les photos de remise et de livraison servent de preuve en cas de problème.</p></div>
+          <summary><span class="faq-q-ic brown" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg></span><span class="faq-q">Que se passe-t-il en cas de litige ?</span><span class="faq-ic" aria-hidden="true"></span></summary>
+          <div class="faq-answer"><p>Un système de litige intégré vous permet de trouver un accord avec l'autre partie. Sans accord, Wonjo tranche sous 2 jours ouvrés. Les photos de remise et de livraison servent de preuve en cas de problème.</p></div>
         </details>
         <details class="faq-item reveal">
-          <summary>Quand l'application sera-t-elle disponible ?<span class="faq-ic" aria-hidden="true"></span></summary>
+          <summary><span class="faq-q-ic green" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg></span><span class="faq-q">Quand l'application sera-t-elle disponible ?</span><span class="faq-ic" aria-hidden="true"></span></summary>
           <div class="faq-answer"><p>Wonjo est en bêta. Rejoignez la liste d'attente pour faire partie des premiers utilisateurs : l'application arrive bientôt sur iOS et Android.</p></div>
         </details>
       </div>
@@ -1289,10 +1351,10 @@
     "mainEntity": [
       { "@type": "Question", "name": "Comment fonctionne Wonjo ?", "acceptedAnswer": { "@type": "Answer", "text": "Wonjo met en relation des expéditeurs qui veulent envoyer un colis et des voyageurs qui ont de la place dans leurs bagages. Le voyageur transporte le colis et le paiement n'est libéré qu'après la livraison confirmée." } },
       { "@type": "Question", "name": "Mon paiement est-il sécurisé ?", "acceptedAnswer": { "@type": "Answer", "text": "Oui. Votre paiement est bloqué jusqu'à la livraison et n'est versé au voyageur qu'après sa confirmation, grâce à un code à 4 chiffres. Si le transport n'a pas lieu, vous êtes remboursé selon les conditions générales d'utilisation. Tous les utilisateurs passent une vérification d'identité (KYC)." } },
-      { "@type": "Question", "name": "Combien coûte un envoi ?", "acceptedAnswer": { "@type": "Answer", "text": "Sans abonnement pour les particuliers : une commission de 10 % est payée par l'expéditeur, avec le prix du transport. Si le transport n'a pas lieu, vous êtes remboursé selon les conditions générales d'utilisation. Le voyageur garde 100 % du prix du transport. Vous pouvez économiser jusqu'à 70 % par rapport aux solutions classiques." } },
+      { "@type": "Question", "name": "Combien coûte un envoi ?", "acceptedAnswer": { "@type": "Answer", "text": "Sans abonnement pour les particuliers : une commission de 10% est payée par l'expéditeur, avec le prix du transport. Si le transport n'a pas lieu, vous êtes remboursé selon les conditions générales d'utilisation. Le voyageur garde 100% du prix du transport. Vous pouvez économiser jusqu'à 70% par rapport aux solutions classiques." } },
       { "@type": "Question", "name": "Quels trajets sont disponibles ?", "acceptedAnswer": { "@type": "Answer", "text": "Des envois entre pays européens, et entre l'Europe et l'Afrique : toute l'Europe de l'Ouest (France, Belgique, Suisse, Royaume-Uni, Allemagne, Italie, Espagne, Portugal, Pays-Bas) est déjà connectée à l'Afrique de l'Ouest, l'Afrique Centrale et l'Afrique du Nord, avec de nouveaux itinéraires ajoutés régulièrement." } },
       { "@type": "Question", "name": "Comment devenir voyageur et gagner de l'argent ?", "acceptedAnswer": { "@type": "Answer", "text": "Inscrivez-vous, vérifiez votre identité, puis publiez votre trajet avec l'espace disponible et votre prix au kilo. Vous êtes payé après chaque livraison confirmée." } },
-      { "@type": "Question", "name": "Que se passe-t-il en cas de litige ?", "acceptedAnswer": { "@type": "Answer", "text": "Un système de litige intégré vous permet de trouver un accord avec l'autre partie. Sans accord, Wonjo tranche sous 5 jours ouvrés. Les photos de remise et de livraison servent de preuve en cas de problème." } },
+      { "@type": "Question", "name": "Que se passe-t-il en cas de litige ?", "acceptedAnswer": { "@type": "Answer", "text": "Un système de litige intégré vous permet de trouver un accord avec l'autre partie. Sans accord, Wonjo tranche sous 2 jours ouvrés. Les photos de remise et de livraison servent de preuve en cas de problème." } },
       { "@type": "Question", "name": "Quand l'application sera-t-elle disponible ?", "acceptedAnswer": { "@type": "Answer", "text": "Wonjo est en bêta. Rejoignez la liste d'attente pour faire partie des premiers utilisateurs : l'application arrive bientôt sur iOS et Android." } }
     ]
   }

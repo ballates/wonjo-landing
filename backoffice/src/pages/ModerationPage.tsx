@@ -500,7 +500,7 @@ function LitigesTab() {
   if (!items) return <p className="loading-state">Chargement…</p>;
   return (
     <>
-      <p className="hint">Arbitrages demandés en premier : réponse promise sous 5 jours ouvrés.</p>
+      <p className="hint">Arbitrages demandés en premier : réponse promise sous 2 jours ouvrés.</p>
       <DataTable rows={items} columns={columns} rowKey={(l) => l.id} initialSort={{ key: 'arbitrage', dir: 'desc' }} emptyText="Aucun litige en cours." />
       <DossiersBloques onChange={charger} />
       {modal}

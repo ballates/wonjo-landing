@@ -1454,3 +1454,104 @@ button.lien { background: none; border: none; padding: 0; font: inherit; color: 
 .input-montant:focus { outline: none; border-color: var(--teal); }
 .input-montant:disabled { opacity: 0.6; }
 tr.is-modifie td { background: var(--accent-soft); }
+
+/* ============ Mobile (<= 860px) ============ */
+/* Le menu devient un tiroir : barre fixe en haut avec le bouton menu, la
+   coque reste a une colonne et seul .content defile, comme sur ordinateur. */
+.mobile-topbar {
+  flex-shrink: 0; position: relative; z-index: 30;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  height: 56px; padding: 0 12px;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+}
+.mobile-topbar-brand { display: flex; align-items: center; gap: 8px; }
+.mobile-topbar-brand img { width: 34px; height: 34px; object-fit: contain; }
+.mobile-topbar-brand .sidebar-wordmark { font-size: 17px; flex: none; }
+.mobile-topbar-me { all: unset; cursor: pointer; display: inline-flex; border-radius: 50%; }
+.mobile-topbar-me:focus-visible { box-shadow: 0 0 0 3px rgba(74,136,150,0.3); }
+.mobile-topbar .icon-button { width: 40px; height: 40px; }
+.sidebar-backdrop { position: fixed; inset: 0; z-index: 70; background: rgba(10,10,20,0.45); backdrop-filter: blur(2px); }
+.sidebar--tiroir {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 80;
+  height: 100dvh; box-shadow: var(--shadow-lg); overflow-y: auto;
+}
+.sidebar--tiroir .sidebar-nav a { height: 46px; font-size: 15px; }
+
+@media (max-width: 860px) {
+  /* Sur telephone la page defile normalement (barre d'adresse repliable). */
+  .layout { flex-direction: column; height: auto; min-height: 100dvh; overflow: visible; }
+  .mobile-topbar { position: sticky; top: 0; }
+  .content { padding: 18px 14px 32px; height: auto; overflow: visible; }
+  .content h1 { font-size: 22px; }
+  .greeting h1 { font-size: 21px; }
+  .page-head { margin-bottom: 14px; }
+
+  /* Onglets : une ligne qui defile au doigt plutot que de casser la page. */
+  .tabs { display: flex; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tabs button { flex: none; white-space: nowrap; padding: 8px 12px; }
+
+  .dt-toolbar { gap: 8px; }
+  .dt-search, .dt-toolbar--titled .dt-search, .comptes-actifs-table .dt-search { flex: 1 1 100%; min-width: 0; max-width: none; margin-left: 0; }
+  .dt-count, .dt-toolbar--titled .dt-count { margin-left: 0; }
+  .dt-wrap { -webkit-overflow-scrolling: touch; }
+  /* Le bouton d'action (Fiche, Voir...) reste visible au bord droit pendant
+     que le tableau defile de cote. */
+  .dt-wrap td:last-child:has(> .btn),
+  .dt-wrap table:has(td:last-child > .btn) th:last-child {
+    position: sticky; right: 0; z-index: 1;
+    background: var(--surface); box-shadow: -8px 0 12px -10px rgba(0,0,0,0.25);
+    padding-left: 10px; padding-right: 10px;
+  }
+  .dt-wrap table:has(td:last-child > .btn) th:last-child { background: var(--surface-2); }
+  th, td { padding: 10px 12px; }
+
+  .panel, .chart-card { padding: 14px; border-radius: 14px; }
+  .chart-with-side { flex-direction: column; }
+  .chart-side-filters { flex-direction: row; flex-wrap: wrap; min-width: 0; }
+  .stat-list.stat-list--nowrap { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .insight-oneline { white-space: normal; }
+  .corridors-region-ligne { flex-direction: column; gap: 6px; }
+  .corridors-region-nom { width: auto; padding-top: 0; }
+  .corridors-prix-grille { grid-template-columns: 1fr; }
+  .commission-switch { flex-direction: column; align-items: flex-start; }
+  .inline-form { flex-wrap: wrap; }
+  .invite-row input { min-width: 0; flex-basis: 100%; }
+  .todo-card { align-items: flex-start; flex-wrap: wrap; }
+  .todo-card > .btn, .todo-card > a { margin-left: 52px; }
+  .selection-bar { flex-wrap: wrap; bottom: 10px; }
+  .pending-list li { align-items: flex-start; }
+
+  /* Fiches : plein ecran, en feuille montante. */
+  .modal-overlay { padding: 0; align-items: flex-end; }
+  .modal, .modal.modal--wide, .modal.modal--narrow {
+    width: 100%; max-height: 94dvh; border-radius: 20px 20px 0 0;
+  }
+  .signal-modal { max-height: 94dvh; }
+  .modal-hero { padding: 14px 16px 12px; }
+  .modal-body { padding: 14px 16px 18px; }
+  .modal-title { padding: 18px 56px 0 16px; }
+  .signal-modal-tete { padding: 18px 56px 10px 16px; }
+  .signal-modal-corps { padding: 4px 16px 12px; }
+  .signal-modal-pied { padding: 10px 16px 14px; }
+  .modal-close { top: 10px; right: 10px; }
+  .modal-hero-people { flex-direction: column; align-items: stretch; gap: 10px; }
+  .modal-hero-party--dest { align-items: flex-start; text-align: left; padding-right: 0; }
+  .modal-hero-party--dest .modal-hero-chip { flex-direction: row; padding: 4px 14px 4px 4px; }
+  .modal-hero-party:first-child { padding-right: 44px; }
+  .conversation-admin-msg { max-width: 90%; }
+  .photo-lightbox { padding: 14px; }
+  .info-row { flex-direction: column; gap: 2px; }
+  .info-row-label { flex: none; }
+
+  .email-preview-wrap { position: static; }
+  .segmented { grid-template-columns: 1fr; }
+  .lieu-row { grid-template-columns: 1fr; }
+  .me-menu { width: min(264px, calc(100vw - 32px)); }
+  .roles-dropdown, .col-menu, .corridors-villes-panneau { max-width: calc(100vw - 24px); }
+}
+@media (max-width: 420px) {
+  .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

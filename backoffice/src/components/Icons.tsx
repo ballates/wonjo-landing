@@ -25,6 +25,7 @@ export const IconMoon = () => (
 export const IconLogout = () => <Svg><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></Svg>;
 export const IconPanelClose = () => <Svg><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M9 3v18" /><path d="M16 15l-3-3 3-3" /></Svg>;
 export const IconPanelOpen = () => <Svg><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M9 3v18" /><path d="M14 9l3 3-3 3" /></Svg>;
+export const IconMenu = () => <Svg size={20}><path d="M4 6h16M4 12h16M4 18h16" /></Svg>;
 export const IconClose = () => <Svg size={18}><path d="M18 6 6 18M6 6l12 12" /></Svg>;
 export const IconSearch = () => <Svg size={16}><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></Svg>;
 export const IconEye = () => <Svg size={16}><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></Svg>;
