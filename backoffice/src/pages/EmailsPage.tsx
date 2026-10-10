@@ -8,11 +8,12 @@ import { dateHeure, nomComplet } from '../lib/labels';
 import { useAuth } from '../auth/AuthContext';
 import { peutEnvoyerInformation } from '../lib/permissions';
 import type { CompteRecherche } from '../lib/types';
+import { EmailsAppSection } from './EmailsAppSection';
 import logo from '../assets/wonjo-logo.png';
 import { IconChevronLeft, IconRestore, IconSend, IconSquarePencil, IconTrash } from '../components/Icons';
 
 type TypeEmail = 'service' | 'promotion';
-type SousOnglet = 'envoyer' | 'modeles' | 'desinscrits' | 'corbeille';
+type SousOnglet = 'envoyer' | 'modeles' | 'emails_app' | 'desinscrits' | 'corbeille';
 
 interface Modele {
   id: string;
@@ -349,13 +350,16 @@ export function EmailsPage() {
       <div className="tabs">
         <button className={sousOnglet === 'envoyer' ? 'active' : ''} onClick={() => setSousOnglet('envoyer')}><IconSend /> Messages envoyés</button>
         <button className={sousOnglet === 'modeles' ? 'active' : ''} onClick={() => setSousOnglet('modeles')}>Modèles{modeles?.length ? ` (${modeles.length})` : ''}</button>
+        <button className={sousOnglet === 'emails_app' ? 'active' : ''} onClick={() => setSousOnglet('emails_app')}>E-mails de l'app</button>
         <button className={sousOnglet === 'desinscrits' ? 'active' : ''} onClick={() => setSousOnglet('desinscrits')}>Désinscrits{nbDesinscrits ? ` (${nbDesinscrits})` : ''}</button>
         <button className={sousOnglet === 'corbeille' ? 'active' : ''} onClick={() => setSousOnglet('corbeille')}><IconTrash /> Corbeille</button>
       </div>
       {erreurChargement && <p className="page-error">{erreurChargement}</p>}
       {retour && !retour.ok && !composerOuvert && <p className="page-error">{retour.texte}</p>}
 
-      {sousOnglet === 'modeles' ? (
+      {sousOnglet === 'emails_app' ? (
+        <EmailsAppSection />
+      ) : sousOnglet === 'modeles' ? (
         <div className="panel">
           <div className="page-head" style={{ marginBottom: 12 }}>
             <p className="chart-sub" style={{ margin: 0 }}>Des sujets/messages prêts à réutiliser, classés par catégorie. Chargez-en un depuis l'onglet Composer, modifiez-le si besoin, puis envoyez.</p>

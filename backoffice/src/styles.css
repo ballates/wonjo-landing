@@ -1807,3 +1807,28 @@ tr.is-modifie td { background: var(--accent-soft); }
 .dossier-effets li.is-ok .dossier-effet-ic { background: var(--badge-green-bg); color: var(--badge-green-fg); }
 .dossier-effets li.is-ko .dossier-effet-ic { background: var(--badge-danger-bg); color: var(--badge-danger-fg); }
 .section-title .hint { margin-left: 6px; }
+
+/* ============ E-mails de l'app ============ */
+.emails-app-groupe { margin: 0 0 26px; }
+.emails-app-titre { display: flex; align-items: baseline; gap: 10px; margin: 0 0 10px; }
+.emails-app-titre h2 { margin: 0; font-size: 16px; font-weight: 800; color: var(--ink); }
+.emails-app-titre span { font-size: 12.5px; color: var(--muted); }
+.emails-app-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+.emails-app-carte {
+  display: flex; flex-direction: column; gap: 12px; padding: 16px 18px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow-sm); min-width: 0;
+}
+.emails-app-entete { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.emails-app-entete h3 { margin: 0; font-size: 14.5px; font-weight: 800; color: var(--ink); line-height: 1.3; }
+.emails-app-carte dl { margin: 0; display: grid; gap: 2px; flex: 1; }
+.emails-app-carte dt { font-size: 10.5px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-top: 8px; }
+.emails-app-carte dt:first-child { margin-top: 0; }
+.emails-app-carte dd { margin: 0; font-size: 13px; line-height: 1.5; color: var(--text); }
+.emails-app-pied { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 12px; border-top: 1px solid var(--border); }
+.emails-app-pied code { font-size: 11.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.emails-app-modal { padding: 4px 4px 0; }
+.emails-app-modal h2 { margin: 0 0 4px; padding-right: 36px; }
+.emails-app-barre { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.emails-app-sujet { font-size: 13px; color: var(--text); min-width: 0; }
+.emails-app-cadre { width: 100%; height: 62vh; border: 1px solid var(--border); border-radius: 12px; background: #F8F7FF; }
