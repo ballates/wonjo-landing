@@ -107,6 +107,7 @@ export function EmailsPage() {
   const [erreurChargement, setErreurChargement] = useState<string | null>(null);
   const [campagnes, setCampagnes] = useState<Campagne[] | null>(null);
   const [sousOnglet, setSousOnglet] = useState<SousOnglet>('envoyer');
+  const [nbEmailsApp, setNbEmailsApp] = useState(0);
   const [composerOuvert, setComposerOuvert] = useState(false);
   const [modeles, setModeles] = useState<Modele[] | null>(null);
   const [modeleChoisi, setModeleChoisi] = useState('');
@@ -350,7 +351,7 @@ export function EmailsPage() {
       <div className="tabs">
         <button className={sousOnglet === 'envoyer' ? 'active' : ''} onClick={() => setSousOnglet('envoyer')}><IconSend /> Messages envoyés</button>
         <button className={sousOnglet === 'modeles' ? 'active' : ''} onClick={() => setSousOnglet('modeles')}>Modèles{modeles?.length ? ` (${modeles.length})` : ''}</button>
-        <button className={sousOnglet === 'emails_app' ? 'active' : ''} onClick={() => setSousOnglet('emails_app')}>E-mails de l'app</button>
+        <button className={sousOnglet === 'emails_app' ? 'active' : ''} onClick={() => setSousOnglet('emails_app')}>E-mails de l'app{nbEmailsApp ? ` (${nbEmailsApp})` : ''}</button>
         <button className={sousOnglet === 'desinscrits' ? 'active' : ''} onClick={() => setSousOnglet('desinscrits')}>Désinscrits{nbDesinscrits ? ` (${nbDesinscrits})` : ''}</button>
         <button className={sousOnglet === 'corbeille' ? 'active' : ''} onClick={() => setSousOnglet('corbeille')}><IconTrash /> Corbeille</button>
       </div>
@@ -358,7 +359,7 @@ export function EmailsPage() {
       {retour && !retour.ok && !composerOuvert && <p className="page-error">{retour.texte}</p>}
 
       {sousOnglet === 'emails_app' ? (
-        <EmailsAppSection />
+        <EmailsAppSection onCompte={setNbEmailsApp} />
       ) : sousOnglet === 'modeles' ? (
         <div className="panel">
           <div className="page-head" style={{ marginBottom: 12 }}>

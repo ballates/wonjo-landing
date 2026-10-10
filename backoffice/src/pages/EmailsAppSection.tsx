@@ -38,7 +38,7 @@ interface Apercu { subject: string; html: string }
 
 // Tous les e-mails que Wonjo envoie lui-meme (hors campagnes), avec quand ils partent et un
 // apercu fidele : le contenu est produit par le vrai code d'envoi, sur des valeurs d'exemple.
-export function EmailsAppSection() {
+export function EmailsAppSection({ onCompte }: { onCompte?: (n: number) => void }) {
   const [emails, setEmails] = useState<EmailApp[] | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [recherche, setRecherche] = useState('');
@@ -57,6 +57,7 @@ export function EmailsAppSection() {
     return supabase.functions.invoke('admin-apercu-email', { body: { action: 'liste' } }).then(({ data, error }) => {
       if (error || !data?.emails) { setErreur(error?.message ?? 'Impossible de charger la liste.'); return null; }
       setEmails(data.emails as EmailApp[]);
+      onCompte?.((data.emails as EmailApp[]).length);
       setPeutModifier(!!data.peutModifier);
       return data.emails as EmailApp[];
     });
@@ -151,7 +152,6 @@ export function EmailsAppSection() {
           <IconSearch />
           <input type="search" placeholder="Rechercher un e-mail…" value={recherche} onChange={(e) => setRecherche(e.target.value)} />
         </div>
-        <span className="hint" style={{ margin: 0 }}>{emails.length} e-mails envoyés par Wonjo, hors campagnes</span>
       </div>
 
       {CATEGORIES.map((cat) => {
@@ -160,7 +160,7 @@ export function EmailsAppSection() {
         return (
           <section key={cat.value} className="emails-app-groupe">
             <div className="emails-app-titre">
-              <h2>{cat.label}</h2>
+              <h2>{cat.label}<span className="emails-app-compte">{liste.length}</span></h2>
               <span>{cat.hint}</span>
             </div>
             <div className="emails-app-grille">

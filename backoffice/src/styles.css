@@ -1812,7 +1812,7 @@ tr.is-modifie td { background: var(--accent-soft); }
 .emails-app-groupe { margin: 0 0 26px; }
 .emails-app-titre { display: flex; align-items: baseline; gap: 10px; margin: 0 0 10px; }
 .emails-app-titre h2 { margin: 0; font-size: 16px; font-weight: 800; color: var(--ink); }
-.emails-app-titre span { font-size: 12.5px; color: var(--muted); }
+.emails-app-titre > span { font-size: 12.5px; color: var(--muted); }
 .emails-app-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
 .emails-app-carte {
   display: flex; flex-direction: column; gap: 12px; padding: 16px 18px;
@@ -1843,3 +1843,4 @@ tr.is-modifie td { background: var(--accent-soft); }
 .emails-app-champ textarea:focus { outline: 2px solid var(--teal); outline-offset: 0; }
 .emails-app-champ-pied { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
 @media (max-width: 900px) { .emails-app-deux { grid-template-columns: 1fr; } .emails-app-edition { max-height: none; } }
+.emails-app-compte { margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); font-size: 11.5px; font-weight: 800; vertical-align: middle; }
