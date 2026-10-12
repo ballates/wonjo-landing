@@ -349,6 +349,8 @@ const TITRES: Record<string, string> = {
   auth_en_rafale: 'Inscriptions ou réinitialisations en rafale',
   collecte_arretee: 'Collecte des logs arrêtée',
   codes_qr_epuises: 'Codes QR épuisés',
+  origine_admin_inhabituelle: 'Connexion administrateur depuis un pays inhabituel',
+  appareil_admin_inconnu: 'Connexion administrateur depuis un appareil inconnu',
 };
 
 // Pour « configuration modifiee », le serveur precise ce qui a bouge dans son titre.

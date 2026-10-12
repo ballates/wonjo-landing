@@ -16,6 +16,7 @@ import { AnimatedNumber, Kpi, VizTooltip, euros, pourcent } from '../components/
 import { useLocation } from 'react-router-dom';
 import { CommunauteTab } from './dashboard/CommunauteTab';
 import { MarcheTab } from './dashboard/MarcheTab';
+import { ServicesTab } from './dashboard/ServicesTab';
 import { ListeAFaire } from './AFairePage';
 import { nbActions, useAFaire } from '../lib/aFaire';
 import type {
@@ -24,7 +25,7 @@ import type {
   RepartitionAnnulations, TopAnnulateur,
 } from '../lib/types';
 
-type Tab = 'activite' | 'communaute' | 'marche' | 'colis' | 'finance' | 'afaire';
+type Tab = 'activite' | 'communaute' | 'marche' | 'colis' | 'finance' | 'services' | 'afaire';
 
 const TAB_LABELS: Record<Tab, string> = {
   activite: 'Activité',
@@ -32,6 +33,7 @@ const TAB_LABELS: Record<Tab, string> = {
   marche: 'Marché',
   colis: 'Colis',
   finance: 'Finance',
+  services: 'Services',
   afaire: 'Alertes',
 };
 
@@ -55,7 +57,7 @@ export function DashboardPage() {
   const onglets: Tab[] = [
     ...(voitActivite ? (['activite', 'communaute', 'marche'] as Tab[]) : []),
     ...(peutVoirColis(roles) ? (['colis'] as Tab[]) : []),
-    ...(voitRevenus ? (['finance'] as Tab[]) : []),
+    ...(voitRevenus ? (['finance', 'services'] as Tab[]) : []),
     ...(voitAlertes ? (['afaire'] as Tab[]) : []),
   ];
   const [tab, setTab] = useState<Tab | null>(ongletDemande);
@@ -101,6 +103,7 @@ export function DashboardPage() {
           {t === 'marche' && <MarcheTab />}
           {t === 'colis' && <ColisTab />}
           {t === 'finance' && <FinanceTab />}
+          {t === 'services' && <ServicesTab />}
           {t === 'afaire' && <ListeAFaire items={aFaire} error={erreurAFaire} />}
         </div>
       ))}
