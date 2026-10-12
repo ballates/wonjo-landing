@@ -5,6 +5,7 @@ import { chargerFicheTransaction } from '../lib/ficheTransaction';
 import { Avatar } from './Avatar';
 import { NumeroTelephone } from './NumeroTelephone';
 import { ConversationTransaction } from './ConversationTransaction';
+import { PaiementStripe } from './PaiementStripe';
 import { Modal } from './Modal';
 import { IconClose } from './Icons';
 import { useFicheCompte } from './FicheCompte';
@@ -154,6 +155,8 @@ export function TransactionModal({ demandeId, onClose }: { demandeId: string; on
             </div>
           </div>
         )}
+
+        {voitMarge && <PaiementStripe demandeId={f.id} />}
 
         <div className="info-rows">
           <div className="info-row">

@@ -52,6 +52,38 @@ const FICHES: Record<string, Fiche> = {
       'Si c\'est une donnée de test ancienne, traitez le signal avec une note.',
     ],
   },
+  paiement_non_suivi: {
+    sens: 'Stripe a confirmé un paiement, mais la base ne l\'a pas suivi : la carte de l\'expéditeur est débitée et la transaction n\'avance pas.',
+    conduite: [
+      'Cherchez le paiement dans Stripe (identifiant dans le détail) et l\'événement dans Développeurs > Webhooks : a-t-il été renvoyé, avec quelle erreur ?',
+      'Si l\'événement a été traité depuis, le signal se referme seul au passage suivant.',
+      'Sinon, renvoyez l\'événement depuis Stripe ; à défaut, remboursez le paiement et prévenez l\'expéditeur.',
+    ],
+  },
+  remboursement_bloque: {
+    sens: 'Stripe a refusé au moins trois fois de rembourser l\'expéditeur : il attend son argent.',
+    conduite: [
+      'Lisez l\'erreur dans le détail, puis le paiement dans Stripe (identifiant dans le détail).',
+      'Le cron retente chaque heure avec une nouvelle clé : corrigez la cause (solde, paiement déjà remboursé à la main...) et le signal se refermera seul.',
+      'À défaut, remboursez depuis Stripe : la prochaine tentative retrouvera ce remboursement et l\'enregistrera.',
+    ],
+  },
+  contestation_bancaire_perdue: {
+    sens: 'La banque du payeur a tranché la contestation bancaire en sa faveur : l\'argent lui est revenu, et les fonds de la transaction restent gelés pour toujours.',
+    conduite: [
+      'Ouvrez la transaction et la contestation dans Stripe (identifiant dans le détail) : le colis a-t-il été livré ?',
+      'Décidez si Wonjo paie le voyageur malgré tout ; rien ne part automatiquement.',
+      'Notez la décision en traitant le signal.',
+    ],
+  },
+  retransfert_en_attente: {
+    sens: 'Wonjo a gagné une contestation bancaire après avoir repris le virement du voyageur, et le nouveau virement n\'est pas parti depuis 24 h.',
+    conduite: [
+      'Vérifiez que le voyageur a toujours un compte de paiement actif (Stripe > Comptes connectés).',
+      'Regardez les journaux de la fonction notify-fonds-liberes : le virement est retenté chaque heure.',
+      'Le signal se referme seul quand le virement est parti.',
+    ],
+  },
   livre_sans_preuve: {
     sens: 'Une livraison est enregistrée sans photo, sans code, sans présomption de 7 jours ni décision de résolution : le chemin supprimé par la migration 190 a peut-être été rouvert.',
     conduite: [
@@ -219,6 +251,16 @@ export function resumeSignal(s: SignalSecurite): string {
       return `Colis « ${d.statut_colis} », paiement « ${d.statut_paiement} »`;
     case 'escrow_sans_stripe':
       return `Paiement « ${d.statut_paiement} » sans identifiant Stripe`;
+    case 'paiement_non_suivi':
+      return d.demande_id
+        ? `Paiement ${court(d.payment_intent)} reçu, demande « ${d.statut_paiement ?? '?'} »`
+        : `Paiement ${court(d.payment_intent)} reçu, événement jamais traité`;
+    case 'remboursement_bloque':
+      return `${d.essais ?? '?'} refus de Stripe : ${String(d.erreur ?? '').slice(0, 80)}`;
+    case 'contestation_bancaire_perdue':
+      return `Contestation ${court(d.dispute_id)} : « ${d.issue ?? '?'} », paiement « ${d.statut_paiement ?? '?'} »`;
+    case 'retransfert_en_attente':
+      return `Virement à refaire, ${d.essais ?? 0} essai(s) échoué(s)`;
     case 'livre_sans_preuve':
       return 'Livrée sans constat, code ni décision';
     case 'identite_sans_kyc':
@@ -282,6 +324,10 @@ export function cibleSignal(s: SignalSecurite): { kind: 'compte' | 'transaction'
 const TITRES: Record<string, string> = {
   argent_incoherent: 'Argent et colis incohérents',
   escrow_sans_stripe: 'Fonds détenus sans paiement Stripe',
+  paiement_non_suivi: 'Paiement reçu, transaction bloquée',
+  remboursement_bloque: 'Remboursement bloqué chez Stripe',
+  contestation_bancaire_perdue: 'Contestation bancaire perdue',
+  retransfert_en_attente: 'Virement au voyageur à refaire',
   livre_sans_preuve: 'Livraison sans aucune preuve',
   identite_sans_kyc: 'Badge vérifié sans identité approuvée',
   telephone_incoherent: 'Téléphone vérifié sans badge',

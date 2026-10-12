@@ -325,3 +325,58 @@ export interface EntreeJournal extends ActionHistorique {
   cible_id: string | null;
   cible_nom: string | null;
 }
+
+// [387] Etat Stripe d'une demande (admin_paiement_transaction), finance et super_admin.
+export interface ContestationBancaire {
+  dispute_id: string;
+  ouverte_at: string;
+  raison: string | null;
+  montant: number | null;
+  virement_repris: boolean;
+  issue: string | null;
+  close_at: string | null;
+}
+export interface EvenementStripe { type: string; at: string; traite_at: string | null; erreur: string | null }
+export interface PaiementTransaction {
+  payment_intent: string | null;
+  statut_paiement: string;
+  montant_total: number | null;
+  commission: number | null;
+  frais_stripe: number | null;
+  frais_retenus: number | null;
+  autorise_at: string | null;
+  autorisation_expire_at: string | null;
+  livre_at: string | null;
+  voyageur_compte: boolean;
+  voyageur_virements_actifs: boolean | null;
+  transfer_id: string | null;
+  transfer_essais: number;
+  fonds_notifies_at: string | null;
+  retransfert_requis_at: string | null;
+  retransfert_id: string | null;
+  retransfert_motif: string | null;
+  refund_id: string | null;
+  refund_essais: number;
+  refund_erreur: string | null;
+  refund_erreur_at: string | null;
+  gele: boolean;
+  contestations: ContestationBancaire[];
+  decision: { decision: 'payer' | 'ne_pas_payer'; motif: string; at: string } | null;
+  peut_decider: boolean;
+  livemode: boolean | null;
+  evenements: EvenementStripe[];
+}
+
+// [387] Une ligne de admin_paiements_a_traiter : la meme liste que les compteurs « A faire ».
+export interface PaiementATraiter {
+  demande_id: string | null;
+  cas: string;
+  depuis: string | null;
+  payment_intent: string | null;
+  detail: Record<string, unknown>;
+  montant_total: number | null;
+  statut_colis: string | null;
+  statut_paiement: string | null;
+  expediteur_prenom: string | null;
+  porteur_prenom: string | null;
+}

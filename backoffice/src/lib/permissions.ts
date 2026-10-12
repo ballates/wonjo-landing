@@ -9,7 +9,7 @@ function a(roles: AdminRole[], ...accepte: AdminRole[]): boolean {
 }
 
 // Onglets Activite / Communaute / Marche : admin_stats_utilisation,
-// admin_stats_communaute, admin_stats_marche. data (migration 284) et
+// admin_stats_communaute, admin_stats_marche. data (migration 284b) et
 // stagiaire (migration 285) corriges : ces roles existaient sans acceder a
 // rien, alors que leurs libelles le promettaient.
 export function peutVoirActivite(roles: AdminRole[]): boolean {

@@ -1,10 +1,12 @@
 import { decimales } from '../lib/nombre';
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { StatutBadge } from '../components/Badge';
 import { Avatar } from '../components/Avatar';
 import { ServerTable, type ServerColumn } from '../components/ServerTable';
 import { TransactionModal } from '../components/TransactionModal';
+import { PaiementsATraiter } from '../components/PaiementsATraiter';
 import { prechargementFiche } from '../lib/ficheTransaction';
 import { LABELS_PAIEMENT, LABELS_STATUT_COLIS, LABELS_TYPE_ENVOI, casserPrenom, clePaiementAffichee, dateHeure, premierMot } from '../lib/labels';
 import { useDebounce } from '../lib/useDebounce';
@@ -48,6 +50,9 @@ export function TransactionsPage() {
   const [chargement, setChargement] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ouverte, setOuverte] = useState<string | null>(null);
+  // [387] Ouverte depuis « A faire » (filtre 'paiements') ou par son bouton, finance seulement.
+  const location = useLocation();
+  const [paiements, setPaiements] = useState(voitMarge && (location.state as { filtre?: string } | null)?.filtre === 'paiements');
 
   function load() {
     setChargement(true);
@@ -146,6 +151,7 @@ export function TransactionsPage() {
           <p className="page-sub">Suivi individuel : qui doit rencontrer qui, où en est la remise, le code de livraison.</p>
         </div>
       </div>
+      {paiements && <PaiementsATraiter onOuvrir={setOuverte} />}
       <ServerTable
         rows={items ?? []}
         columns={columns}
@@ -171,6 +177,11 @@ export function TransactionsPage() {
         }}
         toolbar={(
           <div className="action-row" style={{ flexWrap: 'wrap' }}>
+            {voitMarge && (
+              <button type="button" className={`chip-filter ${paiements ? 'on' : ''}`} onClick={() => setPaiements((v) => !v)}>
+                Paiements à traiter
+              </button>
+            )}
             {FILTRES.map((f) => (
               <button
                 key={f.cle}
