@@ -223,7 +223,6 @@ export function ServicesTab() {
   if (error && !c) return <p className="page-error">{error}</p>;
   if (!c) return <p className="loading-state">Chargement…</p>;
 
-  const depuis = c.depuis ? new Date(c.depuis).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : null;
   const tauxDidit = c.didit.sessions_mois > 0 ? Math.round((c.didit.mois / c.didit.sessions_mois) * 100) : null;
   const pic = (serie: Point[]) => Math.max(0, ...serie.map((p) => Number(p.nb)));
 
@@ -270,9 +269,6 @@ export function ServicesTab() {
         </Carte>
       </div>
 
-      <p className="hint svc-note">
-        Compté par Wonjo{depuis ? ` depuis le ${depuis}` : ''}, du 1er au dernier jour du mois (heure de Paris) : peut différer un peu de Resend et Didit.
-      </p>
     </section>
   );
 }

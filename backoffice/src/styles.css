@@ -1929,7 +1929,6 @@ tr.is-modifie td { background: var(--accent-soft); }
 .svc-source-barre { height: 6px; border-radius: 999px; background: var(--border); overflow: hidden; }
 .svc-source-barre span { display: block; height: 100%; border-radius: inherit; background: var(--brand-gradient); }
 .svc-source-nb { min-width: 28px; text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--ink); }
-.svc-note { margin-top: 14px; }
 @media (max-width: 720px) {
   .svc-barre { align-items: stretch; }
   .svc-mois { justify-content: space-between; }
