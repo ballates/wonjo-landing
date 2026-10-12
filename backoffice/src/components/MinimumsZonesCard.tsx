@@ -135,7 +135,7 @@ export function MinimumsZonesCard() {
         onConfirmer={basculer}
       />
       {actif === false && (
-        <p className="rg-note">À allumer une fois la mise à jour de l'app publiée : les anciennes versions afficheraient moins que le débit réel.</p>
+        <p className="rg-note rg-note--texte">À allumer une fois la mise à jour de l'app publiée : les anciennes versions afficheraient moins que le débit réel.</p>
       )}
 
       <div className="rg-zones">

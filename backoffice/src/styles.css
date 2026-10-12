@@ -1596,6 +1596,7 @@ tr.is-modifie td { background: var(--accent-soft); }
   font-size: 12.5px; font-weight: 600;
 }
 .rg-note::before { content: ''; flex: none; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.rg-note--texte { padding: 0; background: none; border-radius: 0; }
 
 .rg-zones { display: grid; grid-template-columns: repeat(auto-fit, minmax(168px, 1fr)); gap: 12px; margin-top: 18px; }
 .rg-zone {
@@ -1845,3 +1846,92 @@ tr.is-modifie td { background: var(--accent-soft); }
 .emails-app-champ-pied { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
 @media (max-width: 900px) { .emails-app-deux { grid-template-columns: 1fr; } .emails-app-edition { max-height: none; } }
 .emails-app-compte { margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); font-size: 11.5px; font-weight: 800; vertical-align: middle; }
+
+/* ============ Bloc Paiement de la fiche transaction ============ */
+.info-rows--une-ligne .info-row { align-items: center; }
+.info-rows--une-ligne .info-row-label { flex: 0 0 auto; min-width: 150px; white-space: nowrap; }
+.info-rows--une-ligne .info-row-value { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.btn-stripe {
+  display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 8px 0 5px;
+  border-radius: 999px; border: 1px solid var(--border); background: var(--surface);
+  color: var(--text); font-size: 12.5px; font-weight: 700; text-decoration: none; white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+.btn-stripe:hover { border-color: #635BFF; box-shadow: 0 4px 14px rgba(99, 91, 255, 0.22); transform: translateY(-1px); }
+.btn-stripe:focus-visible { outline: 2px solid #635BFF; outline-offset: 2px; }
+.btn-stripe-pastille {
+  display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%;
+  background: #635BFF; color: #fff; font-size: 12px; font-weight: 800;
+}
+.btn-stripe-fleche {
+  display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%;
+  background: var(--surface-2); color: var(--muted); transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+.btn-stripe:hover .btn-stripe-fleche { background: #635BFF; color: #fff; transform: translate(1px, -1px); }
+@media (max-width: 720px) {
+  .info-rows--une-ligne .info-row-label { min-width: 0; }
+}
+
+/* ============ Tableau de bord > Services ============ */
+.svc { transition: opacity 0.2s ease; }
+.svc--charge { opacity: 0.55; pointer-events: none; }
+.svc-barre { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.svc-titre { margin: 0 0 2px; font-size: 18px; font-weight: 800; color: var(--ink); }
+.svc-barre .chart-sub { margin: 0; }
+.svc-mois { display: inline-flex; align-items: center; gap: 4px; padding: 4px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); box-shadow: var(--shadow-sm); }
+.svc-mois-fleche { width: 30px; height: 30px; border-radius: 50%; border: none; background: transparent; color: var(--text); font-size: 18px; line-height: 1; cursor: pointer; transition: background 0.15s ease; }
+.svc-mois-fleche:hover:not(:disabled) { background: var(--hover); }
+.svc-mois-fleche:disabled { opacity: 0.3; cursor: default; }
+.svc-mois-choix { position: relative; display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); font-size: 13px; font-weight: 800; cursor: pointer; min-width: 150px; justify-content: center; }
+.svc-mois-choix select { position: absolute; inset: 0; opacity: 0; cursor: pointer; font: inherit; }
+.svc-mois-choix:focus-within { box-shadow: 0 0 0 3px rgba(74,136,150,0.25); }
+.svc-mois-retour { height: 30px; padding: 0 12px; border-radius: 999px; border: none; background: transparent; color: var(--accent-ink); font-size: 12.5px; font-weight: 700; cursor: pointer; }
+.svc-mois-retour:hover { background: var(--hover); }
+.svc-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; align-items: start; }
+.svc-carte { display: flex; flex-direction: column; gap: 16px; margin-bottom: 0; }
+.svc-tete { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.svc-tete h3 { margin: 0 0 2px; }
+.svc-tete .chart-sub { margin: 0; }
+.svc-pastille { flex-shrink: 0; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 800; white-space: nowrap; }
+.svc-pastille--ok { background: var(--badge-green-bg); color: var(--badge-green-fg); }
+.svc-pastille--attention { background: var(--badge-amber-bg); color: var(--badge-amber-fg); }
+.svc-pastille--atteint { background: var(--badge-danger-bg); color: var(--badge-danger-fg); }
+.svc-resume { display: flex; align-items: center; gap: 18px; }
+.svc-anneau { position: relative; flex-shrink: 0; width: 84px; height: 84px; }
+.svc-anneau svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.svc-anneau circle { fill: none; stroke-width: 8; }
+.svc-anneau-fond { stroke: var(--border); }
+.svc-anneau-trait { stroke: var(--teal); stroke-linecap: round; transition: stroke-dashoffset 0.6s ease; }
+.svc-anneau--attention .svc-anneau-trait { stroke: var(--amber); }
+.svc-anneau--atteint .svc-anneau-trait { stroke: var(--danger); }
+.svc-anneau span { position: absolute; inset: 0; display: grid; place-items: center; font-size: 15px; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
+.svc-chiffres { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.svc-total { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.svc-total strong { font-size: 32px; font-weight: 800; line-height: 1.1; color: var(--ink); font-variant-numeric: tabular-nums; }
+.svc-total span { font-size: 13px; color: var(--muted); }
+.svc-reste { margin: 0; font-size: 12.5px; color: var(--text); }
+.svc-evol { font-size: 12px; font-weight: 700; color: var(--muted); }
+.svc-evol span { font-weight: 500; }
+.svc-evol--hausse { color: var(--badge-amber-fg); }
+.svc-evol--baisse { color: var(--badge-green-fg); }
+.svc-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
+.svc-stat { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); }
+.svc-stat span { font-size: 10.5px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.svc-stat strong { font-size: 17px; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
+.svc-stat small { font-size: 12px; font-weight: 600; color: var(--muted); }
+.svc-graph { margin: 0 -4px; }
+.svc-vide { margin: 0; padding: 22px 0; text-align: center; font-size: 12.5px; color: var(--muted); border: 1px dashed var(--border); border-radius: 12px; }
+.svc-sous-titre { margin: 0 0 8px; font-size: 10.5px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.svc-sources { display: flex; flex-direction: column; gap: 7px; }
+.svc-source { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(60px, 1fr) auto; align-items: center; gap: 10px; font-size: 12.5px; }
+.svc-source-nom { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+.svc-source-barre { height: 6px; border-radius: 999px; background: var(--border); overflow: hidden; }
+.svc-source-barre span { display: block; height: 100%; border-radius: inherit; background: var(--brand-gradient); }
+.svc-source-nb { min-width: 28px; text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--ink); }
+.svc-note { margin-top: 14px; }
+@media (max-width: 720px) {
+  .svc-barre { align-items: stretch; }
+  .svc-mois { justify-content: space-between; }
+  .svc-grille { grid-template-columns: 1fr; }
+}

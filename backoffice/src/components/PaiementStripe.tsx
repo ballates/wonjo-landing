@@ -31,12 +31,21 @@ export function lienStripe(pi: string | null, livemode: boolean | null): string 
   return `https://dashboard.stripe.com/${livemode === false ? 'test/' : ''}payments/${encodeURIComponent(pi)}`;
 }
 
+// Une ligne par information, jamais repliee : le texte trop long est coupe et lu en entier au survol.
 function Ligne({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="info-row">
       <span className="info-row-label">{label}</span>
-      <span className="info-row-value">{children}</span>
+      <span className="info-row-value" onMouseEnter={(e) => { e.currentTarget.title = e.currentTarget.textContent ?? ''; }}>{children}</span>
     </div>
+  );
+}
+
+function IconeSortie() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M7 17 17 7" /><path d="M8 7h9v9" />
+    </svg>
   );
 }
 
@@ -80,9 +89,15 @@ export function PaiementStripe({ demandeId }: { demandeId: string }) {
     <div className="info-card">
       <div className="info-card-head">
         <p className="section-title">Paiement {p.gele && <span className="tag-chip">fonds gelés</span>}</p>
-        {lien && <a className="btn btn-soft btn-sm" href={lien} target="_blank" rel="noopener noreferrer">Ouvrir dans Stripe</a>}
+        {lien && (
+          <a className="btn-stripe" href={lien} target="_blank" rel="noopener noreferrer">
+            <span className="btn-stripe-pastille" aria-hidden="true">S</span>
+            Ouvrir dans Stripe
+            <span className="btn-stripe-fleche"><IconeSortie /></span>
+          </a>
+        )}
       </div>
-      <div className="info-rows">
+      <div className="info-rows info-rows--une-ligne">
         <Ligne label="Statut">{LABELS_PAIEMENT[p.statut_paiement] ?? p.statut_paiement}{p.montant_total != null && ` · ${decimales(Number(p.montant_total), 2)} € pour le voyageur`}</Ligne>
         <Ligne label="Paiement Stripe">{p.payment_intent ? <code>{p.payment_intent}</code> : 'Aucun'}{p.livemode === false && ' (mode test)'}</Ligne>
         {p.autorise_at && (
