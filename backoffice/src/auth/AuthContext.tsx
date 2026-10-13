@@ -12,9 +12,11 @@ import { supabase } from '../lib/supabase';
 //  - checking            : verification admin_est_authentifie() en cours
 //  - authorized          : session aal2 + present dans admin_users
 //  - unauthorized        : aal2 atteint mais pas admin (ou admin desactive)
+//  - verification_impossible : le serveur n'a pas repondu (reseau, erreur) - on ne sait pas si
+//                          le compte est admin, donc ni « refuse » ni deconnexion
 export type AuthStatus =
   | 'loading' | 'signed_out' | 'need_password_set' | 'need_mfa_enroll' | 'need_mfa_challenge'
-  | 'checking' | 'authorized' | 'unauthorized';
+  | 'checking' | 'authorized' | 'unauthorized' | 'verification_impossible';
 
 export type AdminRole = 'super_admin' | 'moderation' | 'finance' | 'commercial' | 'data' | 'stagiaire' | 'lecture_seule';
 
@@ -35,7 +37,7 @@ interface AuthState {
   email: string | null;
   profil: AdminProfil | null;
   signIn: (email: string, password: string) => Promise<void>;
-  signOut: () => Promise<void>;
+  signOut: (message?: string) => Promise<void>;
   refreshMfaState: () => Promise<void>;
   refreshProfil: () => Promise<void>;
 }
@@ -44,6 +46,11 @@ const INACTIVITE_MAX_MS = 60 * 60 * 1000;
 const CLE_ACTIVITE = 'wonjo_bo_derniere_activite';
 
 const AuthCtx = createContext<AuthState | null>(null);
+
+// Jeton expire ou refuse : la session n'est plus valable, ce n'est pas un refus de droits.
+function sessionExpiree(err: { status?: number; code?: string; message?: string }): boolean {
+  return err.status === 401 || err.code === 'PGRST301' || /jwt|token.*expir|expired|not authenticated/i.test(err.message ?? '');
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>('loading');
@@ -54,6 +61,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Lu dans evaluate() (appele par des callbacks anciens) : etat courant, pas celui de la closure.
   const statusRef = useRef(status);
   statusRef.current = status;
+
+  // Erreur d'un appel de verification : session expiree -> retour a la connexion avec un message
+  // clair ; autre erreur (reseau...) -> on ne conclut rien sur les droits de la personne.
+  async function refuserSansDroits(err: { status?: number; code?: string; message?: string }) {
+    if (sessionExpiree(err)) {
+      await supabase.auth.signOut({ scope: 'local' });
+      setError('Votre session a expiré. Reconnectez-vous.');
+      setStatus('signed_out');
+    } else {
+      setStatus('verification_impossible');
+    }
+    setRoles([]);
+    setProfil(null);
+  }
 
   async function evaluate() {
     const { data: sessionData } = await supabase.auth.getSession();
@@ -77,7 +98,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // sinon n'importe quel membre pouvait activer une 2FA sur son compte
     // depuis le back-office avant d'etre refuse (284).
     const { data: eligible, error: eligibleError } = await supabase.rpc('admin_compte_eligible');
-    if (eligibleError || !eligible) {
+    if (eligibleError) {
+      await refuserSansDroits(eligibleError);
+      return;
+    }
+    if (!eligible) {
       setStatus('unauthorized');
       setRoles([]);
       setProfil(null);
@@ -96,7 +121,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // recuperer le role, plutot que deux appels separes.
       const { data, error: rpcError } = await supabase.rpc('admin_mon_profil').maybeSingle();
       const p = data as AdminProfil | null;
-      if (rpcError || !p) {
+      if (rpcError) {
+        await refuserSansDroits(rpcError);
+        return;
+      }
+      if (!p) {
         setStatus('unauthorized');
         setRoles([]);
         setProfil(null);
@@ -137,7 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const verifier = () => {
       if (Date.now() - lire() >= INACTIVITE_MAX_MS) {
         try { localStorage.removeItem(CLE_ACTIVITE); } catch { /* idem */ }
-        signOut();
+        signOut('Vous avez été déconnecté après une heure d\'inactivité.');
       }
     };
 
@@ -182,11 +211,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (data) setProfil(data as AdminProfil);
   }
 
-  async function signOut() {
+  async function signOut(message?: string) {
     try { localStorage.removeItem(CLE_ACTIVITE); } catch { /* stockage indisponible */ }
     // 'local' : sans cela signOut() est GLOBAL et revoque toutes les sessions du compte,
     // y compris celle de l'application sur le telephone.
     await supabase.auth.signOut({ scope: 'local' });
+    setError(message ?? null);
     setStatus('signed_out');
     setRoles([]);
   }

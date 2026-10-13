@@ -107,6 +107,23 @@ export function libelleMotif(action: string, motif: string | null): string | nul
   return motif;
 }
 
+// Messages d'erreur du serveur (exceptions SQL, sans accents ni mise en forme) traduits pour
+// l'administrateur. Un message inconnu est rendu tel quel : mieux vaut un texte brut qu'un faux.
+const MESSAGES_SERVEUR: [RegExp, string][] = [
+  [/kyc_status\s*:\s*seule la valeur pending/i, 'Le serveur a refusé de modifier le statut de vérification d\'identité de ce compte.'],
+  [/Colonnes de verification d'identite en lecture seule/i, 'Le serveur a refusé de modifier les données de vérification d\'identité de ce compte.'],
+  [/date_naissance\s*:\s*figee/i, 'La date de naissance est figée une fois la pièce d\'identité vérifiée.'],
+  [/Acces reserve au role super_admin/i, 'Action réservée aux super administrateurs.'],
+  [/Acces reserve/i, 'Vous n\'avez pas les droits nécessaires pour cette action.'],
+  [/Un motif est obligatoire/i, 'Le motif est obligatoire.'],
+  [/administrateur\s*:\s*utilisez admin_desactiver_admin/i, 'Ce compte est un administrateur : désactivez-le depuis la page Administrateurs, pas comme un membre.'],
+];
+
+export function messageServeur(brut: string): string {
+  for (const [motif, texte] of MESSAGES_SERVEUR) if (motif.test(brut)) return texte;
+  return brut;
+}
+
 export const LABELS_NIVEAU: Record<string, string> = {
   debutant: 'Débutant',
   ambassadeur: 'Ambassadeur',

@@ -34,7 +34,7 @@ function Protege({ si, children }: { si: (roles: AdminRole[]) => boolean; childr
 }
 
 function Gate() {
-  const { status, signOut, profil } = useAuth();
+  const { status, signOut, profil, refreshMfaState } = useAuth();
 
   switch (status) {
     case 'loading':
@@ -54,6 +54,17 @@ function Gate() {
           <div className="auth-card">
             <h1>Accès refusé</h1>
             <p>Ce compte n'a pas les droits d'administration.</p>
+            <button type="button" onClick={() => signOut()}>Se déconnecter</button>
+          </div>
+        </div>
+      );
+    case 'verification_impossible':
+      return (
+        <div className="auth-screen">
+          <div className="auth-card">
+            <h1>Vérification impossible</h1>
+            <p>Nous n'avons pas pu vérifier vos droits d'accès. Vérifiez votre connexion, puis réessayez.</p>
+            <button type="button" onClick={() => refreshMfaState()}>Réessayer</button>
             <button type="button" onClick={() => signOut()}>Se déconnecter</button>
           </div>
         </div>

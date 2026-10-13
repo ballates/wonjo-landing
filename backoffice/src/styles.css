@@ -966,6 +966,7 @@ td.dt-empty { text-align: center; color: var(--muted); padding: 32px; }
 .timeline li:last-child { border-bottom: none; }
 .timeline-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: 12px; }
 .timeline-body b { color: var(--ink); }
+.timeline-longue { max-height: 280px; overflow-y: auto; }
 .timeline-meta { font-size: 11px; color: var(--muted); }
 .timeline-motif { font-size: 11.5px; color: var(--muted); font-style: italic; }
 .btn-link {
@@ -1357,6 +1358,10 @@ th.filtered { color: var(--accent-ink); }
 .publications-admin li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); }
 .publications-admin li > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .publications-admin li.is-masquee strong { text-decoration: line-through; opacity: 0.7; }
+.publications-admin li { padding: 6px 0; }
+.publications-admin li strong { font-size: 12px; font-weight: 700; }
+.publications-admin li .timeline-meta { font-size: 10.5px; }
+.publications-admin li .btn-sm { font-size: 11px; padding: 4px 10px; }
 
 /* [308] Blocage automatique (meme identite qu'un compte suspendu) */
 .bandeau-alerte { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--danger); background: color-mix(in srgb, var(--danger) 8%, transparent); font-size: 13px; line-height: 1.5; }

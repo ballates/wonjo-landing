@@ -10,7 +10,7 @@ import { Modal } from './Modal';
 import { BlocageAutomatique, NotesCompte, PublicationsCompte } from './ModerationCompte';
 import { useFicheCompte } from './FicheCompte';
 import { Select } from './Select';
-import { LABELS_NIVEAU, LABELS_STATUT_KYC, dateHeure, depuis, libelleAction, libelleMotif, nomComplet, niveauReputation } from '../lib/labels';
+import { LABELS_NIVEAU, LABELS_STATUT_KYC, dateHeure, depuis, libelleAction, libelleMotif, messageServeur, nomComplet, niveauReputation } from '../lib/labels';
 import type { ActionHistorique, FicheCompte } from '../lib/types';
 
 type Saisie = 'bloquer' | 'debloquer' | 'approuver_kyc' | 'rejeter_kyc' | 'reinitialiser_kyc' | 'supprimer' | null;
@@ -42,25 +42,26 @@ export function CompteModal({ fiche, onClose, onChanged }: { fiche: FicheCompte;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [historique, setHistorique] = useState<ActionHistorique[] | null>(null);
+  const [historiqueOuvert, setHistoriqueOuvert] = useState(false);
   const { ouvrir, modal } = useFicheCompte();
 
   function chargerHistorique() {
     supabase.rpc('admin_historique_compte', { p_user_id: fiche.id }).then(({ data, error: e }) => {
-      if (e) setError(e.message);
+      if (e) setError(messageServeur(e.message));
       // [300] Les consultations de coordonnees sont au journal, mais ne sont
       // pas des actions sur le compte : elles masqueraient la derniere vraie.
       setHistorique(((data ?? []) as ActionHistorique[]).filter((h) => !h.action.startsWith('consulter_')));
     });
   }
 
-  useEffect(chargerHistorique, [fiche.id]);
+  useEffect(() => { setHistoriqueOuvert(false); chargerHistorique(); }, [fiche.id]);
 
   async function executer(action: () => PromiseLike<{ data?: unknown; error: { message: string } | null }>, apresSucces?: () => void) {
     setBusy(true);
     setError(null);
     try {
       const { data, error: rpcError } = await action();
-      if (rpcError) { setError(rpcError.message); return; }
+      if (rpcError) { setError(messageServeur(rpcError.message)); return; }
       const resultat = data as { success?: boolean; message?: string } | null;
       if (resultat && resultat.success === false) { setError(resultat.message ?? 'Action refusée.'); return; }
       setSaisie(null);
@@ -147,8 +148,8 @@ export function CompteModal({ fiche, onClose, onChanged }: { fiche: FicheCompte;
               {historique === null && <p className="hint">Chargement…</p>}
               {historique !== null && historique.length === 0 && <p className="hint">Aucune action d'administration sur ce compte.</p>}
               {historique !== null && historique.length > 0 && (
-                <ul className="timeline">
-                  {historique.slice(0, 1).map((h) => (
+                <ul className={`timeline${historiqueOuvert ? ' timeline-longue' : ''}`}>
+                  {(historiqueOuvert ? historique : historique.slice(0, 1)).map((h) => (
                     <li key={h.id}>
                       <Avatar src={h.admin_avatar} nom={h.admin_nom} size={30} />
                       <div className="timeline-body">
@@ -161,7 +162,9 @@ export function CompteModal({ fiche, onClose, onChanged }: { fiche: FicheCompte;
                 </ul>
               )}
               {historique !== null && historique.length > 1 && (
-                <p className="hint">Historique complet dans Actions.</p>
+                <button type="button" className="lien" onClick={() => setHistoriqueOuvert((o) => !o)}>
+                  {historiqueOuvert ? 'Réduire l\'historique' : `Voir l'historique des ${historique.length} actions sur ce compte`}
+                </button>
               )}
             </div>
           </div>
