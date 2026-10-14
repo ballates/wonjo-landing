@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { usePhotoSignee } from '../lib/photosProfil';
 
 function initiales(nom: string | null | undefined): string {
   const parts = (nom ?? '').trim().split(/\s+/).filter(Boolean);
@@ -10,10 +11,13 @@ function initiales(nom: string | null | undefined): string {
 
 export function Avatar({ src, nom, size = 36 }: { src?: string | null; nom?: string | null; size?: number }) {
   const [broken, setBroken] = useState(false);
-  const showImg = src && !broken;
+  // URL signee : l'URL stockee ne s'ouvrira plus une fois le bucket avatars prive.
+  const url = usePhotoSignee(src);
+  useEffect(() => { setBroken(false); }, [url]);
+  const showImg = url && !broken;
   return (
     <span className="avatar" style={{ width: size, height: size, fontSize: Math.round(size * 0.38) }} title={nom ?? undefined}>
-      {showImg ? <img src={src} alt="" onError={() => setBroken(true)} /> : initiales(nom)}
+      {showImg ? <img src={url} alt="" onError={() => setBroken(true)} /> : initiales(nom)}
     </span>
   );
 }

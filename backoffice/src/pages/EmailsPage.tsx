@@ -8,6 +8,7 @@ import { dateHeure, nomComplet } from '../lib/labels';
 import { useAuth } from '../auth/AuthContext';
 import { peutEnvoyerInformation } from '../lib/permissions';
 import type { CompteRecherche } from '../lib/types';
+import { useRechercheComptes } from '../lib/useRechercheComptes';
 import { EmailsAppSection } from './EmailsAppSection';
 import logo from '../assets/wonjo-logo.png';
 import { IconChevronLeft, IconRestore, IconSend, IconSquarePencil, IconTrash } from '../components/Icons';
@@ -85,15 +86,16 @@ export function EmailsPage() {
     ids?: string[]; noms?: string[]; segment?: string; type?: TypeEmail; sujet?: string; message?: string;
   } | null;
   const selectionInitiale = etat?.ids && etat.ids.length ? { ids: etat.ids, noms: etat.noms ?? [] } : null;
-  // Noms connus avant meme le chargement de l'annuaire (comptes charge en
-  // arriere-plan) : ceux passes par Moderation/Commissions via location.state.
-  const nomsInitiaux = useMemo(() => new Map((selectionInitiale?.ids ?? []).map((id, i) => [id, selectionInitiale?.noms[i]])), []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Noms des membres coches : ceux passes par Moderation/Commissions via location.state, puis ceux
+  // retenus au clic dans les resultats (l'annuaire n'est plus charge en entier).
+  const [nomsConnus, setNomsConnus] = useState<Map<string, string | undefined>>(
+    () => new Map((selectionInitiale?.ids ?? []).map((id, i) => [id, selectionInitiale?.noms[i]])),
+  );
 
   const [type, setType] = useState<TypeEmail>(peutInformation ? (etat?.type ?? 'service') : 'promotion');
   const [segment, setSegment] = useState(selectionInitiale ? 'selection' : etat?.segment ?? 'non_verifies');
   const [membres, setMembres] = useState<Set<string>>(new Set(selectionInitiale?.ids ?? []));
   const [rechercheMembre, setRechercheMembre] = useState('');
-  const [comptes, setComptes] = useState<CompteRecherche[]>([]);
   const ids = useMemo(() => [...membres], [membres]);
   const [sujet, setSujet] = useState(etat?.sujet ?? '');
   const [message, setMessage] = useState(etat?.message ?? '');
@@ -157,21 +159,15 @@ export function EmailsPage() {
     supabase.rpc('admin_lister_campagnes', { p_corbeille: false }).then(({ data, error: e }) => { if (e) { setErreurChargement(e.message); return; } setCampagnes((data ?? []) as Campagne[]); });
   }
   useEffect(chargerCampagnes, []);
-  useEffect(() => {
-    supabase.rpc('admin_rechercher_comptes', { p_recherche: '', p_limite: 2000 }).then(({ data, error: e }) => { if (e) { setErreurChargement(e.message); return; } setComptes((data ?? []) as CompteRecherche[]); });
-  }, []);
+  const { comptes, erreur: erreurComptes } = useRechercheComptes(rechercheMembre, 60, { actif: segment === 'selection' });
+  useEffect(() => { if (erreurComptes) setErreurChargement(erreurComptes); }, [erreurComptes]);
+  const comptesFiltres = rechercheMembre.trim() ? comptes : [];
 
-  const comptesFiltres = useMemo(() => {
-    const q = rechercheMembre.trim().toLowerCase();
-    if (!q) return [];
-    return comptes.filter((c) => `${c.prenom} ${c.nom} ${c.email}`.toLowerCase().includes(q)).slice(0, 60);
-  }, [comptes, rechercheMembre]);
-
-  const compteParId = useMemo(() => new Map(comptes.map((c) => [c.id, c])), [comptes]);
-  const nomAffiche = (id: string) => {
-    const c = compteParId.get(id);
-    return c ? (nomComplet(c.prenom, c.nom) || c.email) : (nomsInitiaux.get(id) ?? id);
-  };
+  const nomAffiche = (id: string) => nomsConnus.get(id) ?? id;
+  function basculerMembre(c: CompteRecherche) {
+    setNomsConnus((m) => new Map(m).set(c.id, nomComplet(c.prenom, c.nom) || c.email));
+    setMembres((m) => { const n = new Set(m); if (n.has(c.id)) n.delete(c.id); else n.add(c.id); return n; });
+  }
 
   useEffect(() => {
     setCompte(null);
@@ -663,7 +659,7 @@ export function EmailsPage() {
                         type="checkbox"
                         className="dt-check"
                         checked={membres.has(c.id)}
-                        onChange={() => setMembres((m) => { const n = new Set(m); if (n.has(c.id)) n.delete(c.id); else n.add(c.id); return n; })}
+                        onChange={() => basculerMembre(c)}
                       />
                       <Avatar src={c.photo_url} nom={nomComplet(c.prenom, c.nom)} size={28} />
                       <span className="member-name">{nomComplet(c.prenom, c.nom) || c.email}</span>

@@ -8,6 +8,11 @@
 <title>Textes juridiques - Wonjo</title>
 </head>
 <body>
-<script src="https://unpkg.com/decap-cms@^3.8.0/dist/decap-cms.js"></script>
+<!-- Version figee + empreinte (SRI) : une plage ^3.x chargeait toute nouvelle publication sans
+     controle, avec acces au jeton GitHub de l'editeur. Empreinte recoupee avec le tarball npm.
+     Monter de version : changer les deux, empreinte = openssl dgst -sha384 -binary | openssl base64 -A -->
+<script src="https://unpkg.com/decap-cms@3.16.3/dist/decap-cms.js"
+        integrity="sha384-A/Gdn928CNLufmnGWGs9RM4Q9o8bSNLeJERqBFrBjwzL7FRpoLT3MPF8Tl0+Wd2p"
+        crossorigin="anonymous"></script>
 </body>
 </html>

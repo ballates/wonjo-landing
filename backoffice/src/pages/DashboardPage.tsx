@@ -137,7 +137,7 @@ function ActiviteTab() {
     });
     // Liste secondaire : refusee par le serveur aux roles data/stagiaire, qui
     // voient pourtant cet onglet - l'erreur ne doit pas masquer les stats.
-    supabase.rpc('admin_comptes_plus_actifs', { p_limite: 5000 }).then(({ data, error: e }) => { if (e) { setActifs([]); return; } setActifs((data ?? []) as CompteActif[]); });
+    supabase.rpc('admin_comptes_plus_actifs', { p_limite: 200 }).then(({ data, error: e }) => { if (e) { setActifs([]); return; } setActifs((data ?? []) as CompteActif[]); });
   }, []);
 
   if (error) return <p className="page-error">{error}</p>;

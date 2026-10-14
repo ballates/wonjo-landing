@@ -10,6 +10,7 @@ import { aujourdhuiParis, dateHeure, nomComplet } from '../lib/labels';
 import { Kpi } from '../components/Kpi';
 import type { CompteRecherche } from '../lib/types';
 import { useDebounce } from '../lib/useDebounce';
+import { useRechercheComptes } from '../lib/useRechercheComptes';
 
 interface Parametres { actif: boolean; defaut: number; plafond: number; plancher: number; nb_super_admins: number; moi: string }
 interface Changement { id: string; type: 'defaut' | 'activation'; valeur: string; demande_par: string; demande_par_nom: string | null; created_at: string }
@@ -91,7 +92,6 @@ export function CommissionsSection() {
   const [params, setParams] = useState<Parametres | null>(null);
   const [regles, setRegles] = useState<Regle[] | null>(null);
   const [changements, setChangements] = useState<Changement[]>([]);
-  const [comptes, setComptes] = useState<CompteRecherche[]>([]);
   const [lieux, setLieux] = useState<Lieu[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -114,7 +114,8 @@ export function CommissionsSection() {
   const [dateFin, setDateFin] = useState('');
 
   // Simulateur
-  const [simUser, setSimUser] = useState('');
+  const [simMembre, setSimMembre] = useState<CompteRecherche | null>(null);
+  const simUser = simMembre?.id ?? '';
   const [simDepVille, setSimDepVille] = useState('');
   const [simDepPays, setSimDepPays] = useState('');
   const [simArrVille, setSimArrVille] = useState('');
@@ -137,7 +138,6 @@ export function CommissionsSection() {
 
   useEffect(() => {
     charger();
-    supabase.rpc('admin_rechercher_comptes', { p_recherche: '', p_limite: 2000 }).then(({ data, error: e }) => { if (e) { setError(e.message); return; } setComptes((data ?? []) as CompteRecherche[]); });
     supabase.rpc('admin_commission_lieux').then(({ data, error: e }) => { if (e) { setError(e.message); return; } setLieux((data ?? []) as Lieu[]); });
   }, []);
 
@@ -258,17 +258,11 @@ export function CommissionsSection() {
     });
   }, [simCle]);
 
-  const simComptes = useMemo(() => {
-    const q = simRecherche.trim().toLowerCase();
-    if (!q) return [];
-    return comptes.filter((c) => `${c.prenom} ${c.nom} ${c.email}`.toLowerCase().includes(q)).slice(0, 6);
-  }, [comptes, simRecherche]);
-  const simMembre = comptes.find((c) => c.id === simUser) ?? null;
-
-  const comptesFiltres = useMemo(() => {
-    const q = rechercheMembre.trim().toLowerCase();
-    return comptes.filter((c) => !q || `${c.prenom} ${c.nom} ${c.email}`.toLowerCase().includes(q)).slice(0, 60);
-  }, [comptes, rechercheMembre]);
+  // Recherches cote serveur : seules les lignes affichees sont chargees (audit du 14 oct. 2026).
+  const { comptes: simComptesTrouves, erreur: erreurSim } = useRechercheComptes(simRecherche, 6, { actif: tab === 'simulateur' && !simMembre });
+  const simComptes = simRecherche.trim() ? simComptesTrouves : [];
+  const { comptes: comptesFiltres, erreur: erreurMembres } = useRechercheComptes(rechercheMembre, 60, { actif: tab === 'regles' && cible === 'selection', videAutorise: true });
+  useEffect(() => { const e = erreurSim ?? erreurMembres; if (e) setError(e); }, [erreurSim, erreurMembres]);
 
   const tauxSaisi = Number(taux.replace(',', '.'));
   const resume = nom.trim() && Number.isFinite(tauxSaisi) && taux !== ''
@@ -540,7 +534,7 @@ export function CommissionsSection() {
                       <strong>{nomComplet(simMembre.prenom, simMembre.nom) || simMembre.email}</strong>
                       <span>{simMembre.email}</span>
                     </div>
-                    <button type="button" className="btn btn-sm" onClick={() => { setSimUser(''); setSimRecherche(''); }}>Changer</button>
+                    <button type="button" className="btn btn-sm" onClick={() => { setSimMembre(null); setSimRecherche(''); }}>Changer</button>
                   </div>
                 ) : (
                   <div className="simc-recherche">
@@ -550,7 +544,7 @@ export function CommissionsSection() {
                       <ul className="simc-resultats">
                         {simComptes.map((c) => (
                           <li key={c.id}>
-                            <button type="button" onClick={() => setSimUser(c.id)}>
+                            <button type="button" onClick={() => setSimMembre(c)}>
                               <Avatar src={c.photo_url} nom={nomComplet(c.prenom, c.nom)} size={30} />
                               <span className="simc-membre-texte"><strong>{nomComplet(c.prenom, c.nom) || c.email}</strong><span>{c.email}</span></span>
                             </button>

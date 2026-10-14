@@ -4,27 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex, nofollow" />
+    <!-- CSP (GitHub Pages n'envoie pas d'en-tete) : la session admin vit dans localStorage et la page
+         affiche des donnees personnelles ; aucun script hors du site ne doit pouvoir s'executer.
+         style-src 'unsafe-inline' : attributs style de React. Aucun script en ligne (voir demarrage.js). -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://bnlvkcbzqvmnttruyiwi.supabase.co wss://bnlvkcbzqvmnttruyiwi.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'" />
+    <meta name="referrer" content="no-referrer" />
     <title>Wonjo - Back-office</title>
     <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <!-- Anti-clickjacking : GitHub Pages ne permet ni X-Frame-Options ni
-         CSP frame-ancestors. La page reste masquee tant qu'on n'a pas verifie
-         qu'elle n'est pas affichee dans une iframe d'un autre site. -->
+    <!-- Anti-clickjacking : masquee jusqu'a la verification de demarrage.js. -->
     <style id="anti-clickjack">body { display: none !important; }</style>
-    <script>
-      if (window.self === window.top) {
-        document.getElementById('anti-clickjack').remove();
-      } else {
-        window.top.location = window.self.location;
-      }
-    </script>
-    <script>
-      try {
-        var t = localStorage.getItem('wonjo-backoffice-theme');
-        if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
-      } catch (e) {}
-    </script>
+    <script src="/backoffice/demarrage.js"></script>
   </head>
   <body>
     <div id="root"></div>
