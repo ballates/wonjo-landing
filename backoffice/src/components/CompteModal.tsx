@@ -124,7 +124,7 @@ export function CompteModal({ fiche, onClose, onChanged }: { fiche: FicheCompte;
         <div className="stats-row">
           <div className="stat"><strong>{fiche.nombre_livraisons ?? 0}</strong><span>Livraisons</span></div>
           <div className="stat"><strong>{fiche.nombre_colis_confies ?? 0}</strong><span>Colis expédiés</span></div>
-          <div className="stat"><strong>{fiche.note_moyenne != null ? `${decimales(Number(fiche.note_moyenne), 1)} / 5` : '-'}</strong><span>Note moyenne</span></div>
+          <div className="stat"><strong>{fiche.note_moyenne != null ? <>{decimales(Number(fiche.note_moyenne), 1)}<small className="stat-sur"> / 5</small></> : '-'}</strong><span>Avis</span></div>
           <div className="stat" title={`${fiche.signalements} signalement(s) par ${fiche.signaleurs_distincts} personne(s)`}><strong>{fiche.signalements}</strong><span>Signalements</span></div>
         </div>
 

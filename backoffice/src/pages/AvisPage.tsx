@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { MasquageModal } from '../components/MasquageModal';
 import { ServerTable, type ServerColumn } from '../components/ServerTable';
 import { StatutBadge } from '../components/Badge';
 import { TransactionModal } from '../components/TransactionModal';
@@ -28,24 +29,10 @@ export function AvisPage() {
   const [chargement, setChargement] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ouverte, setOuverte] = useState<string | null>(null);
-  const [busyAvis, setBusyAvis] = useState<string | null>(null);
+  const [aMasquer, setAMasquer] = useState<AvisListe | null>(null);
 
   // [300] Masquer un avis (diffamatoire, hors sujet, coordonnees...) : il
   // disparait de l'app et ne compte plus dans la note du destinataire.
-  async function basculerMasquage(a: AvisListe) {
-    const masquer = !a.masque_at;
-    let motif: string | null = null;
-    if (masquer) {
-      motif = window.prompt('Motif du masquage de cet avis (obligatoire) :');
-      if (!motif?.trim()) return;
-    } else if (!window.confirm('Réafficher cet avis ? Il comptera à nouveau dans la note.')) return;
-    setBusyAvis(a.id);
-    const { error: rpcError } = await supabase.rpc('admin_masquer_contenu', { p_type: 'avis', p_id: a.id, p_masquer: masquer, p_motif: motif });
-    setBusyAvis(null);
-    if (rpcError) { window.alert(rpcError.message); return; }
-    load();
-  }
-
   function load() {
     setChargement(true);
     supabase.rpc('admin_lister_avis', {
@@ -89,7 +76,7 @@ export function AvisPage() {
       key: 'actions', label: '', width: 190, render: (a) => (
         <div className="action-row">
           <button className="btn btn-soft btn-sm" onClick={() => setOuverte(a.demande_id)} {...prechargementFiche(a.demande_id)}>Fiche</button>
-          <button className={`btn btn-sm ${a.masque_at ? 'btn-soft' : 'btn-danger-outline'}`} disabled={busyAvis === a.id} onClick={() => basculerMasquage(a)}>
+          <button className={`btn btn-sm ${a.masque_at ? 'btn-soft' : 'btn-danger-outline'}`} onClick={() => setAMasquer(a)}>
             {a.masque_at ? 'Réafficher' : 'Masquer'}
           </button>
         </div>
@@ -124,6 +111,15 @@ export function AvisPage() {
         filtres={{ categorie: filtreCategorie }}
         onFiltreChange={(_cle, valeurs) => setFiltreCategorie(valeurs)}
       />
+      {aMasquer && (
+        <MasquageModal
+          type="avis"
+          id={aMasquer.id}
+          masquer={!aMasquer.masque_at}
+          onClose={() => setAMasquer(null)}
+          onDone={() => { setAMasquer(null); load(); }}
+        />
+      )}
       {ouverte && <TransactionModal demandeId={ouverte} onClose={() => setOuverte(null)} />}
     </div>
   );

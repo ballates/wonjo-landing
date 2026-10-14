@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Avatar } from './Avatar';
+import { MasquageModal } from './MasquageModal';
 import { dateHeure, versDate } from '../lib/labels';
 
 // [300] Notes internes et publications d'un membre, dans sa fiche.
@@ -77,7 +78,7 @@ const NB_PUBLICATIONS = 2;
 export function PublicationsCompte({ userId }: { userId: string }) {
   const [items, setItems] = useState<Publication[] | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
-  const [busy, setBusy] = useState<string | null>(null);
+  const [aMasquer, setAMasquer] = useState<Publication | null>(null);
 
   function charger() {
     supabase.rpc('admin_publications_compte', { p_user_id: userId }).then(({ data, error }) => {
@@ -86,21 +87,6 @@ export function PublicationsCompte({ userId }: { userId: string }) {
     });
   }
   useEffect(charger, [userId]);
-
-  async function basculer(p: Publication) {
-    const masquer = !p.masque_at;
-    let motif: string | null = null;
-    if (masquer) {
-      motif = window.prompt(`Motif du masquage de ${p.type === 'annonce' ? 'ce trajet' : 'cette demande de colis'} (obligatoire) :`);
-      if (!motif?.trim()) return;
-    } else if (!window.confirm('Rendre cette publication à nouveau visible ?')) return;
-    setBusy(p.id);
-    setErreur(null);
-    const { error } = await supabase.rpc('admin_masquer_contenu', { p_type: p.type, p_id: p.id, p_masquer: masquer, p_motif: motif });
-    setBusy(null);
-    if (error) { setErreur(error.message); return; }
-    charger();
-  }
 
   return (
     <div>
@@ -122,12 +108,21 @@ export function PublicationsCompte({ userId }: { userId: string }) {
                   {p.masque_at && ` · masquée le ${dateHeure(p.masque_at)}${p.masque_motif ? ` (« ${p.masque_motif} »)` : ''}`}
                 </span>
               </div>
-              <button className={`btn btn-sm ${p.masque_at ? 'btn-soft' : 'btn-danger-outline'}`} disabled={busy === p.id} onClick={() => basculer(p)}>
+              <button className={`btn btn-sm ${p.masque_at ? 'btn-soft' : 'btn-danger-outline'}`} onClick={() => setAMasquer(p)}>
                 {p.masque_at ? 'Réafficher' : 'Masquer'}
               </button>
             </li>
           ))}
         </ul>
+      )}
+      {aMasquer && (
+        <MasquageModal
+          type={aMasquer.type}
+          id={aMasquer.id}
+          masquer={!aMasquer.masque_at}
+          onClose={() => setAMasquer(null)}
+          onDone={() => { setAMasquer(null); charger(); }}
+        />
       )}
     </div>
   );
