@@ -45,7 +45,7 @@ const FICHES: Record<string, Fiche> = {
     ],
   },
   escrow_sans_stripe: {
-    sens: 'Des fonds figurent comme détenus ou libérés sans paiement Stripe réel derrière.',
+    sens: 'Des fonds figurent comme détenus ou libérés sans paiement réel derrière : ni paiement Stripe, ni encaissement dans la caisse d\'un point relais.',
     conduite: [
       'Cherchez la transaction dans Stripe : un paiement existe-t-il ?',
       'S\'il n\'y en a aucun, personne n\'a payé : bloquez la libération et le compte concerné.',
@@ -235,6 +235,68 @@ const FICHES: Record<string, Fiche> = {
       'Si cela se répète sur un même compte, ouvrez sa fiche.',
     ],
   },
+  // [411] Points relais.
+  pr_caisse_negative: {
+    sens: 'Une poche d\'un point relais (espèces ou compte mobile money) est en négatif : aucune fonction ne le permet, quelqu\'un a écrit dans la caisse par un autre chemin.',
+    conduite: [
+      'Ouvrez la caisse du point (Points relais > Caisse) et relisez les derniers mouvements de cette poche.',
+      'Identifiez le mouvement qui n\'est pas passé par le back-office (auteur, référence absente, heure).',
+      'Suspendez l\'agent en cause si besoin, puis corrigez par une contre-passation et la migration qui manquait.',
+    ],
+  },
+  pr_ecart_caisse: {
+    sens: 'Le dernier comptage d\'une poche d\'un point relais ne correspond pas à l\'historique de la caisse.',
+    conduite: [
+      'Lisez l\'explication de l\'agent (détail) et appelez le point si elle ne suffit pas.',
+      'Si l\'écart est réel, faites-le déclarer comme ajustement, puis validez-le ; sinon demandez un nouveau comptage.',
+      'Le signal se referme au prochain rapprochement juste.',
+    ],
+  },
+  pr_mouvement_sans_reference: {
+    sens: 'Un encaissement, un paiement de voyageur ou un remboursement est dans l\'historique de la caisse sans référence, alors que les fonctions l\'exigent toujours.',
+    conduite: [
+      'Ouvrez le dossier concerné et la caisse du point : qui a écrit ce mouvement, et comment ?',
+      'Retrouvez la transaction mobile money ou le reçu auprès du point.',
+      'Traitez comme un contournement : suspendez si besoin, corrigez la faille.',
+    ],
+  },
+  pr_codes_errones: {
+    sens: 'Un agent de point relais a saisi au moins trois codes de retrait ou de remboursement faux en 24 heures : il essaie peut-être de payer quelqu\'un d\'autre que le bénéficiaire.',
+    conduite: [
+      'Regardez les dossiers visés (journal d\'audit, action « code … errone ») et appelez les bénéficiaires.',
+      'En cas de doute, retirez à l\'agent les droits « Payer les voyageurs » et « Rembourser » (Réseau > Agents).',
+      'Le signal se referme seul après 24 heures sans nouvel essai.',
+    ],
+  },
+  pr_code_bloque: {
+    sens: 'Un code de retrait (voyageur) ou de remboursement (expéditeur) est bloqué après 5 essais : la personne ne peut plus être payée sans le support.',
+    conduite: [
+      'Contactez le bénéficiaire et vérifiez son identité.',
+      'Regardez qui a fait les essais (journal d\'audit) : un agent qui se trompe, ou une tentative de fraude ?',
+      'Le signal se referme une fois la personne payée.',
+    ],
+  },
+  pr_plafond_especes: {
+    sens: 'Un point relais détient plus d\'espèces que son plafond : le risque en cas de vol ou de perte augmente.',
+    conduite: [
+      'Demandez au point un versement au siège.',
+      'Si le plafond est trop bas pour l\'activité, ajustez-le dans Réseau.',
+    ],
+  },
+  pr_rapprochement_en_retard: {
+    sens: 'La caisse d\'un point relais a des mouvements mais n\'a pas été comptée depuis 7 jours.',
+    conduite: [
+      'Rappelez au point de compter chaque poche (Caisse > Compter et rapprocher).',
+      'Le signal se referme au comptage suivant.',
+    ],
+  },
+  pr_operation_en_attente: {
+    sens: 'Une opération de caisse (versement au siège, approvisionnement, écart) attend sa validation depuis plus de 3 jours.',
+    conduite: [
+      'Ouvrez la caisse du point : l\'argent a-t-il bien été reçu ?',
+      'Validez ou refusez avec un motif ; le signal se referme dès la décision.',
+    ],
+  },
 };
 
 export function ficheSignal(type: string): Fiche {
@@ -247,6 +309,22 @@ const court = (v: unknown) => `${String(v ?? '').slice(0, 8)}…`;
 export function resumeSignal(s: SignalSecurite): string {
   const d = s.details ?? {};
   switch (s.type) {
+    case 'pr_caisse_negative':
+      return `${d.point} : poche ${d.moyen} à ${d.solde}`;
+    case 'pr_ecart_caisse':
+      return `${d.point} (${d.moyen}) : écart de ${d.ecart}${d.note ? ` - ${String(d.note).slice(0, 60)}` : ''}`;
+    case 'pr_mouvement_sans_reference':
+      return `${d.type} de ${d.montant} (${d.moyen}) sans référence`;
+    case 'pr_codes_errones':
+      return `${d.essais} codes faux sur ${d.dossiers} dossier(s) en 24 h`;
+    case 'pr_code_bloque':
+      return Number(d.retrait_essais) >= 5 ? 'Code de retrait du voyageur bloqué' : 'Code de remboursement de l\'expéditeur bloqué';
+    case 'pr_plafond_especes':
+      return `${d.point} : ${d.solde} en espèces pour un plafond de ${d.plafond}`;
+    case 'pr_rapprochement_en_retard':
+      return `${d.point} : ${d.dernier ? 'dernier comptage trop ancien' : 'jamais compté'}`;
+    case 'pr_operation_en_attente':
+      return `${d.type} de ${d.montant} en attente`;
     case 'argent_incoherent':
       return `Colis « ${d.statut_colis} », paiement « ${d.statut_paiement} »`;
     case 'escrow_sans_stripe':

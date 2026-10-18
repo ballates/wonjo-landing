@@ -2,14 +2,14 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
-import { LABELS_ROLES, peutEnvoyerEmails, peutGererAdmins, peutGererCorridors, peutModerer, peutVoirKyc, peutVoirLitiges, peutVoirTransactions } from '../lib/permissions';
+import { LABELS_ROLES, estSeulementPointRelais, peutEnvoyerEmails, peutGererAdmins, peutGererCorridors, peutModerer, peutVoirKyc, peutVoirLitiges, peutVoirPointsRelais, peutVoirTransactions } from '../lib/permissions';
 import { useTheme } from '../lib/theme';
 import { brandMark } from './Brand';
 import { Avatar } from './Avatar';
 import { ProfilModal } from './ProfilModal';
 import {
   IconDashboard, IconExchange, IconId, IconLock, IconLogout, IconMoon, IconPanelClose, IconPanelOpen,
-  IconWmail, IconTag, IconShield, IconStar, IconSun, IconUsers, IconUser, IconChevronUp, IconMenu, IconClose,
+  IconWmail, IconTag, IconShield, IconStar, IconStore, IconSun, IconUsers, IconUser, IconChevronUp, IconMenu, IconClose,
 } from './Icons';
 
 const STORAGE_KEY = 'wonjo-backoffice-sidebar-collapsed';
@@ -75,13 +75,15 @@ export function Layout() {
   const collapsed = collapsedPref && !estMobile;
   const nom = profil?.nom ?? email ?? '';
   const liens = [
-    { to: '/', label: 'Tableau de bord', icon: <IconDashboard />, visible: true, end: true },
+    // Un agent de point relais ne voit pas le tableau de bord (chiffres de toute la plateforme).
+    { to: '/', label: 'Tableau de bord', icon: <IconDashboard />, visible: !estSeulementPointRelais(roles), end: true },
     { to: '/moderation', label: 'Confiance', icon: <IconShield />, visible: peutModerer(roles) || peutVoirLitiges(roles) },
     { to: '/kyc', label: 'KYC', icon: <IconId />, visible: peutVoirKyc(roles) },
     { to: '/transactions', label: 'Transactions', icon: <IconExchange />, visible: peutVoirTransactions(roles) },
     { to: '/avis', label: 'Avis', icon: <IconStar />, visible: peutModerer(roles) },
     { to: '/tarification', label: 'Tarification', icon: <IconTag />, visible: peutGererAdmins(roles) || peutGererCorridors(roles) },
     { to: '/emails', label: 'Emails', icon: <IconWmail />, visible: peutEnvoyerEmails(roles) },
+    { to: '/points-relais', label: 'Points relais', icon: <IconStore />, visible: peutVoirPointsRelais(roles) },
     { to: '/audit', label: 'Audit', icon: <IconLock />, visible: peutGererAdmins(roles) },
   ];
   const accesAdmin = peutGererAdmins(roles) || !!profil?.peut_inviter;

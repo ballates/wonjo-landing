@@ -12,6 +12,7 @@ import { useRechercheComptes } from '../lib/useRechercheComptes';
 import { EmailsAppSection } from './EmailsAppSection';
 import logo from '../assets/wonjo-logo.png';
 import { IconChevronLeft, IconRestore, IconSend, IconSquarePencil, IconTrash } from '../components/Icons';
+import { useConfirmation } from '../components/Confirmation';
 
 type TypeEmail = 'service' | 'promotion';
 type SousOnglet = 'envoyer' | 'modeles' | 'emails_app' | 'desinscrits' | 'corbeille';
@@ -77,6 +78,7 @@ interface Campagne {
 
 export function EmailsPage() {
   const location = useLocation();
+  const { confirmer, fenetre } = useConfirmation();
   const { roles, profil } = useAuth();
   // Emails "Information" (ignorent les desinscriptions) : super_admin seul.
   const peutInformation = peutEnvoyerInformation(roles);
@@ -184,7 +186,7 @@ export function EmailsPage() {
 
   async function envoyer(test: boolean) {
     if (!pret) return;
-    if (!test && !window.confirm(`Envoyer cet email à ${compte?.destinataires ?? '?'} destinataire(s) ? Cette action est définitive.`)) return;
+    if (!test && !(await confirmer({ titre: 'Envoyer cet email ?', texte: `Il partira à ${compte?.destinataires ?? '?'} destinataire(s). Cette action est définitive.`, libelleOui: 'Envoyer' }))) return;
     setBusy(true);
     setRetour(null);
     const { data, error } = await supabase.functions.invoke('admin-envoyer-email', {
@@ -279,7 +281,7 @@ export function EmailsPage() {
   }
   async function supprimerModelesDefinitivement(ids: string[]) {
     if (ids.length === 0) return;
-    if (!window.confirm(`Supprimer définitivement ${ids.length} modèle(s) ? Impossible à annuler.`)) return;
+    if (!(await confirmer({ titre: 'Supprimer définitivement ?', texte: `${ids.length} modèle(s) seront supprimés. Impossible à annuler.`, libelleOui: 'Supprimer', danger: true }))) return;
     await toutes(ids.map((id) => supabase.rpc('admin_supprimer_modele', { p_id: id })));
     setSelectionModelesCorbeille(new Set());
     chargerCorbeille();
@@ -300,7 +302,7 @@ export function EmailsPage() {
   }
   async function supprimerCampagnesDefinitivement(ids: string[]) {
     if (ids.length === 0) return;
-    if (!window.confirm(`Supprimer définitivement ${ids.length} envoi(s) de l'historique ? Impossible à annuler.`)) return;
+    if (!(await confirmer({ titre: 'Supprimer définitivement ?', texte: `${ids.length} envoi(s) seront retirés de l'historique. Impossible à annuler.`, libelleOui: 'Supprimer', danger: true }))) return;
     await toutes(ids.map((id) => supabase.rpc('admin_supprimer_campagne', { p_id: id })));
     setSelectionCampagnesCorbeille(new Set());
     chargerCorbeille();
@@ -323,6 +325,7 @@ export function EmailsPage() {
 
   return (
     <div>
+      {fenetre}
       <div className="page-head">
         <div className="wmail-title">
           <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true" className="wmail-logo">

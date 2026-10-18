@@ -18,7 +18,7 @@ export type AuthStatus =
   | 'loading' | 'signed_out' | 'need_password_set' | 'need_mfa_enroll' | 'need_mfa_challenge'
   | 'checking' | 'authorized' | 'unauthorized' | 'verification_impossible';
 
-export type AdminRole = 'super_admin' | 'moderation' | 'finance' | 'commercial' | 'data' | 'stagiaire' | 'lecture_seule';
+export type AdminRole = 'super_admin' | 'moderation' | 'finance' | 'commercial' | 'data' | 'stagiaire' | 'lecture_seule' | 'point_relais';
 
 export interface AdminProfil {
   user_id: string;

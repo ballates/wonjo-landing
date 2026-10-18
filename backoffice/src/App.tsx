@@ -7,7 +7,8 @@ import { MfaEnrollPage } from './auth/MfaEnrollPage';
 import { MfaChallengePage } from './auth/MfaChallengePage';
 import { Layout } from './components/Layout';
 import {
-  peutEnvoyerEmails, peutGererAdmins, peutGererCorridors, peutModerer, peutVoirKyc, peutVoirLitiges, peutVoirTransactions,
+  estSeulementPointRelais, peutEnvoyerEmails, peutGererAdmins, peutGererCorridors, peutModerer, peutVoirKyc, peutVoirLitiges,
+  peutVoirPointsRelais, peutVoirTransactions,
 } from './lib/permissions';
 
 // Pages chargees a la demande : les ecrans de connexion n'embarquent plus
@@ -24,6 +25,7 @@ const AdminsPage = page(() => import('./pages/AdminsPage'), 'AdminsPage');
 const EmailsPage = page(() => import('./pages/EmailsPage'), 'EmailsPage');
 const TarificationPage = page(() => import('./pages/TarificationPage'), 'TarificationPage');
 const AuditPage = page(() => import('./pages/AuditPage'), 'AuditPage');
+const PointsRelaisPage = page(() => import('./pages/PointsRelaisPage'), 'PointsRelaisPage');
 
 // Meme regle que le menu (Layout) : une URL tapee a la main (#/admins...)
 // renvoie au tableau de bord au lieu d'afficher une page en erreur. Le
@@ -31,6 +33,12 @@ const AuditPage = page(() => import('./pages/AuditPage'), 'AuditPage');
 function Protege({ si, children }: { si: (roles: AdminRole[]) => boolean; children: ReactNode }) {
   const { roles } = useAuth();
   return si(roles) ? <>{children}</> : <Navigate to="/" replace />;
+}
+
+// Accueil : un agent de point relais n'a pas de tableau de bord, il arrive sur son onglet.
+function Accueil() {
+  const { roles } = useAuth();
+  return estSeulementPointRelais(roles) ? <Navigate to="/points-relais" replace /> : <DashboardPage />;
 }
 
 function Gate() {
@@ -74,7 +82,7 @@ function Gate() {
         <HashRouter>
           <Routes>
             <Route element={<Layout />}>
-              <Route index element={<DashboardPage />} />
+              <Route index element={<Accueil />} />
               <Route path="moderation" element={<Protege si={(r) => peutModerer(r) || peutVoirLitiges(r)}><ModerationPage /></Protege>} />
               <Route path="transactions" element={<Protege si={peutVoirTransactions}><TransactionsPage /></Protege>} />
               <Route path="avis" element={<Protege si={peutModerer}><AvisPage /></Protege>} />
@@ -85,6 +93,7 @@ function Gate() {
               <Route path="securite" element={<Navigate to="/audit?onglet=securite" replace />} />
               <Route path="emails" element={<Protege si={peutEnvoyerEmails}><EmailsPage /></Protege>} />
               <Route path="tarification" element={<Protege si={peutGererCorridors}><TarificationPage /></Protege>} />
+              <Route path="points-relais" element={<Protege si={peutVoirPointsRelais}><PointsRelaisPage /></Protege>} />
               <Route path="commissions" element={<Navigate to="/tarification" replace />} />
               <Route path="corridors" element={<Navigate to="/tarification" replace />} />
               <Route path="a-faire" element={<Navigate to="/" replace state={{ tab: 'afaire' }} />} />

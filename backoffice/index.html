@@ -7,7 +7,7 @@
     <!-- CSP (GitHub Pages n'envoie pas d'en-tete) : la session admin vit dans localStorage et la page
          affiche des donnees personnelles ; aucun script hors du site ne doit pouvoir s'executer.
          style-src 'unsafe-inline' : attributs style de React. Aucun script en ligne (voir demarrage.js). -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://bnlvkcbzqvmnttruyiwi.supabase.co wss://bnlvkcbzqvmnttruyiwi.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://bnlvkcbzqvmnttruyiwi.supabase.co wss://bnlvkcbzqvmnttruyiwi.supabase.co https://photon.komoot.io; object-src 'none'; base-uri 'self'; form-action 'self'" />
     <meta name="referrer" content="no-referrer" />
     <title>Wonjo - Back-office</title>
     <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png" />
@@ -15,7 +15,7 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <!-- Anti-clickjacking : masquee jusqu'a la verification de demarrage.js. -->
     <style id="anti-clickjack">body { display: none !important; }</style>
-    <script src="/backoffice/demarrage.js"></script>
+    <script src="/demarrage.js"></script>
   </head>
   <body>
     <div id="root"></div>

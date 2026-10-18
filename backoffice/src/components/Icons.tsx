@@ -51,6 +51,14 @@ export const IconChevronRight = () => <Svg size={14}><polyline points="9 6 15 12
 export const IconArrowLeftRight = () => <Svg size={14}><path d="m8 3-4 4 4 4" /><path d="M4 7h16" /><path d="m16 21 4-4-4-4" /><path d="M20 17H4" /></Svg>;
 export const IconChevronLeft = () => <Svg size={14}><polyline points="15 6 9 12 15 18" /></Svg>;
 export const IconSend = () => <Svg size={16}><path d="m22 2-20 8 9 3 3 9z" /><path d="M22 2 11 13" /></Svg>;
+export const IconStore = () => (
+  <Svg>
+    <path d="M3 9l1.5-5h15L21 9" />
+    <path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0" />
+    <path d="M5 12v8h14v-8" />
+    <path d="M10 20v-5h4v5" />
+  </Svg>
+);
 export const IconTag = () => (
   <Svg>
     <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />

@@ -76,6 +76,16 @@ export function peutGererCorridors(roles: AdminRole[]): boolean {
   return a(roles, 'super_admin');
 }
 
+// Points relais (docs/POINTS_RELAIS.md) : l'agent ne voit que son onglet ; finance lit les points.
+export function peutVoirPointsRelais(roles: AdminRole[]): boolean {
+  return a(roles, 'super_admin', 'finance', 'point_relais');
+}
+
+// Agent de point relais et rien d'autre : pas de tableau de bord, accueil sur l'onglet Points relais.
+export function estSeulementPointRelais(roles: AdminRole[]): boolean {
+  return roles.length > 0 && roles.every((r) => r === 'point_relais');
+}
+
 export const LABELS_ROLES: Record<AdminRole, string> = {
   super_admin: 'Admin',
   moderation: 'Confiance & sécurité',
@@ -84,4 +94,5 @@ export const LABELS_ROLES: Record<AdminRole, string> = {
   data: 'Data',
   stagiaire: 'Stagiaire',
   lecture_seule: 'Lecture seule',
+  point_relais: 'Point relais',
 };

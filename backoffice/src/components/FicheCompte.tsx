@@ -3,23 +3,30 @@ import { supabase } from '../lib/supabase';
 import { CompteModal } from './CompteModal';
 import { IconEye } from './Icons';
 import type { FicheCompte } from '../lib/types';
+import { useConfirmation } from './Confirmation';
 
 // Ouverture de la fiche d'un compte depuis n'importe quelle liste.
 export function useFicheCompte(onChanged?: () => void) {
   const [fiche, setFiche] = useState<FicheCompte | null>(null);
+  const { informer, fenetre } = useConfirmation();
 
   async function ouvrir(userId: string) {
     const { data, error } = await supabase.rpc('admin_fiche_compte', { p_user_id: userId }).single();
-    if (error) { alert(error.message); return; }
+    if (error) { await informer({ titre: 'Fiche indisponible', texte: error.message }); return; }
     setFiche(data as FicheCompte);
   }
 
-  const modal = fiche && (
-    <CompteModal
-      fiche={fiche}
-      onClose={() => setFiche(null)}
-      onChanged={() => { ouvrir(fiche.id); onChanged?.(); }}
-    />
+  const modal = (
+    <>
+      {fiche && (
+        <CompteModal
+          fiche={fiche}
+          onClose={() => setFiche(null)}
+          onChanged={() => { ouvrir(fiche.id); onChanged?.(); }}
+        />
+      )}
+      {fenetre}
+    </>
   );
 
   return { ouvrir, modal };

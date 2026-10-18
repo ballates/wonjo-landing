@@ -11,6 +11,8 @@ import { Kpi } from '../components/Kpi';
 import type { CompteRecherche } from '../lib/types';
 import { useDebounce } from '../lib/useDebounce';
 import { useRechercheComptes } from '../lib/useRechercheComptes';
+import { useConfirmation } from '../components/Confirmation';
+import { ChampDate } from '../components/ChampDate';
 
 interface Parametres { actif: boolean; defaut: number; plafond: number; plancher: number; nb_super_admins: number; moi: string }
 interface Changement { id: string; type: 'defaut' | 'activation'; valeur: string; demande_par: string; demande_par_nom: string | null; created_at: string }
@@ -86,6 +88,7 @@ function periodeTexte(debut: string | null, fin: string | null): string {
 
 export function CommissionsSection() {
   const location = useLocation();
+  const { confirmer, demanderTexte, fenetre } = useConfirmation();
   const navigate = useNavigate();
   const selectionInitiale = (location.state ?? null) as { ids: string[]; noms: string[] } | null;
 
@@ -164,21 +167,22 @@ export function CommissionsSection() {
     return true;
   }
 
-  function decider(type: 'regle' | 'changement', id: string, approuver: boolean) {
+  async function decider(type: 'regle' | 'changement', id: string, approuver: boolean) {
     let motif: string | null = null;
     if (!approuver) {
-      motif = window.prompt('Motif du rejet (facultatif) :');
+      motif = await demanderTexte({ titre: 'Rejeter ce changement', libelleOui: 'Rejeter', danger: true, champ: { libelle: 'Motif du rejet (facultatif)' } });
       if (motif === null) return;
-    } else if (!window.confirm('Approuver ce changement ? Il s\'appliquera immédiatement aux nouvelles demandes.')) return;
+    } else if (!(await confirmer({ titre: 'Approuver ce changement ?', texte: 'Il s\'appliquera immédiatement aux nouvelles demandes.', libelleOui: 'Approuver' }))) return;
     executer(() => supabase.rpc('admin_commission_decider', { p_type: type, p_id: id, p_approuver: approuver, p_motif: motif || null }), approuver ? 'Changement approuvé.' : 'Changement rejeté.');
   }
 
-  function basculer() {
+  async function basculer() {
     if (!params) return;
     const texte = params.actif
-      ? 'Désactiver les commissions personnalisées ? Toutes les nouvelles demandes repasseront à 10 %.'
-      : 'Activer les commissions personnalisées ?\n\nL\'app récupère le taux réel auprès du serveur : dès l\'enregistrement, le nouveau taux s\'affiche instantanément dans l\'app, sans reconnexion ni rechargement. Le montant débité est toujours celui affiché à l\'écran de paiement.';
-    if (!window.confirm(texte)) return;
+      ? 'Toutes les nouvelles demandes repasseront à 10 %.'
+      : 'L\'app récupère le taux réel auprès du serveur : dès l\'enregistrement, le nouveau taux s\'affiche instantanément dans l\'app, sans reconnexion ni rechargement. Le montant débité est toujours celui affiché à l\'écran de paiement.';
+    if (!(await confirmer({ titre: params.actif ? 'Désactiver les commissions personnalisées ?' : 'Activer les commissions personnalisées ?',
+      texte, libelleOui: params.actif ? 'Désactiver' : 'Activer', danger: params.actif }))) return;
     executer(
       () => supabase.rpc('admin_commission_activer', { p_actif: !params.actif }),
       params.actif ? 'Commissions personnalisées désactivées.' : 'Commissions personnalisées activées.',
@@ -220,12 +224,12 @@ export function CommissionsSection() {
     }
   }
 
-  function desactiver(r: Regle) {
+  async function desactiver(r: Regle) {
     const enAttente = r.statut === 'en_attente';
     const texte = enAttente
       ? `Annuler la proposition « ${r.nom} » ? Elle ne pourra plus être validée.`
       : `Désactiver la règle « ${r.nom} » ? Les nouvelles demandes repassent au taux normal ; celles déjà créées gardent leur taux.`;
-    if (!window.confirm(texte)) return;
+    if (!(await confirmer({ titre: enAttente ? 'Annuler la proposition ?' : 'Désactiver la règle ?', texte, libelleOui: enAttente ? 'Annuler la proposition' : 'Désactiver', libelleNon: 'Retour', danger: true }))) return;
     executer(() => supabase.rpc('admin_commission_desactiver_regle', { p_id: r.id }), enAttente ? `Proposition « ${r.nom} » annulée.` : `Règle « ${r.nom} » désactivée.`);
   }
 
@@ -307,6 +311,7 @@ export function CommissionsSection() {
 
   return (
     <div>
+      {fenetre}
       {params.nb_super_admins < 2 && (
         <div className="insight-banner warn">
           <div>
@@ -487,11 +492,11 @@ export function CommissionsSection() {
             <div className="field-row">
               <label className="field">
                 <span>Début (facultatif)</span>
-                <input type="date" value={dateDebut} onChange={(e) => setDateDebut(e.target.value)} />
+                <ChampDate valeur={dateDebut} onChange={setDateDebut} ariaLabel="Début de la règle" placeholder="Dès la validation" />
               </label>
               <label className="field">
                 <span>Fin (facultatif)</span>
-                <input type="date" value={dateFin} min={dateDebut || undefined} onChange={(e) => setDateFin(e.target.value)} />
+                <ChampDate valeur={dateFin} onChange={setDateFin} min={dateDebut || undefined} ariaLabel="Fin de la règle" placeholder="Sans fin" />
               </label>
             </div>
 

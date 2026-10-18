@@ -46,6 +46,10 @@ export const LABELS_ACTIONS: Record<string, string> = {
   desactiver_admin: 'a désactivé un administrateur',
   reactiver_admin: 'a réactivé un administrateur',
   inviter_admin: 'a invité un administrateur',
+  creer_point_relais: 'a créé un point relais',
+  modifier_point_relais: 'a modifié un point relais',
+  definir_agent_point_relais: 'a défini un agent de point relais',
+  retirer_agent_point_relais: 'a retiré un agent de point relais',
   envoyer_email: 'a envoyé un email',
   commission_defaut: 'a modifié le taux de commission par défaut',
   commission_activee: 'a activé les commissions personnalisées',
@@ -87,6 +91,7 @@ const LABELS_ROLES_TXT: Record<string, string> = {
   moderation: 'Confiance & sécurité',
   finance: 'Finance',
   lecture_seule: 'Lecture seule',
+  point_relais: 'Point relais',
 };
 
 // Le motif brut depend de l'action (statut de signalement, role...) : on le

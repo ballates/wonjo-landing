@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paiement enregistré</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#4A8896">
+<link rel="icon" type="image/png" sizes="512x512" href="/assets/img/wonjo-favicon.png">
+<style>
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #F8F7FF;
+    color: #1A1A2E;
+  }
+  .card {
+    text-align: center;
+    padding: 32px 24px;
+    max-width: 360px;
+  }
+  .ok {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(90deg, #4A8896, #7D4E2E);
+  }
+  h1 {
+    font-size: 20px;
+    margin: 0 0 8px;
+  }
+  p {
+    font-size: 15px;
+    color: #555;
+    line-height: 1.5;
+    margin: 0 0 12px;
+  }
+</style>
+</head>
+<body>
+  <!-- Page de retour du paiement par carte au guichet d'un point relais (Edge Function pr-lien-carte). -->
+  <div class="card">
+    <div class="ok" aria-hidden="true">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+    </div>
+    <h1>Paiement enregistré</h1>
+    <p>Merci ! Le montant est réservé sur votre carte. Il ne sera débité que lorsque le voyageur aura accepté votre colis ; sinon, rien n'est débité.</p>
+    <p>L'agent du point relais Wonjo voit la confirmation : vous pouvez fermer cette page.</p>
+  </div>
+</body>
+</html>

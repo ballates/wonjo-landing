@@ -8,8 +8,9 @@ import { DataTable, type Column } from '../components/DataTable';
 import { IconSquarePencil } from '../components/Icons';
 import type { AdminRow } from '../lib/adminTypes';
 import type { AdminRole } from '../auth/AuthContext';
+import { useConfirmation } from '../components/Confirmation';
 
-const ROLES: AdminRole[] = ['super_admin', 'moderation', 'finance', 'commercial', 'data', 'stagiaire', 'lecture_seule'];
+const ROLES: AdminRole[] = ['super_admin', 'moderation', 'finance', 'commercial', 'data', 'stagiaire', 'lecture_seule', 'point_relais'];
 const HINTS_ROLES: Record<AdminRole, string> = {
   super_admin: 'Tout, y compris gérer les collaborateurs (max 5)',
   moderation: 'Comptes, signalements, litiges, KYC',
@@ -18,6 +19,7 @@ const HINTS_ROLES: Record<AdminRole, string> = {
   data: 'Consultation des tableaux de bord',
   stagiaire: 'Accès très limité, en lecture',
   lecture_seule: 'Consultation du tableau de bord',
+  point_relais: 'Point focal : uniquement l\'onglet Points relais, sur ses points',
 };
 
 function RolePill({ role, checked, onToggle }: { role: AdminRole; checked: boolean; onToggle: () => void }) {
@@ -96,6 +98,7 @@ export function AdminsPage() {
 
 function AdminsPageComplete() {
   const { profil } = useAuth();
+  const { confirmer, informer, fenetre } = useConfirmation();
   const [admins, setAdmins] = useState<AdminRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   async function load() {
@@ -107,9 +110,9 @@ function AdminsPageComplete() {
   useEffect(() => { load(); }, []);
 
   async function definirRoles(userId: string, roles: AdminRole[]) {
-    if (roles.length === 0) { alert('Au moins un rôle est requis.'); return; }
+    if (roles.length === 0) { await informer({ titre: 'Rôle manquant', texte: 'Au moins un rôle est requis.' }); return; }
     const { error: rpcError } = await supabase.rpc('admin_definir_roles', { p_user_id: userId, p_roles: roles });
-    if (rpcError) { alert(rpcError.message); return; }
+    if (rpcError) { await informer({ titre: 'Action impossible', texte: rpcError.message }); return; }
     await load();
   }
 
@@ -120,16 +123,16 @@ function AdminsPageComplete() {
 
   async function togglePeutInviter(admin: AdminRow) {
     const { error: rpcError } = await supabase.rpc('admin_definir_peut_inviter', { p_user_id: admin.user_id, p_peut_inviter: !admin.peut_inviter });
-    if (rpcError) { alert(rpcError.message); return; }
+    if (rpcError) { await informer({ titre: 'Action impossible', texte: rpcError.message }); return; }
     await load();
   }
 
   async function toggleActif(admin: AdminRow) {
     const verbe = admin.actif ? 'Désactiver' : 'Réactiver';
-    if (!window.confirm(`${verbe} l'accès de ${admin.nom_affiche ?? admin.email} au back-office ?`)) return;
+    if (!(await confirmer({ titre: `${verbe} l'accès ?`, texte: `${verbe} l'accès de ${admin.nom_affiche ?? admin.email} au back-office ?`, libelleOui: verbe, danger: admin.actif }))) return;
     const fn = admin.actif ? 'admin_desactiver_admin' : 'admin_reactiver_admin';
     const { error: rpcError } = await supabase.rpc(fn, { p_user_id: admin.user_id });
-    if (rpcError) { alert(rpcError.message); return; }
+    if (rpcError) { await informer({ titre: 'Action impossible', texte: rpcError.message }); return; }
     await load();
   }
 
@@ -174,6 +177,7 @@ function AdminsPageComplete() {
 
   return (
     <div>
+      {fenetre}
       <div className="page-head">
         <div>
           <h1>Administration</h1>

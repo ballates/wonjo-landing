@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, ReferenceLine, Cell } from 'recharts';
 import { supabase } from '../../lib/supabase';
 import { AnimatedNumber, VizTooltip } from '../../components/Kpi';
+import { Select } from '../../components/Select';
 
 // [388-389] Consommation des services gratuits sous quota : e-mails Resend et verifications Didit, mois
 // par mois. Les chiffres viennent de nos propres comptages (admin_consommation_services), pas des
@@ -188,13 +189,8 @@ function SelecteurMois({ mois, disponibles, courant, onChange }: {
   return (
     <div className="svc-mois" role="group" aria-label="Mois affiché">
       <button className="svc-mois-fleche" disabled={!plusAncien} onClick={() => plusAncien && onChange(plusAncien)} aria-label="Mois précédent">‹</button>
-      <label className="svc-mois-choix">
-        <select value={mois} onChange={(e) => onChange(e.target.value)} aria-label="Choisir un mois">
-          {liste.map((m) => <option key={m} value={m}>{nomMois(m)}</option>)}
-        </select>
-        <span aria-hidden="true">{nomMois(mois)}</span>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
-      </label>
+      <Select ariaLabel="Choisir un mois" size="sm" value={mois} onChange={onChange} minWidth={170}
+              options={liste.map((m) => ({ value: m, label: nomMois(m) }))} />
       <button className="svc-mois-fleche" disabled={!plusRecent} onClick={() => plusRecent && onChange(plusRecent)} aria-label="Mois suivant">›</button>
       {!courant && liste[0] && <button className="svc-mois-retour" onClick={() => onChange(liste[0])}>Mois en cours</button>}
     </div>

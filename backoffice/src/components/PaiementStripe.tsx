@@ -17,6 +17,8 @@ export const LIBELLES_CAS_PAIEMENT: Record<string, string> = {
   paiement_non_suivi: 'Paiement reçu, transaction bloquée',
   contestation_ouverte: 'Contestation bancaire en cours',
   contestation_perdue: 'Contestation bancaire perdue à trancher',
+  versement_point_en_retard: 'Voyageur à payer au point relais, en retard',
+  remboursement_point_en_retard: 'Expéditeur à rembourser au point relais, en retard',
 };
 
 const ISSUES: Record<string, string> = {

@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode }
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { IconFilter, IconSearch, IconSort } from './Icons';
+import { ChampDate } from './ChampDate';
 
 export interface Column<T> {
   key: string;
@@ -30,7 +31,7 @@ const cle = (v: unknown) => (v == null || v === '' ? VIDE : String(v));
 
 export function DataTable<T>({
   rows, columns, rowKey, emptyText = 'Aucun résultat.', searchPlaceholder = 'Rechercher…',
-  initialSort, title, toolbar, selected, onSelectedChange, pageSize = 10, limiteSansRecherche, onRowClick, onSearchChange,
+  initialSort, title, toolbar, selected, onSelectedChange, pageSize = 10, limiteSansRecherche, onRowClick, onSearchChange, integre = false,
 }: {
   rows: T[];
   columns: Column<T>[];
@@ -41,6 +42,8 @@ export function DataTable<T>({
   // Titre affiche sur la meme ligne que la barre de recherche, a sa gauche.
   title?: ReactNode;
   toolbar?: ReactNode;
+  // Barre de recherche (et titre, filtres actifs, pagination) DANS le cadre du tableau, au lieu d'au-dessus.
+  integre?: boolean;
   // Selection multiple (cases a cocher) : absente = pas de colonne de selection.
   selected?: Set<string>;
   onSelectedChange?: (s: Set<string>) => void;
@@ -156,7 +159,7 @@ export function DataTable<T>({
   }
 
   return (
-    <div>
+    <div className={integre ? 'dt-integre' : undefined}>
       <div className={`dt-toolbar ${title ? 'dt-toolbar--titled' : ''}`}>
         {title && <h3 className="dt-title">{title}</h3>}
         {toolbar}
@@ -393,11 +396,11 @@ function OptionsMenu({
             <div className="col-menu-dates">
               <label>
                 À partir du
-                <input type="date" value={plage.de} onChange={(e) => onPlage({ ...plage, de: e.target.value })} />
+                <ChampDate valeur={plage.de} onChange={(v) => onPlage({ ...plage, de: v })} max={plage.a || undefined} ariaLabel="À partir du" />
               </label>
               <label>
                 Jusqu'au
-                <input type="date" value={plage.a} onChange={(e) => onPlage({ ...plage, a: e.target.value })} />
+                <ChampDate valeur={plage.a} onChange={(v) => onPlage({ ...plage, a: v })} min={plage.de || undefined} ariaLabel="Jusqu'au" />
               </label>
             </div>
             <div className="col-menu-foot">

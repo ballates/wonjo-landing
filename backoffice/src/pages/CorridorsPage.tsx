@@ -116,7 +116,7 @@ export function CorridorsSection() {
     setPaysBusy(true);
     for (const p of paysModifies) {
       const { error: rpcError } = await supabase.rpc('admin_definir_pays_corridor', { p_code: p.code, p_actif: p.actif });
-      if (rpcError) { alert(rpcError.message); setPaysBusy(false); return; }
+      if (rpcError) { setError(rpcError.message); setPaysBusy(false); return; }
     }
     setPaysOriginal(pays);
     setPaysBusy(false);
@@ -142,7 +142,7 @@ export function CorridorsSection() {
     setVillesBusy(true);
     for (const v of villesModifiees) {
       const { error: rpcError } = await supabase.rpc('admin_definir_ville_corridor', { p_pays_code: v.pays_code, p_ville: v.ville, p_actif: v.actif });
-      if (rpcError) { alert(rpcError.message); setVillesBusy(false); return; }
+      if (rpcError) { setError(rpcError.message); setVillesBusy(false); return; }
     }
     setVillesOriginal(villes);
     setVillesBusy(false);
@@ -178,7 +178,7 @@ export function CorridorsSection() {
     setPrixBusy(true);
     for (const c of prixCorridorsModifies) {
       const { error: rpcError } = await supabase.rpc('admin_definir_prix_corridor', { p_id: c.id, p_min: c.min_price_per_kg, p_max: c.max_price_per_kg });
-      if (rpcError) { alert(rpcError.message); setPrixBusy(false); return; }
+      if (rpcError) { setError(rpcError.message); setPrixBusy(false); return; }
     }
     setPrixCorridorsOriginal(prixCorridors);
     setPrixBusy(false);
@@ -197,7 +197,7 @@ export function CorridorsSection() {
     if (rpcError) {
       setPrixCorridors((liste) => liste!.map((x) => (x.id === c.id ? { ...x, actif: c.actif } : x)));
       setPrixCorridorsOriginal((liste) => liste!.map((x) => (x.id === c.id ? { ...x, actif: c.actif } : x)));
-      alert(rpcError.message);
+      setError(rpcError.message);
     }
     setEnCours((s) => { const n = new Set(s); n.delete(c.id); return n; });
   }
@@ -215,7 +215,7 @@ export function CorridorsSection() {
     setPrixEnveloppesBusy(true);
     for (const e of prixEnveloppesModifies) {
       const { error: rpcError } = await supabase.rpc('admin_definir_prix_enveloppe', { p_zone: e.zone, p_min: e.prix_min, p_max: e.prix });
-      if (rpcError) { alert(rpcError.message); setPrixEnveloppesBusy(false); return; }
+      if (rpcError) { setError(rpcError.message); setPrixEnveloppesBusy(false); return; }
     }
     setPrixEnveloppesOriginal(prixEnveloppes);
     setPrixEnveloppesBusy(false);
@@ -238,7 +238,7 @@ export function CorridorsSection() {
     if (rpcError) {
       setPrixEnveloppes(appliquer(e.actif));
       setPrixEnveloppesOriginal(appliquer(e.actif));
-      alert(rpcError.message);
+      setError(rpcError.message);
     }
     setEnCours((s) => { const n = new Set(s); n.delete(cle); return n; });
   }
