@@ -76,7 +76,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfil(null);
   }
 
-  async function evaluate() {
+  // Deja connecte et une erreur de verification : panne passagere (rien ne change, on garde l'ecran) ou jeton perime (on le
+  // renouvelle une fois et on reverifie). Rend true quand l'erreur est traitee ici ; false = refus ou session perimee, a traiter
+  // comme avant (retour a la connexion).
+  async function reprendreSiJetonPerime(err: { status?: number; code?: string; message?: string }, tentative: number): Promise<boolean> {
+    if (!sessionExpiree(err)) return true;
+    if (tentative > 0) return false;
+    const { error: renouvellement } = await supabase.auth.refreshSession();
+    if (renouvellement) return false;
+    await evaluate(1);
+    return true;
+  }
+
+  // Evaluation de la session. `tentative` : 0 au premier passage ; 1 apres un renouvellement du jeton (une seule reprise).
+  //
+  // Quand la personne est DEJA connectee (statut « authorized »), cette verification est SILENCIEUSE : elle tourne a chaque retour
+  // sur l'onglet (la bibliotheque de connexion emet alors des evenements) et ne doit jamais, sur une panne passagere (reseau pas
+  // encore reveille, jeton en cours de renouvellement), faire passer l'ecran en « verification impossible » ni deconnecter :
+  // cela demonte tout le back-office et efface la fiche ouverte, le formulaire en cours, les filtres. Seuls comptent un refus
+  // DEFINITIF (compte plus admin, compte desactive) ou une session reellement perimee (jeton non renouvelable).
+  async function evaluate(tentative = 0) {
+    const silencieux = statusRef.current === 'authorized';
     const { data: sessionData } = await supabase.auth.getSession();
     if (!sessionData.session) {
       setStatus('signed_out');
@@ -99,6 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // depuis le back-office avant d'etre refuse (284).
     const { data: eligible, error: eligibleError } = await supabase.rpc('admin_compte_eligible');
     if (eligibleError) {
+      if (silencieux && await reprendreSiJetonPerime(eligibleError, tentative)) return;
       await refuserSansDroits(eligibleError);
       return;
     }
@@ -110,6 +131,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    // Reponse absente (panne passagere) alors qu'on est deja connecte : on ne renvoie pas vers l'ecran MFA.
+    if (silencieux && !aal) return;
     if (aal?.currentLevel === 'aal2') {
       // Deja autorise : re-verification silencieuse. Passer par 'checking'
       // demonterait tout le back-office (Gate affiche un spinner) et
@@ -122,6 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { data, error: rpcError } = await supabase.rpc('admin_mon_profil').maybeSingle();
       const p = data as AdminProfil | null;
       if (rpcError) {
+        if (silencieux && await reprendreSiJetonPerime(rpcError, tentative)) return;
         await refuserSansDroits(rpcError);
         return;
       }
@@ -131,9 +155,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfil(null);
         return;
       }
-      setRoles(p.roles);
+      // Memes valeurs = memes objets : un nouvel objet a chaque retour sur l'onglet relancerait les chargements des pages
+      // qui dependent du profil ou des roles.
+      setRoles((prec) => (JSON.stringify(prec) === JSON.stringify(p.roles) ? prec : p.roles));
       setEmail(p.email);
-      setProfil(p);
+      setProfil((prec) => (prec && JSON.stringify(prec) === JSON.stringify(p) ? prec : p));
       setStatus('authorized');
       return;
     }
@@ -144,9 +170,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus(verified ? 'need_mfa_challenge' : 'need_mfa_enroll');
   }
 
+  // Au retour sur l'onglet, la bibliotheque de connexion emet plusieurs evenements d'affilee : les verifications se font une par
+  // une (au plus une en cours, une seule reprise en attente) au lieu de courir en parallele et de s'ecraser.
+  const evaluationEnCours = useRef(false);
+  const evaluationEnAttente = useRef(false);
+  async function evaluerEnSerie() {
+    if (evaluationEnCours.current) { evaluationEnAttente.current = true; return; }
+    evaluationEnCours.current = true;
+    try {
+      do { evaluationEnAttente.current = false; await evaluate(); } while (evaluationEnAttente.current);
+    } finally {
+      evaluationEnCours.current = false;
+    }
+  }
+
   useEffect(() => {
-    evaluate();
-    const { data: sub } = supabase.auth.onAuthStateChange(() => { evaluate(); });
+    evaluerEnSerie();
+    const { data: sub } = supabase.auth.onAuthStateChange(() => { evaluerEnSerie(); });
     return () => sub.subscription.unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -222,7 +262,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthCtx.Provider value={{ status, error, roles, email, profil, signIn, signOut, refreshMfaState: evaluate, refreshProfil }}>
+    <AuthCtx.Provider value={{ status, error, roles, email, profil, signIn, signOut, refreshMfaState: () => evaluate(), refreshProfil }}>
       {children}
     </AuthCtx.Provider>
   );

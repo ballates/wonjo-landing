@@ -9,7 +9,10 @@ import { ChampTelephone } from '../ChampTelephone';
 import { ValidationModal, type AEncaisser } from './AEncaisserSection';
 import { ChatGuichetModal } from './ChatGuichetModal';
 import { LienCarteModal, type DossierCarte } from './LienCarteModal';
-import { dateCourte, libelleDevise, montantEuros, montantLocal, type PointRelais } from '../../lib/pointsRelais';
+import { dateCourte, fraisProtection, libelleDevise, montantEuros, montantLocal, pourcent, type BaremeProtection, type PointRelais } from '../../lib/pointsRelais';
+import { Pagination } from '../Pagination';
+import { ChampMultiChoix } from '../ChampMultiChoix';
+import { TrajetDetailModal } from './TrajetDetailModal';
 import { ChampDate } from '../ChampDate';
 import { decomposerNumero, numeroComplet } from '../../lib/telephone';
 
@@ -18,7 +21,7 @@ import { decomposerNumero, numeroComplet } from '../../lib/telephone';
 // Le montant exact vient du serveur ; ensuite tout passe par les ecrans d'A2 (encaisser, deposer, remettre).
 // Carte (404) : un lien Stripe que le client paie depuis son telephone ; jamais en meme temps qu'un autre moyen.
 
-interface Trajet {
+export interface Trajet {
   annonce_id: string;
   porteur_id: string;
   porteur_nom: string | null;
@@ -78,6 +81,16 @@ const NATURES: { section: string; items: string[] }[] = [
   { section: 'Divers', items: ['Cadeaux', 'Articles de sport', 'Matériel scolaire', 'Autre'] },
 ];
 const VALEUR_DECLAREE_MAX = 250;
+// Cartes par page (3 par ligne sur un grand ecran) et dossiers par page.
+const TRAJETS_PAR_PAGE = 12;
+const DOSSIERS_PAR_PAGE = 10;
+type Tri = 'depart' | 'prix' | 'kilos' | 'note';
+const TRIS: { value: Tri; label: string }[] = [
+  { value: 'depart', label: 'Départ le plus proche' },
+  { value: 'prix', label: 'Prix au kilo le plus bas' },
+  { value: 'kilos', label: 'Le plus de place' },
+  { value: 'note', label: 'Les mieux notés' },
+];
 const TAUX_CFA = 655.957;
 
 function statutDossier(d: DossierGuichet): { texte: string; tone: 'amber' | 'teal' | 'green' | 'muted' | 'danger' } {
@@ -102,6 +115,10 @@ export function GuichetSection({ point, nomsPays }: { point: PointRelais; nomsPa
   const [filtrePoids, setFiltrePoids] = useState('');
   const [filtreAvant, setFiltreAvant] = useState('');
   const [aConfier, setAConfier] = useState<Trajet | null>(null);
+  const [detail, setDetail] = useState<Trajet | null>(null);
+  const [tri, setTri] = useState<Tri>('depart');
+  const [pageTrajets, setPageTrajets] = useState(0);
+  const [pageDossiers, setPageDossiers] = useState(0);
   const [aEncaisser, setAEncaisser] = useState<AEncaisser | null>(null);
   const [chat, setChat] = useState<DossierGuichet | null>(null);
   const [code, setCode] = useState<DossierGuichet | null>(null);
@@ -138,7 +155,15 @@ export function GuichetSection({ point, nomsPays }: { point: PointRelais; nomsPa
     if (filtrePoids && Number.isFinite(poids) && t.kilos_disponibles < poids) return false;
     if (filtreAvant && t.date_depart > filtreAvant) return false;
     return true;
-  }), [trajets, filtreVille, filtrePoids, filtreAvant]);
+  }).sort((a, b) => {
+    if (tri === 'prix') return Number(a.prix_par_kilo) - Number(b.prix_par_kilo);
+    if (tri === 'kilos') return Number(b.kilos_disponibles) - Number(a.kilos_disponibles);
+    if (tri === 'note') return Number(b.porteur_note ?? 0) - Number(a.porteur_note ?? 0);
+    return new Date(a.depart).getTime() - new Date(b.depart).getTime();
+  }), [trajets, filtreVille, filtrePoids, filtreAvant, tri]);
+  // Retour a la premiere page des qu'un filtre ou le tri change.
+  useEffect(() => { setPageTrajets(0); }, [filtreVille, filtrePoids, filtreAvant, tri, point.id]);
+  const trajetsPage = visibles.slice(pageTrajets * TRAJETS_PAR_PAGE, (pageTrajets + 1) * TRAJETS_PAR_PAGE);
 
   async function encaisserMaintenant(demandeId: string) {
     const { data } = await supabase.rpc('admin_pr_a_encaisser', { p_point_id: point.id });
@@ -172,6 +197,7 @@ export function GuichetSection({ point, nomsPays }: { point: PointRelais; nomsPa
       {message && <p className="success-text" style={{ marginBottom: 12 }}>{message}</p>}
       {error && <p className="page-error">{error}</p>}
 
+      <div className="pr-barre">
       <div className="pr-filtres">
         <label>Destination
           <Select
@@ -184,14 +210,25 @@ export function GuichetSection({ point, nomsPays }: { point: PointRelais; nomsPa
         </label>
         <label>Poids du colis (kg)<input type="text" inputMode="decimal" value={filtrePoids} onChange={(e) => setFiltrePoids(e.target.value)} placeholder="Ex. 3" /></label>
         <label>Départ au plus tard<ChampDate valeur={filtreAvant} onChange={setFiltreAvant} ariaLabel="Départ au plus tard" placeholder="Toutes les dates" /></label>
+        <label>Trier par
+          <Select ariaLabel="Trier par" value={tri} onChange={(v) => setTri(v as Tri)} minWidth={210} options={TRIS} />
+        </label>
+        {(filtreVille || filtrePoids || filtreAvant) && (
+          <button type="button" className="pr-filtres-effacer" onClick={() => { setFiltreVille(''); setFiltrePoids(''); setFiltreAvant(''); }}>Effacer les filtres</button>
+        )}
+      </div>
+      {trajets && <p className="pr-compteur"><strong>{visibles.length}</strong> trajet{visibles.length > 1 ? 's' : ''} disponible{visibles.length > 1 ? 's' : ''}{visibles.length !== trajets.length ? ` sur ${trajets.length}` : ''}</p>}
       </div>
 
       {!trajets ? <p className="loading-state">Chargement des trajets…</p> : visibles.length === 0 ? (
         <div className="empty-state">Aucun trajet ne correspond. Les voyageurs publient leurs trajets dans l'app : revenez plus tard ou élargissez les filtres.</div>
       ) : (
         <div className="pr-grid">
-          {visibles.map((t) => (
-            <article key={t.annonce_id} className="pr-card pr-trajet">
+          {trajetsPage.map((t) => (
+            <article key={t.annonce_id} className="pr-card pr-trajet pr-trajet--cliquable" role="button" tabIndex={0}
+                     aria-label={`Détail du trajet ${t.ville_depart} vers ${t.ville_arrivee}`}
+                     onClick={() => setDetail(t)}
+                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDetail(t); } }}>
               <div className="pr-trajet-route">
                 <span><Drapeau iso={t.pays_depart_code} /> {t.ville_depart}</span>
                 <span className="pr-trajet-fleche" aria-hidden="true" />
@@ -211,11 +248,12 @@ export function GuichetSection({ point, nomsPays }: { point: PointRelais; nomsPa
                 </div>
               </div>
               {!t.porteur_payable && <p className="hint" style={{ color: 'var(--badge-amber-fg)' }}>Ce voyageur ne peut pas être payé (pas de point à l'arrivée, pas de compte Stripe).</p>}
-              <button className="btn btn-primary pr-action" disabled={!t.porteur_payable} onClick={() => { setMessage(null); setAConfier(t); }}>Confier un colis</button>
+              <button className="btn btn-primary pr-action" disabled={!t.porteur_payable} onClick={(e) => { e.stopPropagation(); setMessage(null); setAConfier(t); }}>Confier un colis</button>
             </article>
           ))}
         </div>
       )}
+      <Pagination page={pageTrajets} total={visibles.length} taille={TRAJETS_PAR_PAGE} onPage={setPageTrajets} unite="trajets" />
 
       <div className="pr-entete" style={{ marginTop: 28 }}>
         <div><h3>Dossiers du guichet</h3><p className="hint">Les colis confiés par vos clients, du paiement à la livraison.</p></div>
@@ -224,7 +262,7 @@ export function GuichetSection({ point, nomsPays }: { point: PointRelais; nomsPa
         <div className="empty-state">Aucun dossier en cours.</div>
       ) : (
         <div className="pr-table">
-          {enCours.map((d) => {
+          {enCours.slice(pageDossiers * DOSSIERS_PAR_PAGE, (pageDossiers + 1) * DOSSIERS_PAR_PAGE).map((d) => {
             const s = statutDossier(d);
             return (
               <div key={d.demande_id} className="pr-table-ligne">
@@ -258,6 +296,12 @@ export function GuichetSection({ point, nomsPays }: { point: PointRelais; nomsPa
         </div>
       )}
 
+      <Pagination page={pageDossiers} total={enCours.length} taille={DOSSIERS_PAR_PAGE} onPage={setPageDossiers} unite="dossiers" />
+
+      {detail && (
+        <TrajetDetailModal trajet={detail} onClose={() => setDetail(null)}
+          onConfier={() => { const t = detail; setDetail(null); setMessage(null); setAConfier(t); }} />
+      )}
       {aConfier && (
         <ConfierModal point={point} trajet={aConfier} nomsPays={nomsPays} onClose={() => setAConfier(null)}
           onCree={(r, encaisser) => {
@@ -375,6 +419,10 @@ function ConfierModal({ point, trajet, nomsPays, onClose, onCree }: {
   const [natures, setNatures] = useState<string[]>([]);
   const [valeur, setValeur] = useState('');
   const [fragile, setFragile] = useState(false);
+  const [bareme, setBareme] = useState<BaremeProtection | null>(null);
+  useEffect(() => {
+    supabase.rpc('admin_pr_bareme_protection').then(({ data }) => { if (data) setBareme(data as BaremeProtection); });
+  }, []);
   const [moyen, setMoyen] = useState<'mobile_money' | 'especes' | 'carte'>(point.accepte_especes ? 'especes' : 'mobile_money');
   const [interdits, setInterdits] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -390,7 +438,12 @@ function ConfierModal({ point, trajet, nomsPays, onClose, onCree }: {
   const valeurOk = Number.isFinite(valeurNum) && valeurNum > 0 && valeurNum <= VALEUR_DECLAREE_MAX;
   const etape3Ok = description.trim().length >= 3 && natures.length > 0 && poidsOk && valeurOk && interdits;
   // Estimation seulement (prix du voyageur + 10 %) : le montant exact, frais de protection compris, vient du serveur.
-  const estimationEur = poidsOk ? Math.round(trajet.prix_par_kilo * poidsNum * 1.1 * 100) / 100 : null;
+  // Frais de la valeur declaree : meme bareme que l'app, lu sur le serveur (apercu ; le montant exact est fige a l'envoi).
+  const fraisValeur = valeurOk ? fraisProtection(valeurNum, bareme) : 0;
+  const baseEur = poidsOk ? Math.round(trajet.prix_par_kilo * poidsNum * 100) / 100 : null;
+  const serviceEur = baseEur != null ? Math.round(baseEur * 0.1 * 100) / 100 : 0;
+  const estimationEur = baseEur != null ? Math.round((baseEur + serviceEur + fraisValeur) * 100) / 100 : null;
+  const poidsTrop = !!poids && Number.isFinite(poidsNum) && poidsNum > trajet.kilos_disponibles;
   const cfa = point.devise === 'XOF' || point.devise === 'XAF';
 
   async function envoyer() {
@@ -467,26 +520,32 @@ function ConfierModal({ point, trajet, nomsPays, onClose, onCree }: {
             <div className="field-row">
               <label>Poids (kg, {Number(trajet.kilos_disponibles).toLocaleString('fr-FR')} kg disponibles)
                 <input type="text" inputMode="decimal" value={poids} onChange={(e) => setPoids(e.target.value)} className={poids && !poidsOk ? 'champ-invalide' : ''} placeholder="Ex. 3" autoFocus />
+                {poidsTrop && <span className="pr-erreur-champ">Il ne reste que {Number(trajet.kilos_disponibles).toLocaleString('fr-FR')} kg sur ce trajet : on ne peut pas dépasser.</span>}
+                {!!poids && Number.isFinite(poidsNum) && poidsNum <= 0 && <span className="pr-erreur-champ">Indiquez un poids supérieur à 0.</span>}
               </label>
               <label>Valeur déclarée (€, {VALEUR_DECLAREE_MAX} € max)
                 <input type="text" inputMode="decimal" value={valeur} onChange={(e) => setValeur(e.target.value)} className={valeur && !valeurOk ? 'champ-invalide' : ''} placeholder="Ex. 40" />
+                {!!valeur && Number.isFinite(valeurNum) && valeurNum > VALEUR_DECLAREE_MAX && <span className="pr-erreur-champ">La valeur déclarée ne peut pas dépasser {VALEUR_DECLAREE_MAX} €.</span>}
               </label>
             </div>
+            {bareme?.actif && (
+              <div className="pr-frais-valeur">
+                {valeurOk && fraisValeur > 0 ? (
+                  <p><strong>Frais de valeur déclarée : + {montantEuros(fraisValeur)}</strong> <span>({pourcent(fraisValeur / valeurNum)} de la valeur déclarée, ajoutés au total du client)</span></p>
+                ) : valeurOk ? (
+                  <p><strong>Aucun frais</strong> <span>jusqu'à {bareme.seuil1.toLocaleString('fr-FR')} € de valeur déclarée</span></p>
+                ) : (
+                  <p><strong>Frais de valeur déclarée</strong> <span>calculés dès que la valeur est saisie</span></p>
+                )}
+                <small>Barème : aucun frais jusqu'à {bareme.seuil1.toLocaleString('fr-FR')} € · {pourcent(bareme.taux1)} de la part entre {bareme.seuil1.toLocaleString('fr-FR')} et {bareme.seuil2.toLocaleString('fr-FR')} € · {pourcent(bareme.taux2)} au-delà de {bareme.seuil2.toLocaleString('fr-FR')} €.</small>
+              </div>
+            )}
             <label>Description<input type="text" value={description} maxLength={200} onChange={(e) => setDescription(e.target.value)} placeholder="Ex. Tissus wax et chaussures" /></label>
             <div>
               <strong style={{ fontSize: 13 }}>Nature du contenu</strong>
-              <div className="pr-natures">
-                {NATURES.map((g) => (
-                  <div key={g.section}>
-                    <span className="hint">{g.section}</span>
-                    <div className="action-row" style={{ marginTop: 4 }}>
-                      {g.items.map((n) => {
-                        const on = natures.includes(n);
-                        return <button key={n} type="button" className={`chip-filter ${on ? 'on' : ''}`} onClick={() => setNatures((l) => (on ? l.filter((x) => x !== n) : [...l, n]))}>{n}</button>;
-                      })}
-                    </div>
-                  </div>
-                ))}
+              <div style={{ marginTop: 6 }}>
+                <ChampMultiChoix groupes={NATURES} valeur={natures} onChange={setNatures} ariaLabel="Nature du contenu"
+                                 placeholder="Choisir la nature du contenu (un ou plusieurs choix)" />
               </div>
             </div>
             <label style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -518,7 +577,10 @@ function ConfierModal({ point, trajet, nomsPays, onClose, onCree }: {
               <div className="insight-banner">
                 <div>
                   <strong>Estimation : {cfa && moyen !== 'carte' ? `≈ ${Math.ceil(estimationEur * TAUX_CFA).toLocaleString('fr-FR')} ${libelleDevise(point.devise)}` : `≈ ${estimationEur.toLocaleString('fr-FR')} €`}</strong>
-                  <span>Prix du voyageur + 10 %. Le montant exact (frais de protection compris) s'affiche à l'envoi.</span>
+                  <span>
+                    Prix du voyageur {montantEuros(baseEur)} + frais de service 10 % {montantEuros(serviceEur)}
+                    {fraisValeur > 0 ? ` + valeur déclarée ${montantEuros(fraisValeur)}` : ''}. Le montant exact s'affiche à l'envoi.
+                  </span>
                 </div>
               </div>
             )}

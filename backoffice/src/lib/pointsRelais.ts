@@ -84,3 +84,20 @@ export function echeanceRelative(iso: string, maintenant = Date.now()): { texte:
 export function dateCourte(iso: string): string {
   return new Date(iso).toLocaleString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
+
+// ── Frais de la valeur declaree (migrations 318 et 418) ─────────────────────────────────────────
+export interface BaremeProtection { actif: boolean; seuil1: number; seuil2: number; taux1: number; taux2: number }
+
+/** Meme calcul que fn_frais_protection de la base (verifie par le test 59) : rien jusqu'au seuil 1, taux 1 sur la part entre les deux
+ *  seuils, taux 2 au-dela, au centime. Apercu seulement : le montant debite est celui que le serveur fige sur la demande. */
+export function fraisProtection(valeur: number, b: BaremeProtection | null): number {
+  if (!b || !b.actif || !Number.isFinite(valeur) || valeur <= b.seuil1) return 0;
+  const t1 = (Math.min(valeur, b.seuil2) - b.seuil1) * b.taux1;
+  const t2 = Math.max(valeur - b.seuil2, 0) * b.taux2;
+  return Math.round((t1 + t2) * 100) / 100;
+}
+
+/** « 5 % » ou « 3,5 % » : un taux de 0,05 devient 5. */
+export function pourcent(taux: number): string {
+  return `${(Math.round(taux * 1000) / 10).toLocaleString('fr-FR')} %`;
+}

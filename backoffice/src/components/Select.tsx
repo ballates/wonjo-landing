@@ -9,10 +9,17 @@ export interface Option<T extends string> {
   icon?: ReactNode;
 }
 
+// Compare sans tenir compte des accents ni de la casse (« cote » trouve « Côte d'Ivoire »).
+export const normaliserRecherche = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+
+// Au-dela de ce nombre de choix, le menu affiche une barre de recherche (pays, indicatifs, villes...).
+const SEUIL_RECHERCHE = 12;
+
 // Menu deroulant maison : le <select> natif ne se stylise pas (liste systeme
 // grise, sans mode sombre). Navigation clavier : fleches, Entree, Echap.
+// Recherche : barre en haut du menu, automatique au-dela de 12 choix ; `recherche` force (true) ou coupe (false).
 export function Select<T extends string>({
-  value, options, onChange, disabled, ariaLabel, size = 'md', minWidth,
+  value, options, onChange, disabled, ariaLabel, size = 'md', minWidth, recherche,
 }: {
   value: T;
   options: Option<T>[];
@@ -21,17 +28,24 @@ export function Select<T extends string>({
   ariaLabel?: string;
   size?: 'sm' | 'md';
   minWidth?: number;
+  recherche?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [q, setQ] = useState('');
   const [active, setActive] = useState(0);
   const root = useRef<HTMLDivElement>(null);
   const menu = useRef<HTMLUListElement>(null);
   const [pos, setPos] = useState<{ top: number; left: number; width: number; up: boolean } | null>(null);
   const listId = useId();
   const current = options.find((o) => o.value === value);
+  const avecRecherche = recherche ?? options.length > SEUIL_RECHERCHE;
+  const nq = normaliserRecherche(q);
+  // Liste affichee : filtree par la recherche (libelle ou precision), sinon complete.
+  const liste = avecRecherche && nq ? options.filter((o) => normaliserRecherche(`${o.label} ${o.hint ?? ''}`).includes(nq)) : options;
 
   useEffect(() => {
     if (!open) return;
+    setQ('');
     setActive(Math.max(0, options.findIndex((o) => o.value === value)));
     function onDoc(e: MouseEvent) {
       const t = e.target as Node;
@@ -48,7 +62,7 @@ export function Select<T extends string>({
     function place() {
       const r = root.current?.getBoundingClientRect();
       if (!r) return;
-      const hauteur = Math.min(320, options.length * 44 + 12);
+      const hauteur = Math.min(320, options.length * 44 + 12) + (avecRecherche ? 52 : 0);
       const up = r.bottom + hauteur + 8 > window.innerHeight && r.top > hauteur;
       setPos({ top: up ? r.top - hauteur - 6 : r.bottom + 6, left: r.left, width: r.width, up });
     }
@@ -68,9 +82,9 @@ export function Select<T extends string>({
     if (!open && (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); setOpen(true); return; }
     if (!open) return;
     if (e.key === 'Escape') { e.preventDefault(); setOpen(false); }
-    if (e.key === 'ArrowDown') { e.preventDefault(); setActive((a) => Math.min(options.length - 1, a + 1)); }
+    if (e.key === 'ArrowDown') { e.preventDefault(); setActive((a) => Math.min(liste.length - 1, a + 1)); }
     if (e.key === 'ArrowUp') { e.preventDefault(); setActive((a) => Math.max(0, a - 1)); }
-    if (e.key === 'Enter') { e.preventDefault(); choose(options[active].value); }
+    if (e.key === 'Enter') { e.preventDefault(); if (liste[active]) choose(liste[active].value); }
   }
 
   return (
@@ -104,7 +118,21 @@ export function Select<T extends string>({
             exit={{ opacity: 0, y: -4, scale: 0.98 }}
             transition={{ duration: 0.14, ease: 'easeOut' }}
           >
-            {options.map((o, i) => (
+            {avecRecherche && (
+              <li className="ui-select-search" role="presentation">
+                <input
+                  type="search"
+                  autoFocus
+                  value={q}
+                  placeholder="Rechercher…"
+                  aria-label="Rechercher dans la liste"
+                  onChange={(e) => { setQ(e.target.value); setActive(0); }}
+                  onKeyDown={onKey}
+                />
+              </li>
+            )}
+            {avecRecherche && liste.length === 0 && <li className="ui-select-vide" role="presentation">Aucun résultat</li>}
+            {liste.map((o, i) => (
               <li
                 key={o.value}
                 role="option"
