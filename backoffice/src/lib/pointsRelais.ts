@@ -85,6 +85,30 @@ export function dateCourte(iso: string): string {
   return new Date(iso).toLocaleString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
+// ── Refus « ce trajet ne peut pas passer par le point relais » ──────────────────────────────────
+// Le serveur renvoie « Ce trajet ne peut pas passer par le point relais (depart_trop_proche) » : un code technique que personne
+// ne comprend. Ici, une phrase qui dit POURQUOI et QUOI FAIRE. `depart` : le depart du trajet, en texte lisible (facultatif).
+const RAISONS_REFUS: Record<string, (depart?: string) => string> = {
+  depart_trop_proche: (d) =>
+    `Ce trajet part trop tôt${d ? ` (${d})` : ''}. Le colis doit être payé puis confié au point relais au moins 12 h avant le départ, `
+    + 'et le client a besoin d\'au moins 3 h pour payer : le trajet doit donc partir dans plus de 15 h. Choisissez un trajet qui part plus tard.',
+  plafond_depasse: () => 'Ce colis coûte plus que le plafond autorisé par dossier pour ce point relais. Réduisez le poids ou la valeur déclarée, ou choisissez un autre trajet.',
+  voyageur_non_payable: () => 'Ce voyageur ne pourrait pas être payé à l\'arrivée : il n\'a pas de compte de paiement actif et aucun point relais n\'est ouvert dans le pays d\'arrivée. Choisissez un autre trajet.',
+  trajet_non_couvert: () => 'Ce trajet n\'est pas couvert par le service point relais pour le moment. Choisissez un trajet entre deux pays ouverts.',
+  aucun_point: () => 'Aucun point relais actif dans le pays de départ de ce trajet.',
+  inactif: () => 'Ce point relais est fermé : il ne peut plus recevoir de colis.',
+  montant_indisponible: () => 'Le prix de ce colis n\'a pas pu être calculé (taux de change indisponible). Réessayez dans un instant.',
+  deja_payee: () => 'Cette demande est déjà payée.',
+  carte_commencee: () => 'Un paiement par carte est déjà en cours pour cette demande.',
+};
+
+/** Message lisible pour une erreur de l'envoi d'un colis au guichet ; le message du serveur est conserve s'il n'a rien de technique. */
+export function messageRefusPointRelais(e: { message: string; hint?: string | null }, depart?: string): string {
+  const code = e.hint?.startsWith('point_relais_') ? e.hint.slice('point_relais_'.length) : /point relais \((\w+)\)/.exec(e.message)?.[1];
+  const f = code ? RAISONS_REFUS[code] : undefined;
+  return f ? f(depart) : e.message;
+}
+
 // ── Frais de la valeur declaree (migrations 318 et 418) ─────────────────────────────────────────
 export interface BaremeProtection { actif: boolean; seuil1: number; seuil2: number; taux1: number; taux2: number }
 

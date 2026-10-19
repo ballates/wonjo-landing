@@ -9,7 +9,7 @@ import { ChampTelephone } from '../ChampTelephone';
 import { ValidationModal, type AEncaisser } from './AEncaisserSection';
 import { ChatGuichetModal } from './ChatGuichetModal';
 import { LienCarteModal, type DossierCarte } from './LienCarteModal';
-import { dateCourte, fraisProtection, libelleDevise, montantEuros, montantLocal, pourcent, type BaremeProtection, type PointRelais } from '../../lib/pointsRelais';
+import { dateCourte, fraisProtection, libelleDevise, messageRefusPointRelais, montantEuros, montantLocal, pourcent, type BaremeProtection, type PointRelais } from '../../lib/pointsRelais';
 import { Pagination } from '../Pagination';
 import { ChampMultiChoix } from '../ChampMultiChoix';
 import { TrajetDetailModal } from './TrajetDetailModal';
@@ -458,7 +458,11 @@ function ConfierModal({ point, trajet, nomsPays, onClose, onCree }: {
       p_moyen: moyen,
     });
     setBusy(false);
-    if (e) { setError(e.message); return; }
+    if (e) {
+      const jour = new Date(`${trajet.date_depart}T00:00:00`).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+      setError(messageRefusPointRelais(e, `départ le ${jour}${trajet.heure_depart ? ` à ${trajet.heure_depart.slice(0, 5).replace(':', 'h')}` : ''}`));
+      return;
+    }
     setCree({ ...(data as Cree), moyen, client_nom: clientNom.trim(), client_telephone: clientTel });
   }
 
