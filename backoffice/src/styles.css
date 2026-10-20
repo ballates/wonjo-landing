@@ -2086,7 +2086,7 @@ tr.is-modifie td { background: var(--accent-soft); }
 .pr-etapes li.faite span { background: var(--badge-green-bg); color: var(--badge-green-fg); }
 .pr-natures { display: grid; gap: 10px; margin-top: 8px; max-height: 260px; overflow-y: auto; padding-right: 4px; }
 .chat-systeme { align-self: center; font-size: 12px; color: var(--muted); padding: 4px 10px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); }
-.pr-badge-non-lu { display: inline-flex; min-width: 18px; height: 18px; padding: 0 5px; margin-left: 6px; border-radius: 9px; background: var(--badge-danger-fg); color: #fff; font-size: 11px; font-weight: 800; align-items: center; justify-content: center; }
+.pr-badge-non-lu { display: inline-flex; min-width: 18px; height: 18px; padding: 0 5px; margin-left: 6px; border-radius: 9px; background: var(--danger); color: #fff; font-size: 11px; font-weight: 800; align-items: center; justify-content: center; }
 .pr-contact-dest { display: flex; gap: 10px; margin-top: 2px; }
 .pr-contact-dest a { font-size: 12px; font-weight: 700; color: var(--accent-ink); text-decoration: none; }
 .pr-contact-dest a:hover { text-decoration: underline; }
