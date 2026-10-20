@@ -18,11 +18,16 @@ export type AuthStatus =
   | 'loading' | 'signed_out' | 'need_password_set' | 'need_mfa_enroll' | 'need_mfa_challenge'
   | 'checking' | 'authorized' | 'unauthorized' | 'verification_impossible';
 
-export type AdminRole = 'super_admin' | 'moderation' | 'finance' | 'commercial' | 'data' | 'stagiaire' | 'lecture_seule' | 'point_relais';
+// Codes des roles (table admin_roles, migration 438). Hierarchie : Admin > Securite (moderation), Finance, Commercial > Lecture ;
+// Admin > Reseau > Agent relais (point_relais). Un parent a tous les droits de ses enfants.
+export type AdminRole = 'super_admin' | 'moderation' | 'finance' | 'commercial' | 'lecture' | 'reseau' | 'point_relais';
 
 export interface AdminProfil {
   user_id: string;
+  /** Roles EFFECTIFS : attribues + herites (admin_roles_effectifs). Ce sont eux qui ouvrent les ecrans. */
   roles: AdminRole[];
+  /** Roles attribues a la personne (affichage). */
+  roles_attribues: AdminRole[];
   peut_inviter: boolean;
   email: string;
   nom_affiche: string | null;
@@ -191,29 +196,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Deconnexion apres 1h sans activite. La derniere activite est partagee via
-  // localStorage : plusieurs onglets comptent comme une seule session, et un
-  // onglet rouvert apres plus d'1h est deconnecte des le retour.
+  // Deconnexion apres 1h sans activite. La derniere activite vit dans sessionStorage, comme la session elle-meme (propre a
+  // chaque onglet, 1 point de l'audit) ; un onglet reste ouvert plus d'1h sans activite est deconnecte des le retour.
   useEffect(() => {
     if (status === 'loading' || status === 'signed_out') return;
 
     const lire = () => {
-      try { return Number(localStorage.getItem(CLE_ACTIVITE)) || Date.now(); } catch { return Date.now(); }
+      try { return Number(sessionStorage.getItem(CLE_ACTIVITE)) || Date.now(); } catch { return Date.now(); }
     };
     const ecrire = () => {
-      try { localStorage.setItem(CLE_ACTIVITE, String(Date.now())); } catch { /* stockage indisponible */ }
+      try { sessionStorage.setItem(CLE_ACTIVITE, String(Date.now())); } catch { /* stockage indisponible */ }
     };
     const verifier = () => {
       if (Date.now() - lire() >= INACTIVITE_MAX_MS) {
-        try { localStorage.removeItem(CLE_ACTIVITE); } catch { /* idem */ }
-        signOut('Vous avez été déconnecté après une heure d\'inactivité.');
+        try { sessionStorage.removeItem(CLE_ACTIVITE); } catch { /* idem */ }
+        signOut('Vous avez été déconnecté après une heure d\'inactivité');
       }
     };
 
     // Premiere verification avant d'ecrire : sinon le chargement de la page
     // effacerait l'inactivite accumulee pendant que l'onglet etait ferme.
     verifier();
-    try { if (!localStorage.getItem(CLE_ACTIVITE)) ecrire(); } catch { /* idem */ }
+    try { if (!sessionStorage.getItem(CLE_ACTIVITE)) ecrire(); } catch { /* idem */ }
 
     let dernierEcrit = 0;
     const surActivite = () => {
@@ -252,7 +256,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signOut(message?: string) {
-    try { localStorage.removeItem(CLE_ACTIVITE); } catch { /* stockage indisponible */ }
+    try { sessionStorage.removeItem(CLE_ACTIVITE); localStorage.removeItem(CLE_ACTIVITE); } catch { /* stockage indisponible */ }
     // 'local' : sans cela signOut() est GLOBAL et revoque toutes les sessions du compte,
     // y compris celle de l'application sur le telephone.
     await supabase.auth.signOut({ scope: 'local' });

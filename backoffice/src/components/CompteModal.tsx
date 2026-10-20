@@ -41,6 +41,7 @@ export function CompteModal({ fiche, onClose, onChanged }: { fiche: FicheCompte;
   const [confirmationSuppression, setConfirmationSuppression] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const [historique, setHistorique] = useState<ActionHistorique[] | null>(null);
   const [historiqueOuvert, setHistoriqueOuvert] = useState(false);
   const { ouvrir, modal } = useFicheCompte();
@@ -59,9 +60,19 @@ export function CompteModal({ fiche, onClose, onChanged }: { fiche: FicheCompte;
   async function executer(action: () => PromiseLike<{ data?: unknown; error: { message: string } | null }>, apresSucces?: () => void) {
     setBusy(true);
     setError(null);
+    setInfo(null);
     try {
       const { data, error: rpcError } = await action();
       if (rpcError) { setError(messageServeur(rpcError.message)); return; }
+      // [439] Validation manuelle d'identite : une DEMANDE, qu'un autre administrateur Securite doit approuver.
+      if (data === 'en_attente') {
+        setSaisie(null);
+        setMotif('');
+        setInfo('Demande enregistrée : un autre administrateur Sécurité doit approuver cette identité (page KYC, « Validations à approuver »).');
+        onChanged();
+        chargerHistorique();
+        return;
+      }
       const resultat = data as { success?: boolean; message?: string } | null;
       if (resultat && resultat.success === false) { setError(resultat.message ?? 'Action refusée.'); return; }
       setSaisie(null);
@@ -252,6 +263,7 @@ export function CompteModal({ fiche, onClose, onChanged }: { fiche: FicheCompte;
               </div>
             )}
             {error && error !== 'Le motif est obligatoire.' && <p className="page-error">{error}</p>}
+            {info && <p className="success-text">{info}</p>}
             <div className="action-row" style={{ justifyContent: 'flex-end' }}>
               <button className="btn" disabled={busy} onClick={() => ouvrirSaisie(null)}>Annuler</button>
               <button

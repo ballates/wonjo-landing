@@ -2,8 +2,11 @@ import { ChampMontant } from '../ChampMontant';
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Modal } from '../Modal';
+import { Select } from '../Select';
+import { RecuActions } from './RecuActions';
+import type { Recu } from '../../lib/recu';
 import {
-  COULEUR_OPERATEUR, LABEL_OPERATEUR, dateCourte, echeanceRelative, libelleDevise, montantEuros, montantLocal,
+  COULEUR_OPERATEUR, LABEL_OPERATEUR, OPERATEURS, dateCourte, echeanceRelative, libelleDevise, montantEuros, montantLocal,
   moyenDepuisOperateur, type MoyenRecu, type Operateur, type PointRelais,
 } from '../../lib/pointsRelais';
 
@@ -155,6 +158,8 @@ function messageErreur(brut: string): string {
   if (brut.includes('Plafond d\'especes')) return 'Le plafond d\'espèces du point est atteint : faites d\'abord un versement au siège.';
   if (brut.includes('different du montant')) return 'Le montant reçu doit être exactement le montant dû. Réglez l\'écart avec l\'expéditeur avant de valider.';
   if (brut.includes('Echeance depassee')) return 'L\'échéance est dépassée : la demande va être annulée, le paiement ne peut plus être validé.';
+  if (brut.includes('Recu inconnu')) return 'Ce numéro ne correspond à aucun reçu édité pour cette demande (ou il a déjà servi). Éditez le reçu ci-dessus, puis saisissez son numéro.';
+  if (brut.includes('ne correspond pas')) return 'Le montant de ce reçu n\'est pas le montant dû : annulez ce reçu (onglet Reçus) et éditez-en un nouveau.';
   if (brut.includes('deja valide')) return 'Ce paiement a déjà été validé.';
   return brut;
 }
@@ -177,8 +182,11 @@ export function ValidationModal({ point, item, onClose, onValide, onCarte }: {
       detail: `${c.numero} · ${c.titulaire}`,
     }));
     if (point.accepte_especes) liste.push({ cle: 'especes', moyen: 'especes', label: 'Espèces', couleur: '#1D9E75', detail: 'Reçues au guichet' });
+    // Le client a pu payer par un opérateur dont le point n'a pas (encore) enregistré le compte : on le choisit ici.
+    liste.push({ cle: 'autre', moyen: 'autre_mobile', label: 'Autre opérateur', couleur: '#8A879E', detail: 'Choisir dans la liste' });
     return liste;
   }, [point]);
+  const [autreOp, setAutreOp] = useState<Operateur>('wave');
 
   const [choix, setChoix] = useState(() => (item.moyen_choisi === 'especes' && point.accepte_especes ? 'especes' : moyens[0]?.cle ?? ''));
   const [montant, setMontant] = useState(String(item.montant_local));
@@ -186,13 +194,42 @@ export function ValidationModal({ point, item, onClose, onValide, onCarte }: {
   const [verifie, setVerifie] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Reçu d'espèces (420) : édité par le serveur ; le numéro saisi ci-dessous doit être le sien.
+  const [recu, setRecu] = useState<Recu | null>(null);
+  const [recuCharge, setRecuCharge] = useState(false);
+  const [recuBusy, setRecuBusy] = useState(false);
+  const [recuError, setRecuError] = useState<string | null>(null);
 
-  const moyen = moyens.find((m) => m.cle === choix);
+  const moyen = choix === 'autre'
+    ? { cle: 'autre', moyen: moyenDepuisOperateur(autreOp), label: LABEL_OPERATEUR[autreOp], couleur: COULEUR_OPERATEUR[autreOp], detail: 'compte du point' }
+    : moyens.find((m) => m.cle === choix);
   const especes = moyen?.moyen === 'especes';
   const montantNum = Number(montant.replace(/\s/g, '').replace(',', '.'));
   const montantOk = Number.isFinite(montantNum) && montantNum === Number(item.montant_local);
-  const referenceOk = reference.trim().length >= (especes ? 1 : 4);
+  const referenceOk = especes ? /^R-\d{4}-\d{5,}$/.test(reference.trim()) : reference.trim().length >= 4;
   const unite = libelleDevise(item.devise);
+
+  // Un reçu existe peut-être déjà pour cette demande (édité plus tôt, ou par un collègue) : on le retrouve et on préremplit son numéro.
+  useEffect(() => {
+    if (!especes || recuCharge) return;
+    setRecuCharge(true);
+    supabase.rpc('admin_pr_recu_du_dossier', { p_demande_id: item.demande_id }).then(({ data }) => {
+      const r = data as Recu | null;
+      if (r) { setRecu(r); setReference((ref) => ref || r.numero); }
+    });
+  }, [especes]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function editerRecu() {
+    setRecuBusy(true);
+    setRecuError(null);
+    const { data, error: e } = await supabase.rpc('admin_pr_editer_recu', { p_demande_id: item.demande_id });
+    setRecuBusy(false);
+    if (e) { setRecuError(messageErreur(e.message)); return; }
+    const r = data as Recu;
+    setRecu(r);
+    setReference(r.numero);
+    setVerifie(false);
+  }
 
   async function valider() {
     if (!moyen) return;
@@ -226,6 +263,19 @@ export function ValidationModal({ point, item, onClose, onValide, onCarte }: {
           <small>{montantEuros(item.montant_eur)} · {item.trajet}</small>
         </div>
 
+        {onCarte && (
+          <div className="pr-carte-bloc" style={{ marginTop: 12 }}>
+            <span className="pr-carte-icone" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2.5" /><line x1="2" y1="10" x2="22" y2="10" /></svg>
+            </span>
+            <div className="pr-carte-texte">
+              <strong>Le client préfère payer par carte ?</strong>
+              <span>Envoyez-lui un lien de paiement sécurisé, à ouvrir sur son téléphone.</span>
+            </div>
+            <button className="btn pr-carte-bouton" onClick={onCarte} disabled={busy}>Payer par carte</button>
+          </div>
+        )}
+
         <div className="form-grid" style={{ marginTop: 16 }}>
           <div>
             <strong style={{ fontSize: 13 }}>Comment l'argent a-t-il été reçu ?</strong>
@@ -244,6 +294,13 @@ export function ValidationModal({ point, item, onClose, onValide, onCarte }: {
                 </button>
               ))}
             </div>
+            {choix === 'autre' && (
+              <div style={{ marginTop: 10 }}>
+                <Select ariaLabel="Opérateur utilisé par le client" value={autreOp} options={OPERATEURS.map((o) => ({ value: o.value, label: o.label }))}
+                        onChange={(v) => { setAutreOp(v as Operateur); setVerifie(false); }} />
+                <p className="hint" style={{ marginTop: 6 }}>Si le client paie régulièrement par cet opérateur, ajoutez son compte dans « Compte du point » (onglet Réseau).</p>
+              </div>
+            )}
           </div>
 
           <label>
@@ -252,16 +309,39 @@ export function ValidationModal({ point, item, onClose, onValide, onCarte }: {
             {!montantOk && <span className="hint" style={{ color: 'var(--badge-danger-fg)' }}>Doit être exactement {montantLocal(item.montant_local, item.devise)}.</span>}
           </label>
 
+          {especes && (
+            <div className={`pr-recu-bloc ${recu ? 'pr-recu-bloc--pret' : ''}`}>
+              {recu ? (
+                <>
+                  <div className="pr-recu-tete">
+                    <span className="pr-recu-icone" aria-hidden="true">✓</span>
+                    <div><strong>Reçu {recu.numero}</strong><span>Édité : téléchargez-le ou imprimez-le pour le remettre au client.</span></div>
+                  </div>
+                  <RecuActions recu={recu} compact />
+                </>
+              ) : (
+                <div className="pr-recu-tete">
+                  <span className="pr-recu-icone pr-recu-icone--attente" aria-hidden="true">€</span>
+                  <div><strong>Reçu d'espèces</strong><span>Éditez le reçu avant d'encaisser : il porte un numéro unique, vérifié ensuite par le serveur.</span></div>
+                  <button type="button" className="btn btn-primary btn-sm" onClick={editerRecu} disabled={recuBusy || !recuCharge}>{recuBusy ? 'Édition…' : 'Éditer le reçu'}</button>
+                </div>
+              )}
+              {recuError && <p className="page-error" style={{ marginTop: 8 }}>{recuError}</p>}
+            </div>
+          )}
+
           <label>
-            {especes ? 'Numéro du reçu remis à l\'expéditeur' : 'Référence de la transaction (SMS de l\'opérateur)'}
+            {especes ? 'Numéro du reçu édité' : 'Référence de la transaction (SMS de l\'opérateur)'}
             <input
               type="text"
               value={reference}
               maxLength={80}
               autoComplete="off"
-              placeholder={especes ? 'Ex. R-0042' : 'Ex. CI241014.1532.A12345'}
+              className={especes && reference.trim() && !referenceOk ? 'champ-invalide' : ''}
+              placeholder={especes ? 'Ex. R-2026-00042' : 'Ex. CI241014.1532.A12345'}
               onChange={(e) => { setReference(e.target.value); setVerifie(false); }}
             />
+            {especes && <span className="hint" style={{ fontWeight: 500 }}>Le serveur vérifie que ce reçu a bien été édité pour cette demande, pour ce montant, et qu'il n'a pas déjà servi.</span>}
           </label>
 
           <label style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, fontWeight: 600 }}>
@@ -269,18 +349,20 @@ export function ValidationModal({ point, item, onClose, onValide, onCarte }: {
             <span>
               {especes
                 ? `J'ai reçu ${montantLocal(item.montant_local, item.devise)} en espèces et remis le reçu ${reference.trim() || '…'}.`
-                : `J'ai vérifié que ${montantLocal(item.montant_local, item.devise)} sont bien arrivés sur le compte ${moyen?.label ?? ''} (${moyen?.detail.split(' · ')[0] ?? ''}).`}
+                : `J'ai vérifié que ${montantLocal(item.montant_local, item.devise)} sont bien arrivés sur le compte ${moyen?.label ?? ''} ${choix === 'autre' ? 'du point' : `(${moyen?.detail.split(' · ')[0] ?? ''})`}.`}
             </span>
           </label>
         </div>
 
-        {error && <p className="page-error" style={{ marginTop: 12 }}>{error}</p>}
-        <div className="action-row" style={{ justifyContent: 'flex-end', marginTop: 16 }}>
-          {onCarte && <button className="btn btn-soft" style={{ marginRight: 'auto' }} onClick={onCarte} disabled={busy}>Payer par carte à la place</button>}
-          <button className="btn" onClick={onClose} disabled={busy}>Annuler</button>
-          <button className="btn btn-primary" onClick={valider} disabled={busy || !verifie || !montantOk || !referenceOk || !moyen}>
-            {busy ? 'Validation…' : 'Valider le paiement'}
-          </button>
+        {/* Pied fixe : « Valider le paiement » reste visible meme quand la fenetre defile. */}
+        <div className="pr-pied-fixe">
+          {error && <p className="page-error">{error}</p>}
+          <div className="action-row" style={{ justifyContent: 'flex-end' }}>
+            <button className="btn" onClick={onClose} disabled={busy}>Annuler</button>
+            <button className="btn btn-primary" onClick={valider} disabled={busy || !verifie || !montantOk || !referenceOk || !moyen}>
+              {busy ? 'Validation…' : 'Valider le paiement'}
+            </button>
+          </div>
         </div>
       </div>
     </Modal>

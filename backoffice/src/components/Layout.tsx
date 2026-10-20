@@ -77,7 +77,7 @@ export function Layout() {
   const liens = [
     // Un agent de point relais ne voit pas le tableau de bord (chiffres de toute la plateforme).
     { to: '/', label: 'Tableau de bord', icon: <IconDashboard />, visible: !estSeulementPointRelais(roles), end: true },
-    { to: '/moderation', label: 'Confiance', icon: <IconShield />, visible: peutModerer(roles) || peutVoirLitiges(roles) },
+    { to: '/moderation', label: 'Sécurité', icon: <IconShield />, visible: peutModerer(roles) || peutVoirLitiges(roles) },
     { to: '/kyc', label: 'KYC', icon: <IconId />, visible: peutVoirKyc(roles) },
     { to: '/transactions', label: 'Transactions', icon: <IconExchange />, visible: peutVoirTransactions(roles) },
     { to: '/avis', label: 'Avis', icon: <IconStar />, visible: peutModerer(roles) },
@@ -194,7 +194,7 @@ export function Layout() {
                   <span className="sidebar-me-text">
                     <span className="sidebar-me-name">{nom}</span>
                     <span className="sidebar-me-roles">
-                      {roles.map((r) => <span key={r} className="badge badge-teal">{LABELS_ROLES[r]}</span>)}
+                      {(profil?.roles_attribues ?? roles).map((r) => <span key={r} className="badge badge-teal">{LABELS_ROLES[r] ?? r}</span>)}
                     </span>
                   </span>
                   <span className="sidebar-me-chevron"><IconChevronUp /></span>

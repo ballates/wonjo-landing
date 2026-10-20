@@ -87,7 +87,7 @@ export function ProfilModal({ onClose }: { onClose: () => void }) {
             Pseudo
             <input type="text" value={nomAffiche} placeholder={profil?.nom ?? 'Ex. Ben'} style={{ maxWidth: 220 }} onChange={(e) => setNomAffiche(e.target.value)} />
           </label>
-          <p className="hint">Email : {email} · Rôle{roles.length > 1 ? 's' : ''} : {roles.map((r) => LABELS_ROLES[r]).join(', ')}</p>
+          <p className="hint">Email : {email} · Rôle{(profil?.roles_attribues ?? roles).length > 1 ? 's' : ''} : {(profil?.roles_attribues ?? roles).map((r) => LABELS_ROLES[r] ?? r).join(', ')}</p>
         </div>
 
         {error && <p className="page-error">{error}</p>}

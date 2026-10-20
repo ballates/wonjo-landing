@@ -77,6 +77,16 @@ export const LABELS_ACTIONS: Record<string, string> = {
   consulter_coordonnees: 'a consulté les coordonnées',
   masquer_contenu: 'a masqué un contenu',
   demasquer_contenu: 'a réaffiché un contenu',
+  // [430-436] points relais, paiements de la finance, alertes (audit du back-office)
+  interrupteur_points_relais: 'a changé un interrupteur des points relais',
+  payer_voyageur_siege: 'a enregistré le paiement d\'un voyageur',
+  litige_ouvrir: 'a ouvert un litige',
+  litige_verser_demande: 'a demandé de verser un litige au voyageur (attend un second administrateur)',
+  litige_verser_refuse: 'a refusé de verser un litige au voyageur',
+  consulter_photos: 'a consulté les photos d\'une transaction',
+  kyc_validation_demande: 'a demandé de valider une identité à la main (attend un second administrateur)',
+  kyc_validation_refusee: 'a refusé une validation d\'identité à la main',
+  alerte_volume_consultations: 'a consulté beaucoup de données personnelles en peu de temps',
   // [291] zones enveloppe
   definir_actif_enveloppe: 'a ouvert ou fermé une zone enveloppe',
   reinitialiser_tentatives_kyc: 'a réinitialisé les tentatives de vérification d\'identité',
@@ -88,10 +98,16 @@ export function libelleAction(action: string): string {
 
 const LABELS_ROLES_TXT: Record<string, string> = {
   super_admin: 'Admin',
-  moderation: 'Confiance & sécurité',
+  moderation: 'Sécurité',
   finance: 'Finance',
+  commercial: 'Commercial',
+  lecture: 'Lecture',
+  reseau: 'Réseau',
+  point_relais: 'Agent relais',
+  // Anciens codes (avant la 438), encore presents dans le journal.
   lecture_seule: 'Lecture seule',
-  point_relais: 'Point relais',
+  data: 'Data',
+  stagiaire: 'Stagiaire',
 };
 
 // Le motif brut depend de l'action (statut de signalement, role...) : on le

@@ -10,6 +10,7 @@ import { peutGererAdmins, peutModerer, peutVoirRevenus } from '../lib/permission
 import { DataTable, type Column } from '../components/DataTable';
 import { ServerTable, type ServerColumn } from '../components/ServerTable';
 import { Modal } from '../components/Modal';
+import { useConfirmation } from '../components/Confirmation';
 import { useFicheCompte, VoirFicheButton } from '../components/FicheCompte';
 import { LABELS_NIVEAU, LABELS_PAIEMENT, LABELS_STATUT_COLIS, LABELS_STATUT_KYC, LABELS_STATUT_SIGNALEMENT, casserNom, casserPrenom, dateHeure, dateSeule, depuis, nomComplet } from '../lib/labels';
 import { useDebounce } from '../lib/useDebounce';
@@ -395,6 +396,7 @@ function LitigeResolutionModal({ litige, onClose, onDone }: { litige: Litige; on
   const [motif, setMotif] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [demande, setDemande] = useState(false);
 
   const avant = litige.statut_avant_litige ?? '';
   const voyageurPossible = COLIS_REMIS.includes(avant) && litige.statut_paiement === 'escrow';
@@ -408,10 +410,29 @@ function LitigeResolutionModal({ litige, onClose, onDone }: { litige: Litige; on
     setBusy(true);
     setError(null);
     const rpc = decision === 'voyageur' ? 'admin_resoudre_litige_voyageur' : 'admin_resoudre_litige_remboursement';
-    const { error: rpcError } = await supabase.rpc(rpc, { p_demande_id: litige.id, p_motif: m });
+    const { data, error: rpcError } = await supabase.rpc(rpc, { p_demande_id: litige.id, p_motif: m });
     setBusy(false);
     if (rpcError) { setError(rpcError.message); return; }
+    // Payer le voyageur = une DEMANDE qu'un autre administrateur doit valider (audit du back-office, point 3).
+    if (data === 'en_attente') { setDemande(true); return; }
     onDone();
+  }
+
+  if (demande) {
+    return (
+      <Modal onClose={onDone} narrow>
+        <h2 className="modal-title">Demande enregistrée</h2>
+        <div className="modal-body">
+          <p className="hint" style={{ fontSize: 14, lineHeight: 1.5 }}>
+            Le voyageur n'est pas encore payé. Un <strong>autre administrateur</strong> (finance ou super admin) doit valider ce versement de {montant} :
+            il le retrouve en haut de l'onglet Litiges, sous « Versements à valider ». Le motif sera envoyé aux deux parties au moment du versement.
+          </p>
+          <div className="action-row" style={{ justifyContent: 'flex-end', marginTop: 18 }}>
+            <button className="btn btn-primary" onClick={onDone}>Compris</button>
+          </div>
+        </div>
+      </Modal>
+    );
   }
 
   return (
@@ -446,11 +467,95 @@ function LitigeResolutionModal({ litige, onClose, onDone }: { litige: Litige; on
         <div className="action-row" style={{ justifyContent: 'flex-end' }}>
           <button className="btn" disabled={busy} onClick={onClose}>Annuler</button>
           <button className={`btn ${decision === 'voyageur' ? 'btn-primary' : 'btn-danger'}`} disabled={busy || !decision} onClick={confirmer}>
-            {busy ? '…' : decision === 'voyageur' ? `Verser ${montant} au voyageur` : decision === 'expediteur' ? 'Confirmer le remboursement' : 'Confirmer'}
+            {busy ? '…' : decision === 'voyageur' ? `Demander de verser ${montant} au voyageur` : decision === 'expediteur' ? 'Confirmer le remboursement' : 'Confirmer'}
           </button>
         </div>
       </div>
     </Modal>
+  );
+}
+
+// [436] Versements au voyageur demandes par un administrateur, a valider par un AUTRE (finance ou super admin).
+interface VersementEnAttente {
+  id: string; demande_id: string; reference: string; description_colis: string; montant_total: number; motif: string;
+  demande_par_nom: string; created_at: string; a_moi: boolean; autres_approbateurs: number;
+}
+
+function VersementsAValider({ onChange }: { onChange: () => void }) {
+  const [items, setItems] = useState<VersementEnAttente[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const { confirmer, demanderTexte, fenetre } = useConfirmation();
+
+  function charger() {
+    supabase.rpc('admin_litiges_verser_en_attente').then(({ data, error: rpcError }) => {
+      if (rpcError) { setError(rpcError.message); return; }
+      setItems((data ?? []) as VersementEnAttente[]);
+    });
+  }
+  useEffect(charger, []);
+
+  async function approuver(v: VersementEnAttente) {
+    const ok = await confirmer({
+      titre: `Verser ${decimales(Number(v.montant_total), 2)} € au voyageur ?`,
+      texte: <>Transaction #{v.reference} · {v.description_colis}. Demandé par {v.demande_par_nom}, motif : « {v.motif} ». Le paiement part immédiatement et la décision est définitive pour les deux parties.</>,
+      libelleOui: 'Verser au voyageur',
+    });
+    if (!ok) return;
+    await executer(v.id, () => supabase.rpc('admin_approuver_litige_voyageur', { p_id: v.id, p_approuver: true, p_motif: null }));
+  }
+  async function refuser(v: VersementEnAttente) {
+    const motif = await demanderTexte({ titre: 'Refuser ce versement ?', texte: `Transaction #${v.reference} : le litige reste ouvert.`, libelleOui: 'Refuser', danger: true, champ: { libelle: 'Motif du refus', obligatoire: true, min: 4 } });
+    if (!motif) return;
+    await executer(v.id, () => supabase.rpc('admin_approuver_litige_voyageur', { p_id: v.id, p_approuver: false, p_motif: motif }));
+  }
+  async function annuler(v: VersementEnAttente) {
+    await executer(v.id, () => supabase.rpc('admin_annuler_litige_verser', { p_id: v.id }));
+  }
+  async function executer(id: string, appel: () => PromiseLike<{ error: { message: string } | null }>) {
+    setBusy(id);
+    setError(null);
+    const { error: e } = await appel();
+    setBusy(null);
+    if (e) { setError(e.message); return; }
+    charger();
+    onChange();
+  }
+
+  if (items.length === 0 && !error) return null;
+  return (
+    <div className="chart-card" style={{ marginBottom: 16 }}>
+      <div className="chart-head">
+        <div className="chart-head-titre">
+          <h3>Versements à valider</h3>
+          <span className="badge badge-amber">{items.length}</span>
+        </div>
+      </div>
+      <p className="chart-sub">Payer le voyageur d'un litige demande deux administrateurs : celui qui a fait la demande ne peut pas la valider lui-même.</p>
+      {error && <p className="page-error">{error}</p>}
+      <div className="liste-demandes">
+        {items.map((v) => (
+          <div key={v.id} className="pr-ligne" style={{ display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderTop: '1px solid var(--border)' }}>
+            <div style={{ minWidth: 0 }}>
+              <strong>#{v.reference} · {decimales(Number(v.montant_total), 2)} €</strong> <span className="hint">· {v.description_colis}</span>
+              <div className="hint">{v.demande_par_nom} · {dateHeure(v.created_at)} · « {v.motif} »</div>
+              {v.a_moi && v.autres_approbateurs === 0 && <div className="hint" style={{ color: 'var(--badge-amber-fg)' }}>Aucun autre administrateur finance ou super admin actif : ajoutez-en un pour valider.</div>}
+            </div>
+            <div className="action-row">
+              {v.a_moi ? (
+                <button className="btn btn-sm" disabled={busy === v.id} onClick={() => annuler(v)}>Annuler ma demande</button>
+              ) : (
+                <>
+                  <button className="btn btn-sm" disabled={busy === v.id} onClick={() => refuser(v)}>Refuser</button>
+                  <button className="btn btn-primary btn-sm" disabled={busy === v.id} onClick={() => approuver(v)}>Approuver</button>
+                </>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+      {fenetre}
+    </div>
   );
 }
 
@@ -500,6 +605,7 @@ function LitigesTab() {
   if (!items) return <p className="loading-state">Chargement…</p>;
   return (
     <>
+      {peutVoirRevenus(roles) && <VersementsAValider onChange={charger} />}
       <p className="hint">Arbitrages demandés en premier : réponse promise sous 2 jours ouvrés.</p>
       <DataTable rows={items} columns={columns} rowKey={(l) => l.id} initialSort={{ key: 'arbitrage', dir: 'desc' }} emptyText="Aucun litige en cours." />
       <DossiersBloques onChange={charger} />

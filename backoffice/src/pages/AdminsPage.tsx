@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../auth/AuthContext';
-import { LABELS_ROLES } from '../lib/permissions';
+import { DESCRIPTIONS_ROLES, LABELS_ROLES, ROLES_ORDONNES } from '../lib/permissions';
 import { Person } from '../components/Avatar';
 import { DataTable, type Column } from '../components/DataTable';
 import { IconSquarePencil } from '../components/Icons';
@@ -10,17 +10,8 @@ import type { AdminRow } from '../lib/adminTypes';
 import type { AdminRole } from '../auth/AuthContext';
 import { useConfirmation } from '../components/Confirmation';
 
-const ROLES: AdminRole[] = ['super_admin', 'moderation', 'finance', 'commercial', 'data', 'stagiaire', 'lecture_seule', 'point_relais'];
-const HINTS_ROLES: Record<AdminRole, string> = {
-  super_admin: 'Tout, y compris gérer les collaborateurs (max 5)',
-  moderation: 'Comptes, signalements, litiges, KYC',
-  finance: 'Chiffres, revenus, commissions',
-  commercial: 'Envoi d\'emails et modèles (Wmail)',
-  data: 'Consultation des tableaux de bord',
-  stagiaire: 'Accès très limité, en lecture',
-  lecture_seule: 'Consultation du tableau de bord',
-  point_relais: 'Point focal : uniquement l\'onglet Points relais, sur ses points',
-};
+const ROLES: AdminRole[] = ROLES_ORDONNES;
+const HINTS_ROLES: Record<AdminRole, string> = DESCRIPTIONS_ROLES;
 
 function RolePill({ role, checked, onToggle }: { role: AdminRole; checked: boolean; onToggle: () => void }) {
   return (
@@ -198,13 +189,15 @@ function AdminsPageComplete() {
 // gere la liste complete des administrateurs (admin_lister_admins reste
 // reservee au super_admin cote serveur).
 function FormulaireInvitationSeul() {
-  const rolesAutorises = ROLES.filter((r) => r !== 'super_admin');
+  // On n'attribue que des roles que l'on possede (roles effectifs) ; jamais Admin. Verifie aussi par la base (438).
+  const { roles: mesRoles } = useAuth();
+  const rolesAutorises = ROLES.filter((r) => r !== 'super_admin' && mesRoles.includes(r));
   return (
     <div>
       <div className="page-head">
         <div>
           <h1>Administration</h1>
-          <p className="page-sub">Vous pouvez inviter de nouveaux collaborateurs (hors rôle super_admin).</p>
+          <p className="page-sub">Vous pouvez inviter de nouveaux collaborateurs, avec les rôles que vous avez vous-même (jamais Admin).</p>
         </div>
       </div>
       <InviteForm rolesAutorises={rolesAutorises} onInvited={() => {}} />
@@ -214,7 +207,7 @@ function FormulaireInvitationSeul() {
 
 function InviteForm({ rolesAutorises, onInvited }: { rolesAutorises: AdminRole[]; onInvited: () => void }) {
   const [email, setEmail] = useState('');
-  const [roles, setRoles] = useState<Set<AdminRole>>(new Set(['lecture_seule']));
+  const [roles, setRoles] = useState<Set<AdminRole>>(new Set(['lecture']));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);

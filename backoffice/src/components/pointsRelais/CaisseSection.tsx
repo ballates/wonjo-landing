@@ -4,8 +4,9 @@ import { supabase } from '../../lib/supabase';
 import { Modal } from '../Modal';
 import { Badge } from '../Badge';
 import { DataTable, type Column } from '../DataTable';
+import { BasculeUnite, type Unite } from '../BasculeUnite';
 import {
-  COULEUR_OPERATEUR, LABEL_OPERATEUR, dateCourte, libelleDevise, montantLocal, type Operateur, type PointRelais,
+  COULEUR_OPERATEUR, LABEL_OPERATEUR, dateCourte, equivalentEuros, libelleDevise, montantEuros, montantLocal, tauxDe, useTauxEuros, type Operateur, type PointRelais,
 } from '../../lib/pointsRelais';
 
 // Caisse d'un point relais (migrations 409-410, docs/POINTS_RELAIS.md § 8.4 et § 11) : soldes par poche (especes,
@@ -46,6 +47,9 @@ export function CaisseSection({ point, finance }: { point: PointRelais; finance:
   const [mouvements, setMouvements] = useState<Mouvement[] | null>(null);
   const [rapprochements, setRapprochements] = useState<Rapprochement[]>([]);
   const [reseau, setReseau] = useState<PointReseau[] | null>(null);
+  // Vue du réseau (finance) : chaque point dans sa monnaie, ou tout en euros pour comparer et additionner. Les poches, l'historique et
+  // les rapprochements restent dans la monnaie du point : c'est l'argent réellement compté.
+  const [uniteReseau, setUniteReseau] = useState<Unite>('local');
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [declarer, setDeclarer] = useState<TypeOperation | null>(null);
@@ -63,6 +67,7 @@ export function CaisseSection({ point, finance }: { point: PointRelais; finance:
     if (finance) supabase.rpc('admin_pr_caisses_reseau').then(({ data }) => setReseau((data ?? []) as PointReseau[]));
   }
   useEffect(() => { setCaisse(null); setMouvements(null); charger(); }, [point.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  useTauxEuros([point.devise, ...(reseau ?? []).map((r) => r.devise)]); // taux du serveur pour l'équivalent en euros
 
   async function valider(a: Attente) {
     setError(null);
@@ -95,16 +100,36 @@ export function CaisseSection({ point, finance }: { point: PointRelais; finance:
   return (
     <div>
       {finance && reseau && reseau.length > 0 && (
+        <>
+        <div className="pr-bascule-ligne" style={{ marginBottom: 8 }}>
+          <p className="hint">Argent détenu par point{uniteReseau === 'eur' ? ' · converti en euros au taux du serveur' : ''}.</p>
+          <BasculeUnite valeur={uniteReseau} onChange={setUniteReseau} libelleLocal="Monnaie du point" ariaLabel="Unité de la vue du réseau" />
+        </div>
         <div className="pr-reseau-caisse">
           {reseau.map((r) => (
             <div key={r.point_id} className={`pr-reseau-ligne ${r.point_id === point.id ? 'actif' : ''}`}>
               <strong>{r.nom}</strong>
-              <span>{montantLocal(Number(r.solde_especes) + Number(r.solde_mobile), r.devise)}</span>
+              <span>{uniteReseau === 'eur'
+                ? (tauxDe(r.devise) != null || r.devise === 'EUR' ? (r.devise === 'EUR' ? montantEuros(Number(r.solde_especes) + Number(r.solde_mobile)) : equivalentEuros(Number(r.solde_especes) + Number(r.solde_mobile), r.devise).replace(/^≈ /, '')) : 'taux non renseigné')
+                : montantLocal(Number(r.solde_especes) + Number(r.solde_mobile), r.devise)}</span>
               <span className="hint">{r.operations_en_attente ? `${r.operations_en_attente} à valider` : 'rien à valider'}</span>
               {r.ecart_non_nul ? <Badge tone="danger">Écart</Badge> : r.rapproche_at ? <Badge tone="green">Rapproché</Badge> : <Badge tone="muted">Jamais rapproché</Badge>}
             </div>
           ))}
+          {uniteReseau === 'eur' && (() => {
+            const lignes = reseau.map((r) => ({ devise: r.devise, v: Number(r.solde_especes) + Number(r.solde_mobile) }));
+            const connues = lignes.filter((l) => l.devise === 'EUR' || tauxDe(l.devise) != null);
+            const total = connues.reduce((a, l) => a + (l.devise === 'EUR' ? l.v : l.v / (tauxDe(l.devise) as number)), 0);
+            return (
+              <div className="pr-reseau-ligne pr-reseau-total">
+                <strong>Total du réseau</strong>
+                <span>{montantEuros(Math.round(total * 100) / 100)}</span>
+                <span className="hint">{connues.length < lignes.length ? `${lignes.length - connues.length} point(s) sans taux, non comptés` : `${lignes.length} point${lignes.length > 1 ? 's' : ''}`}</span>
+              </div>
+            );
+          })()}
         </div>
+        </>
       )}
 
       <div className="pr-entete">
@@ -112,7 +137,7 @@ export function CaisseSection({ point, finance }: { point: PointRelais; finance:
           <h3>Caisse · {point.nom}</h3>
           <p className="hint">Argent détenu par le point, poche par poche. Toute opération est déclarée par une personne et validée par une autre ; l'historique ne se modifie jamais.</p>
         </div>
-        <div className="pr-total"><span>Total détenu</span><strong>{montantLocal(total, devise)}</strong></div>
+        <div className="pr-total"><span>Total détenu</span><strong>{montantLocal(total, devise)}</strong>{!!equivalentEuros(total, devise) && <small className="pr-equiv">{equivalentEuros(total, devise)}</small>}</div>
       </div>
 
       {message && <p className="success-text" style={{ marginBottom: 12 }}>{message}</p>}

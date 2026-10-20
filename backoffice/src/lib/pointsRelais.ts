@@ -1,4 +1,6 @@
 // Types et libelles partages par l'onglet Points relais (docs/POINTS_RELAIS.md du depot wonjo).
+import { useEffect, useState } from 'react';
+import { supabase } from './supabase';
 
 export type Operateur = 'orange_money' | 'wave' | 'mtn_momo' | 'moov_money' | 'free_money' | 'autre';
 export interface CompteMobileMoney { operateur: Operateur; numero: string; titulaire: string }
@@ -67,6 +69,76 @@ export function montantEuros(v: number | null | undefined): string {
   return `${Number(v).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
 }
 
+// ── Equivalents euro <-> monnaie du point ───────────────────────────────────────────────────────
+// Une personne peut avoir cree son trajet en euros (voyageur installe en France) alors que le point travaille dans une autre
+// monnaie : partout ou un montant est en euros, le point voit aussi ce que ca fait dans sa monnaie, et inversement.
+// Le taux vient du SERVEUR (admin_pr_taux_change = prive.fn_taux_euro, le meme que celui fige dans le dossier) : 655,957 pour le franc
+// CFA (parite fixe), 1 pour l'euro, sinon le taux enregistre (indicatif : il varie). Une monnaie sans taux enregistre n'a pas
+// d'equivalent affiche : on n'invente jamais un taux. Les composants appellent useTauxEuro(devise) pour charger le taux ; les
+// fonctions ci-dessous lisent ensuite ce cache.
+export const TAUX_CFA = 655.957;
+const estCfa = (devise: string) => devise === 'XOF' || devise === 'XAF';
+interface Taux { taux: number | null; fixe: boolean }
+const cacheTaux = new Map<string, Taux>();
+const enCours = new Set<string>();
+
+/** Taux connu pour une monnaie (null = inconnu ou monnaie = euro : pas d'equivalent). */
+export function tauxDe(devise: string): number | null {
+  if (devise === 'EUR') return null;
+  if (estCfa(devise)) return TAUX_CFA;
+  return cacheTaux.get(devise)?.taux ?? null;
+}
+const tauxFixe = (devise: string) => estCfa(devise) || (cacheTaux.get(devise)?.fixe ?? false);
+
+function chargerTaux(devise: string, quandPret: () => void) {
+  if (devise === 'EUR' || estCfa(devise) || cacheTaux.has(devise) || enCours.has(devise)) return;
+  enCours.add(devise);
+  supabase.rpc('admin_pr_taux_change', { p_devise: devise }).then(({ data }) => {
+    const r = data as { taux: number | null; fixe: boolean } | null;
+    cacheTaux.set(devise, { taux: r?.taux != null ? Number(r.taux) : null, fixe: !!r?.fixe });
+    enCours.delete(devise);
+    quandPret();
+  });
+}
+
+/** Charge le taux euro -> `devise` (une fois par monnaie) et re-affiche le composant quand il arrive. */
+export function useTauxEuro(devise: string): { taux: number | null; fixe: boolean } {
+  const [, majAffichage] = useState(0);
+  useEffect(() => chargerTaux(devise, () => majAffichage((n) => n + 1)), [devise]);
+  return { taux: tauxDe(devise), fixe: tauxFixe(devise) };
+}
+/** Pareil pour plusieurs monnaies (vue du reseau de points de monnaies differentes). */
+export function useTauxEuros(devises: string[]): void {
+  const [, majAffichage] = useState(0);
+  const cle = [...new Set(devises)].sort().join(',');
+  useEffect(() => { cle.split(',').filter(Boolean).forEach((d) => chargerTaux(d, () => majAffichage((n) => n + 1))); }, [cle]);
+}
+
+/** « 1 € = 655,957 FCFA (taux fixe) » ou « 1 € = 10,9 MAD (taux indicatif) » ; vide sans taux. */
+export function texteTaux(devise: string): string {
+  const t = tauxDe(devise);
+  if (t == null) return '';
+  return `1 € = ${t.toLocaleString('fr-FR', { minimumFractionDigits: estCfa(devise) ? 3 : 0, maximumFractionDigits: 4 })} ${libelleDevise(devise)} (${tauxFixe(devise) ? 'taux fixe' : 'taux indicatif'})`;
+}
+
+/** « ≈ 23 089 FCFA » (arrondi au-dessus, comme le serveur) ; chaine vide sans taux. */
+export function equivalentLocal(eur: number | null | undefined, devise: string): string {
+  const t = tauxDe(devise);
+  if (eur == null || t == null || !Number.isFinite(Number(eur))) return '';
+  return `≈ ${Math.ceil(Number(eur) * t).toLocaleString('fr-FR')} ${libelleDevise(devise)}`;
+}
+/** « ≈ 35,20 € » pour un montant en monnaie locale. */
+export function equivalentEuros(local: number | null | undefined, devise: string): string {
+  const t = tauxDe(devise);
+  if (local == null || t == null || !Number.isFinite(Number(local))) return '';
+  return `≈ ${(Math.round(Number(local) / t * 100) / 100).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
+}
+/** « 35,20 € (≈ 23 089 FCFA) » */
+export function montantEurosEtLocal(eur: number | null | undefined, devise: string): string {
+  const eq = equivalentLocal(eur, devise);
+  return eq ? `${montantEuros(eur)} (${eq})` : montantEuros(eur);
+}
+
 export type Urgence = 'depasse' | 'urgent' | 'proche' | 'ok';
 
 /** Temps restant avant une echeance, lisible (« dans 5 h 20 », « dépassée depuis 12 min »), et son urgence. */
@@ -90,10 +162,9 @@ export function dateCourte(iso: string): string {
 // ne comprend. Ici, une phrase qui dit POURQUOI et QUOI FAIRE. `depart` : le depart du trajet, en texte lisible (facultatif).
 const RAISONS_REFUS: Record<string, (depart?: string) => string> = {
   depart_trop_proche: (d) =>
-    `Ce trajet part trop tôt${d ? ` (${d})` : ''}. Le colis doit être payé puis confié au point relais au moins 12 h avant le départ, `
-    + 'et le client a besoin d\'au moins 3 h pour payer : le trajet doit donc partir dans plus de 15 h. Choisissez un trajet qui part plus tard.',
+    `Ce trajet part trop tôt${d ? ` (${d})` : ''}. Le client a besoin d'au moins 3 h pour payer, et le colis doit être confié au point relais au moins 3 h avant le départ : `
+    + 'le trajet doit donc partir dans plus de 6 h. Choisissez un trajet qui part plus tard.',
   plafond_depasse: () => 'Ce colis coûte plus que le plafond autorisé par dossier pour ce point relais. Réduisez le poids ou la valeur déclarée, ou choisissez un autre trajet.',
-  voyageur_non_payable: () => 'Ce voyageur ne pourrait pas être payé à l\'arrivée : il n\'a pas de compte de paiement actif et aucun point relais n\'est ouvert dans le pays d\'arrivée. Choisissez un autre trajet.',
   trajet_non_couvert: () => 'Ce trajet n\'est pas couvert par le service point relais pour le moment. Choisissez un trajet entre deux pays ouverts.',
   aucun_point: () => 'Aucun point relais actif dans le pays de départ de ce trajet.',
   inactif: () => 'Ce point relais est fermé : il ne peut plus recevoir de colis.',

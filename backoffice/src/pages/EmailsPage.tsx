@@ -9,6 +9,7 @@ import { useAuth } from '../auth/AuthContext';
 import { peutEnvoyerInformation } from '../lib/permissions';
 import type { CompteRecherche } from '../lib/types';
 import { useRechercheComptes } from '../lib/useRechercheComptes';
+import { lienAutorise } from '../lib/liensAutorises';
 import { EmailsAppSection } from './EmailsAppSection';
 import logo from '../assets/wonjo-logo.png';
 import { IconChevronLeft, IconRestore, IconSend, IconSquarePencil, IconTrash } from '../components/Icons';
@@ -182,7 +183,7 @@ export function EmailsPage() {
     return () => clearTimeout(t);
   }, [segment, type, ids]);
 
-  const pret = sujet.trim().length > 0 && message.trim().length > 0 && (!ctaUrl || ctaUrl.startsWith('https://'));
+  const pret = sujet.trim().length > 0 && message.trim().length > 0 && (!ctaUrl.trim() || lienAutorise(ctaUrl));
 
   async function envoyer(test: boolean) {
     if (!pret) return;
@@ -707,7 +708,9 @@ export function EmailsPage() {
             </label>
             <label className="field">
               <span>Lien du bouton</span>
-              <input type="text" value={ctaUrl} onChange={(e) => setCtaUrl(e.target.value)} placeholder="https://wonjo.app" />
+              <input type="text" value={ctaUrl} onChange={(e) => setCtaUrl(e.target.value)} placeholder="https://wonjo.app"
+                     className={ctaUrl.trim() && !lienAutorise(ctaUrl) ? 'champ-invalide' : ''} />
+              <small className="hint">wonjo.app, App Store ou Google Play uniquement (le texte aussi).</small>
             </label>
           </div>
 

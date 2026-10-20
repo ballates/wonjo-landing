@@ -11,13 +11,16 @@ const NOMS_HORS_AFRIQUE: Record<string, string> = {
 // Indicatif (drapeau + code) et numero formate pendant la frappe. `valeur` est la forme enregistree
 // (« +221 77 123 45 67 ») ; `pays` choisit l'indicatif par defaut quand le champ est vide (le pays du
 // point), sans ecraser un numero deja saisi avec un autre indicatif.
-export function ChampTelephone({ valeur, onChange, pays, nomsPays, placeholder, ariaLabel = 'Téléphone' }: {
+export function ChampTelephone({ valeur, onChange, pays, nomsPays, placeholder, ariaLabel = 'Téléphone', invalide, compact }: {
   valeur: string;
   onChange: (v: string) => void;
   pays: string;
   nomsPays: Record<string, string>;
   placeholder?: string;
   ariaLabel?: string;
+  invalide?: boolean;
+  /** Largeur du champ réduite au numéro le plus long de la liste des pays (14 caractères groupés + un zéro de tête), au lieu de remplir la ligne. */
+  compact?: boolean;
 }) {
   const initial = useMemo(() => decomposerNumero(valeur, pays || 'SN'), []); // eslint-disable-line react-hooks/exhaustive-deps
   const [iso, setIso] = useState(valeur ? initial.iso : (pays || 'SN'));
@@ -51,7 +54,7 @@ export function ChampTelephone({ valeur, onChange, pays, nomsPays, placeholder, 
   const aide = aideNumero(iso, numeroInternational(iso, local));
   return (
     <span className="champ-tel-bloc">
-    <div className={`champ-tel ${aide ? 'champ-tel--incomplet' : ''}`}>
+    <div className={`champ-tel ${aide ? 'champ-tel--incomplet' : ''} ${invalide ? 'champ-tel--invalide' : ''} ${compact ? 'champ-tel--compact' : ''}`}>
       <Select ariaLabel={`Indicatif - ${ariaLabel}`} value={iso} onChange={changerIso} options={options} minWidth={112} />
       <input
         type="tel"

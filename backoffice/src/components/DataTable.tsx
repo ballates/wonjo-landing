@@ -31,7 +31,7 @@ const cle = (v: unknown) => (v == null || v === '' ? VIDE : String(v));
 
 export function DataTable<T>({
   rows, columns, rowKey, emptyText = 'Aucun résultat.', searchPlaceholder = 'Rechercher…',
-  initialSort, title, toolbar, selected, onSelectedChange, pageSize = 10, limiteSansRecherche, onRowClick, onSearchChange, integre = false,
+  initialSort, title, toolbar, filtres, selected, onSelectedChange, pageSize = 10, limiteSansRecherche, onRowClick, onSearchChange, integre = false,
 }: {
   rows: T[];
   columns: Column<T>[];
@@ -42,6 +42,8 @@ export function DataTable<T>({
   // Titre affiche sur la meme ligne que la barre de recherche, a sa gauche.
   title?: ReactNode;
   toolbar?: ReactNode;
+  // Ligne de filtres rapides (pastilles) DANS le cadre du tableau, sous la barre de recherche.
+  filtres?: ReactNode;
   // Barre de recherche (et titre, filtres actifs, pagination) DANS le cadre du tableau, au lieu d'au-dessus.
   integre?: boolean;
   // Selection multiple (cases a cocher) : absente = pas de colonne de selection.
@@ -173,6 +175,8 @@ export function DataTable<T>({
             : `${visible.length} / ${rows.length}`}
         </span>
       </div>
+
+      {filtres && <div className="dt-filtres">{filtres}</div>}
 
       {(choixActifs.length > 0 || textesActifs.length > 0 || plagesActives.length > 0) && (
         <div className="dt-active-filters">

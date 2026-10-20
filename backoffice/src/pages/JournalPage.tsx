@@ -33,10 +33,18 @@ export function JournalPage({ integre = false }: { integre?: boolean }) {
   function surRecherche(q: string) {
     if (!q.trim() || chargeEnEntier) return;
     setChargeEnEntier(true);
-    supabase.rpc('admin_journal', { p_limite: 20000, p_offset: 0 }).then(({ data, error: rpcError }) => {
-      if (rpcError) { setError(rpcError.message); return; }
-      setItems((data ?? []) as EntreeJournal[]);
-    });
+    // 1 000 lignes par appel au plus (439) : on lit page par page, jusqu'a 20 000.
+    (async () => {
+      const tout: EntreeJournal[] = [];
+      for (let offset = 0; offset < 20000; offset += 1000) {
+        const { data, error: rpcError } = await supabase.rpc('admin_journal', { p_limite: 1000, p_offset: offset });
+        if (rpcError) { setError(rpcError.message); return; }
+        const page = (data ?? []) as EntreeJournal[];
+        tout.push(...page);
+        if (page.length < 1000) break;
+      }
+      setItems(tout);
+    })();
   }
 
   const columns: Column<EntreeJournal>[] = [

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
 import { supabase } from '../../lib/supabase';
 import { Modal } from '../Modal';
@@ -47,7 +47,14 @@ export function LienCarteModal({ point, dossier, onClose, onPaye, onAutrement }:
   const [copie, setCopie] = useState(false);
   const [paye, setPaye] = useState(false);
 
+  // Une seule création à la fois : l'ouverture de la fenêtre (ou un double clic) ne doit pas lancer deux demandes simultanées à Stripe.
+  const creationEnCours = useRef(false);
   async function creer() {
+    if (creationEnCours.current) return;
+    creationEnCours.current = true;
+    try { await creerLien(); } finally { creationEnCours.current = false; }
+  }
+  async function creerLien() {
     setBusy(true);
     setError(null);
     const { data, error: e } = await supabase.functions.invoke('pr-lien-carte', { body: { action: 'creer', demandeId: dossier.demande_id } });

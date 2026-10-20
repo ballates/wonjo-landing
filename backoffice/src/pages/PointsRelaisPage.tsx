@@ -1,8 +1,9 @@
 import { ChampMontant } from '../components/ChampMontant';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../auth/AuthContext';
 import { DataTable, type Column } from '../components/DataTable';
+import { Drapeau } from '../components/Drapeau';
 import { Modal } from '../components/Modal';
 import { Select } from '../components/Select';
 import { Badge } from '../components/Badge';
@@ -19,9 +20,11 @@ import { GuichetSection } from '../components/pointsRelais/GuichetSection';
 import { VoyageursSection } from '../components/pointsRelais/VoyageursSection';
 import { RemboursementsSection } from '../components/pointsRelais/RemboursementsSection';
 import { CaisseSection } from '../components/pointsRelais/CaisseSection';
+import { RecusSection } from '../components/pointsRelais/RecusSection';
+import { SiegeVoyageursSection } from '../components/pointsRelais/SiegeVoyageursSection';
+import { InterrupteurPointsRelais, useInterrupteursPointsRelais } from '../components/pointsRelais/InterrupteurPointsRelais';
 import { decomposerNumero, numeroComplet } from '../lib/telephone';
-import { Drapeau } from '../components/Drapeau';
-import { peutGererAdmins } from '../lib/permissions';
+import { peutGererAdmins, peutGererReseau } from '../lib/permissions';
 import type { AdminRow } from '../lib/adminTypes';
 import {
   LABEL_OPERATEUR, LABEL_PERMISSION, OPERATEURS, PERMISSIONS, montantLocal,
@@ -57,12 +60,15 @@ function deviseImposee(pays: string): string | null {
 // Plafonds proposes pour le pilote (docs/POINTS_RELAIS.md § 14), en franc CFA.
 const PLAFONDS_CFA = { dossier: '150000', jour: '500000', especes: '300000' };
 
-type Onglet = 'encaisser' | 'depots' | 'guichet' | 'voyageurs' | 'rembourser' | 'caisse' | 'reseau' | 'monpoint';
+type Onglet = 'encaisser' | 'depots' | 'guichet' | 'voyageurs' | 'rembourser' | 'recus' | 'caisse' | 'reseau' | 'monpoint';
 
 export function PointsRelaisPage() {
-  const { roles } = useAuth();
+  const { roles, profil } = useAuth();
   const superAdmin = peutGererAdmins(roles);
-  const agent = roles.includes('point_relais');
+  // Reseau (438) : tous les points, creer / modifier / fermer / agents ; la suppression d'un point reste a l'Admin.
+  const reseau = peutGererReseau(roles);
+  // « Mon point » : seulement pour qui a le role Agent relais ATTRIBUE (le Reseau et l'Admin l'heritent sans etre agents d'un point).
+  const agent = (profil?.roles_attribues ?? roles).includes('point_relais');
   const finance = roles.includes('finance');
   const [points, setPoints] = useState<PointRelais[] | null>(null);
   const [mesPoints, setMesPoints] = useState<MonPoint[]>([]);
@@ -70,6 +76,7 @@ export function PointsRelaisPage() {
   const [edition, setEdition] = useState<PointRelais | 'nouveau' | null>(null);
   const [agentsDe, setAgentsDe] = useState<PointRelais | null>(null);
   const [onglet, setOnglet] = useState<Onglet | null>(null);
+  const { etats: interrupteurs } = useInterrupteursPointsRelais();
   const [pointEncaisser, setPointEncaisser] = useState('');
   const [message, setMessage] = useState<string | null>(null);
   const { confirmer, informer, fenetre } = useConfirmation();
@@ -84,7 +91,7 @@ export function PointsRelaisPage() {
       libelleOui: 'Compris',
       texte: (
         <>
-          <p style={{ margin: '0 0 8px' }}>Quand un agent confie un colis au guichet, la demande part dans l'app <strong>au nom du point</strong> : le voyageur voit « Point relais Wonjo {p.ville} », avec le badge « vérifié par Wonjo ».</p>
+          <p style={{ margin: '0 0 8px' }}>Quand un agent confie un colis au guichet, la demande part dans l'app <strong>au nom du point</strong> : le voyageur voit « Wonjo {p.ville} », avec le badge « vérifié par Wonjo ».</p>
           <p style={{ margin: '0 0 8px' }}>Ce compte vient d'être créé, ou existait déjà : cliquer de nouveau ne change rien. Personne ne peut s'y connecter, il sert seulement à porter ces demandes.</p>
           <p style={{ margin: 0 }}>Rien d'autre à faire : l'onglet Guichet peut maintenant confier des colis pour ce point.</p>
         </>
@@ -170,23 +177,82 @@ export function PointsRelaisPage() {
     });
   }, []);
 
+  // Ce qui attend une action du point, par onglet : pastille sur chaque onglet (rafraîchie toutes les 30 s et à chaque changement d'onglet).
+  //  - À encaisser : demandes de l'app dont l'échéance n'est pas dépassée ;
+  //  - Dépôts et remises : colis à déposer + colis prêts à remettre (QR à scanner par le voyageur) ;
+  //  - Guichet : dossiers à encaisser ou à régler par carte, codes de livraison à saisir, messages non lus des voyageurs ;
+  //  - Voyageurs à payer ; À rembourser ; Caisse : opérations déclarées par un autre, à valider.
+  const [aFaire, setAFaire] = useState<Partial<Record<Onglet, number>>>({});
+  const [detailGuichet, setDetailGuichet] = useState('');
+  const idsParOnglet = {
+    encaisser: pointsEncaissement.map((p) => p.id).join(','), depots: pointsDepots.map((p) => p.id).join(','), guichet: pointsGuichet.map((p) => p.id).join(','),
+    voyageurs: pointsVoyageurs.map((p) => p.id).join(','), rembourser: pointsRembourser.map((p) => p.id).join(','), caisse: pointsCaisse.map((p) => p.id).join(','),
+  };
+  const cleIds = JSON.stringify(idsParOnglet);
+  const rafraichirAFaire = useRef<() => void>(() => {});
+  useEffect(() => {
+    let actif = true;
+    const ids = JSON.parse(cleIds) as Record<string, string>;
+    const parPoint = async <T,>(liste: string, f: (id: string) => Promise<T>): Promise<T[]> => Promise.all(liste.split(',').filter(Boolean).map(f));
+    const somme = (xs: number[]) => xs.reduce((a, n) => a + n, 0);
+    async function compter() {
+      const lignes = async (rpc: string, id: string) => ((await supabase.rpc(rpc, { p_point_id: id })).data ?? []) as Record<string, unknown>[];
+      const [encaisser, depots, guichet, voyageurs, siege, rembourser, caisse] = await Promise.all([
+        parPoint(ids.encaisser, async (id) => (await lignes('admin_pr_a_encaisser', id)).filter((r) => !r.expire).length),
+        parPoint(ids.depots, async (id) => (await lignes('admin_pr_depots', id)).filter((r) => !r.depot_at || r.statut_colis === 'accepte').length),
+        parPoint(ids.guichet, async (id) => {
+          const dossiers = await lignes('admin_pr_dossiers_guichet', id);
+          const aEncaisser = dossiers.filter((r) => !r.paiement_valide_at && r.statut_colis === 'en_attente').length;
+          const codes = dossiers.filter((r) => r.statut_colis === 'arrive').length;
+          const nonLus = somme((await lignes('admin_pr_chats_non_lus', id)).map((r) => Number(r.non_lus)));
+          return { aEncaisser, codes, nonLus };
+        }),
+        parPoint(ids.voyageurs, async (id) => (await lignes('admin_pr_voyageurs_a_payer', id)).length),
+        // Finance centrale : voyageurs à payer par mobile money (hors contestation).
+        (superAdmin || finance) ? supabase.rpc('admin_siege_voyageurs_a_payer').then(({ data }) => ((data ?? []) as { contestation: boolean }[]).filter((r) => !r.contestation).length) : Promise.resolve(0),
+        parPoint(ids.rembourser, async (id) => (await lignes('admin_pr_a_rembourser', id)).length),
+        parPoint(ids.caisse, async (id) => {
+          const { data } = await supabase.rpc('admin_pr_caisse', { p_point_id: id });
+          return ((data as { attente?: { de_moi: boolean }[] } | null)?.attente ?? []).filter((a) => !a.de_moi).length;
+        }),
+      ]);
+      const g = { aEncaisser: somme(guichet.map((x) => x.aEncaisser)), codes: somme(guichet.map((x) => x.codes)), nonLus: somme(guichet.map((x) => x.nonLus)) };
+      if (actif) {
+        setAFaire({ encaisser: somme(encaisser), depots: somme(depots), guichet: g.aEncaisser + g.codes + g.nonLus, voyageurs: somme(voyageurs) + siege, rembourser: somme(rembourser), caisse: somme(caisse) });
+        // Le détail de la pastille du Guichet, au survol : de quoi se compose le chiffre.
+        setDetailGuichet([g.aEncaisser && `${g.aEncaisser} à encaisser`, g.codes && `${g.codes} code${g.codes > 1 ? 's' : ''} à saisir`, g.nonLus && `${g.nonLus} message${g.nonLus > 1 ? 's' : ''} non lu${g.nonLus > 1 ? 's' : ''}`].filter(Boolean).join(' · '));
+      }
+    }
+    rafraichirAFaire.current = compter;
+    compter();
+    const t = window.setInterval(compter, 30_000);
+    return () => { actif = false; window.clearInterval(t); };
+  }, [cleIds, superAdmin, finance]);
+
+  // Ordre des sous-onglets = ordre du travail : d'abord on monte le réseau (points et agents), puis on suit la vie d'un colis (accueil au
+  // guichet, paiements à encaisser, dépôt et remise au voyageur, paiement du voyageur après la livraison, remboursements), puis les pièces
+  // et l'argent (reçus, caisse). « Mon point » (fiche de l'agent) ferme la liste.
   const onglets: { cle: Onglet; label: string }[] = [
+    ...(reseau || finance ? [{ cle: 'reseau' as const, label: 'Réseau' }] : []),
+    ...(pointsGuichet.length > 0 ? [{ cle: 'guichet' as const, label: 'Guichet' }] : []),
     ...(pointsEncaissement.length > 0 ? [{ cle: 'encaisser' as const, label: 'À encaisser' }] : []),
     ...(pointsDepots.length > 0 ? [{ cle: 'depots' as const, label: 'Dépôts et remises' }] : []),
-    ...(pointsGuichet.length > 0 ? [{ cle: 'guichet' as const, label: 'Guichet' }] : []),
-    ...(pointsVoyageurs.length > 0 ? [{ cle: 'voyageurs' as const, label: 'Voyageurs à payer' }] : []),
+    ...(pointsVoyageurs.length > 0 || superAdmin || finance ? [{ cle: 'voyageurs' as const, label: 'Voyageurs à payer' }] : []),
     ...(pointsRembourser.length > 0 ? [{ cle: 'rembourser' as const, label: 'À rembourser' }] : []),
-    ...(pointsCaisse.length > 0 ? [{ cle: 'caisse' as const, label: 'Caisse' }] : []),
-    ...(superAdmin || finance ? [{ cle: 'reseau' as const, label: 'Réseau' }] : []),
+    ...(pointsCaisse.length > 0 ? [{ cle: 'recus' as const, label: 'Reçus' }, { cle: 'caisse' as const, label: 'Caisse' }] : []),
     ...(agent ? [{ cle: 'monpoint' as const, label: mesPoints.length > 1 ? 'Mes points' : 'Mon point' }] : []),
   ];
-  const actif: Onglet | undefined = onglet && onglets.some((o) => o.cle === onglet) ? onglet : onglets[0]?.cle;
+  // À l'ouverture : le premier onglet de travail (le réseau se configure une fois, on n'y arrive pas à chaque visite) ; sans point encore, le réseau.
+  const premierDeTravail = onglets.find((o) => o.cle !== 'reseau' && o.cle !== 'monpoint') ?? onglets[0];
+  const actif: Onglet | undefined = onglet && onglets.some((o) => o.cle === onglet) ? onglet : premierDeTravail?.cle;
   // Un seul point choisi pour tous les sous-onglets operationnels, pris dans la liste du sous-onglet ouvert.
-  const pointsOnglet = actif === 'depots' ? pointsDepots : actif === 'guichet' ? pointsGuichet : actif === 'voyageurs' ? pointsVoyageurs : actif === 'rembourser' ? pointsRembourser : actif === 'caisse' ? pointsCaisse : pointsEncaissement;
+  const pointsOnglet = actif === 'depots' ? pointsDepots : actif === 'guichet' ? pointsGuichet : actif === 'voyageurs' ? pointsVoyageurs : actif === 'rembourser' ? pointsRembourser : (actif === 'caisse' || actif === 'recus') ? pointsCaisse : pointsEncaissement;
   const pointChoisi = pointsOnglet.find((p) => p.id === pointEncaisser) ?? pointsOnglet[0];
 
   const columns: Column<PointRelais>[] = [
-    { key: 'nom', label: 'Point', value: (p) => p.nom, render: (p) => <><strong>{p.nom}</strong><br /><span className="hint">{p.ville} · {p.pays_nom ?? p.pays_code}</span></> },
+    { key: 'nom', label: 'Point', value: (p) => p.nom, render: (p) => <strong className="pr-nowrap">{p.nom}</strong> },
+    { key: 'pays', label: 'Pays', value: (p) => p.pays_nom ?? p.pays_code, filter: 'options',
+      render: (p) => <span className="pr-nowrap">{p.pays_nom ?? p.pays_code}</span> },
     { key: 'encaissement', label: 'Encaissement', value: (p) => p.comptes_mobile_money.length,
       render: (p) => (
         <span className="hint">
@@ -198,7 +264,7 @@ export function PointsRelaisPage() {
     { key: 'agents', label: 'Agents', value: (p) => p.nb_agents, width: 90 },
     { key: 'statut', label: 'Statut', value: (p) => (p.actif ? 'Ouvert' : 'Fermé'), filter: 'options', width: 110,
       render: (p) => <Badge tone={p.actif ? 'green' : 'muted'}>{p.actif ? 'Ouvert' : 'Fermé'}</Badge> },
-    ...(superAdmin ? [{
+    ...(reseau ? [{
       key: 'actions', label: '', width: 540,
       render: (p: PointRelais) => (
         <div className="action-row">
@@ -209,7 +275,7 @@ export function PointsRelaisPage() {
             ? <button className="btn btn-sm btn-danger-outline" onClick={() => changerEtat(p, false)}>Fermer</button>
             : <>
                 <button className="btn btn-soft btn-sm" onClick={() => changerEtat(p, true)}>Rouvrir</button>
-                <button className="btn btn-sm btn-danger-outline" onClick={() => supprimer(p)}>Supprimer</button>
+                {superAdmin && <button className="btn btn-sm btn-danger-outline" onClick={() => supprimer(p)}>Supprimer</button>}
               </>}
         </div>
       ),
@@ -222,18 +288,20 @@ export function PointsRelaisPage() {
         <div>
           <h1>Points relais</h1>
           <p className="page-sub">
-            {superAdmin
+            {reseau
               ? 'Guichets Wonjo en Afrique : paiements à encaisser, comptes mobile money, plafonds et agents.'
               : agent ? 'Votre point relais : paiements à encaisser et ce que vous pouvez y faire.' : 'Guichets Wonjo en Afrique (consultation).'}
           </p>
         </div>
-        {superAdmin && actif === 'reseau' && <button className="btn btn-primary" onClick={() => setEdition('nouveau')}>Nouveau point relais</button>}
+        {reseau && actif === 'reseau' && <button className="btn btn-primary" onClick={() => setEdition('nouveau')}>Nouveau point relais</button>}
       </div>
 
-      <div className="insight-banner insight-banner--compact">
-        <strong>Mise en place en cours</strong>
-        <span>Les points relais ne sont pas encore proposés dans l'app (interrupteur éteint) : aucune demande n'arrive encore.</span>
-      </div>
+      {interrupteurs && !interrupteurs.points_relais_actif.actif && (
+        <div className="insight-banner insight-banner--compact">
+          <strong>Points relais éteints</strong>
+          <span>Les points relais ne sont pas proposés dans l'app (interrupteur éteint, onglet Réseau) : aucune demande n'arrive.</span>
+        </div>
+      )}
 
       {error && <p className="page-error">{error}</p>}
       {message && <p className="success-text" style={{ marginBottom: 12 }}>{message}</p>}
@@ -242,12 +310,14 @@ export function PointsRelaisPage() {
       {onglets.length > 1 && (
         <div className="tabs">
           {onglets.map((o) => (
-            <button key={o.cle} className={actif === o.cle ? 'active' : ''} onClick={() => setOnglet(o.cle)}>{o.label}</button>
+            <button key={o.cle} className={actif === o.cle ? 'active' : ''} onClick={() => { setOnglet(o.cle); rafraichirAFaire.current(); }}>{o.label}{(aFaire[o.cle] ?? 0) > 0 ? <span className="pr-badge-non-lu" title={o.cle === 'guichet' && detailGuichet ? detailGuichet : 'À faire'}>{aFaire[o.cle]}</span> : null}</button>
           ))}
         </div>
       )}
 
-      {(actif === 'encaisser' || actif === 'depots' || actif === 'guichet' || actif === 'voyageurs' || actif === 'rembourser' || actif === 'caisse') && pointChoisi && (
+      {actif === 'voyageurs' && (superAdmin || finance) && <SiegeVoyageursSection />}
+
+      {(actif === 'encaisser' || actif === 'depots' || actif === 'guichet' || actif === 'voyageurs' || actif === 'rembourser' || actif === 'recus' || actif === 'caisse') && pointChoisi && (
         <>
           {pointsOnglet.length > 1 && (
             <div className="pr-tabs-point">
@@ -266,6 +336,7 @@ export function PointsRelaisPage() {
           {actif === 'guichet' && <GuichetSection key={pointChoisi.id} point={pointChoisi} nomsPays={nomsPays} />}
           {actif === 'voyageurs' && <VoyageursSection key={pointChoisi.id} point={pointChoisi} />}
           {actif === 'rembourser' && <RemboursementsSection key={pointChoisi.id} point={pointChoisi} />}
+          {actif === 'recus' && <RecusSection key={pointChoisi.id} point={pointChoisi} />}
           {actif === 'caisse' && <CaisseSection key={pointChoisi.id} point={pointChoisi} finance={superAdmin || finance} />}
         </>
       )}
@@ -293,6 +364,15 @@ export function PointsRelaisPage() {
         </div>
       )}
 
+      {actif === 'reseau' && (reseau || finance) && (
+        <InterrupteurPointsRelais
+          cle="points_relais_actif"
+          titre="Points relais dans l'app"
+          sousTitre="Allumé, les points relais apparaissent dans l'app et les expéditeurs peuvent leur confier des colis. Éteint, tout redevient invisible : les dossiers déjà ouverts restent en base."
+          avertissementAllumer="Allumé, les clients voient les points relais et peuvent payer en espèces ou en mobile money. Vérifiez que les points sont ouverts et que leurs agents sont prêts."
+        />
+      )}
+
       {actif === 'reseau' && (
         !points ? <p className="loading-state">Chargement…</p> : (
           <DataTable
@@ -307,10 +387,10 @@ export function PointsRelaisPage() {
 
       {!actif && points && <p className="empty-state">Rien à afficher pour vos droits actuels.</p>}
 
-      {edition && superAdmin && (
+      {edition && reseau && (
         <PointModal point={edition === 'nouveau' ? null : edition} onClose={() => setEdition(null)} onSaved={() => { setEdition(null); charger(); }} />
       )}
-      {agentsDe && superAdmin && (
+      {agentsDe && reseau && (
         <AgentsModal point={agentsDe} onClose={() => { setAgentsDe(null); charger(); }} />
       )}
     </div>
@@ -509,10 +589,10 @@ function AgentsModal({ point, onClose }: { point: PointRelais; onClose: () => vo
   }
   useEffect(() => {
     charger();
-    // Candidats : administrateurs actifs qui ont le role point_relais (attribue dans Administrateurs).
-    supabase.rpc('admin_lister_admins').then(({ data, error: e }) => {
+    // Candidats : administrateurs actifs qui ont le role Agent relais attribue (admin_lister_comptes_agents, lisible par le Reseau).
+    supabase.rpc('admin_lister_comptes_agents').then(({ data, error: e }) => {
       if (e) { setError(e.message); return; }
-      setCandidats(((data ?? []) as AdminRow[]).filter((a) => a.actif && a.roles.includes('point_relais')));
+      setCandidats(((data ?? []) as AdminRow[]).filter((a) => a.actif));
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

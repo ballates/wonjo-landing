@@ -18,17 +18,46 @@ Aucune donnée sensible n'est lue directement (pas de `.from('profiles')...`)
 : tout passe par des RPC `admin_*` qui vérifient elles-mêmes l'accès. Les
 policies RLS de l'appli mobile ne sont jamais modifiées pour ce chantier.
 
+### Garde-fous ajoutés après l'audit du 19 octobre 2026
+
+1. **Session par onglet.** La session vit dans `sessionStorage`, pas `localStorage` : le back-office est sur la même origine (wonjo.app) que le
+   site vitrine et l'éditeur des textes juridiques, qui chargent des scripts tiers ; `localStorage` leur serait lisible. Un nouvel onglet demande
+   donc de se reconnecter (mot de passe + code TOTP). Les anciens jetons restés dans `localStorage` sont effacés au chargement.
+2. **Alertes e-mail** aux super administrateurs (`alerte-commission`, migration 435) pour : comptes administrateurs, commissions, paiement d'un
+   voyageur par la finance, litiges (ouverture, demande, refus, versement, remboursement), contestation bancaire, contrepassation de caisse,
+   validation manuelle de KYC, suppression de compte ou de point relais, e-mails de masse, interrupteurs des points relais. Les consultations de
+   données personnelles (coordonnées, conversations, photos) alertent à partir de la 10e en une heure pour un même administrateur.
+3. **Verser un litige au voyageur = deux administrateurs** (migration 436). Un administrateur finance ou super admin fait la demande, un
+   **autre** la valide (« Versements à valider », onglet Litiges). Il faut donc au moins deux comptes finance ou super admin actifs.
+4. **Liens des e-mails de masse** limités à wonjo.app, l'App Store et Google Play, dans le bouton comme dans le texte
+   (`_shared/liens-autorises.ts`, testé avec `deno test`).
+5. **Photos des transactions** : motif obligatoire et ligne au journal (migration 437), comme la lecture d'une conversation.
+
 ## Rôles
 
-| Rôle | Voit | Peut agir |
-|------|------|-----------|
-| `super_admin` | tout | tout, y compris gérer les admins/rôles |
-| `moderation` (affiché « Confiance & sécurité ») | dashboard opérationnel (hors €), signalements, litiges, KYC | traiter signalements, bloquer/débloquer un compte |
-| `finance` | dashboard chiffres (€) uniquement | aucune |
-| `lecture_seule` | dashboard opérationnel (hors €) uniquement | aucune |
+Hiérarchie (migration 438, `docs/ROLES_BACKOFFICE.md` du dépôt wonjo) : un rôle parent a tous les droits de ses enfants.
 
-Appliqué côté serveur (migration 213, `admin_a_le_role()`) - les masquages
-dans l'UI (`lib/permissions.ts`) ne sont que du confort d'affichage.
+```
+                    Admin  (super_admin, 5 au plus)
+          ┌───────────┼───────────┬──────────────┐
+      Sécurité      Finance    Commercial     Réseau
+          └───────────┼───────────┘              │
+                   Lecture                 Agent relais
+```
+
+| Rôle | Code | Voit et fait en propre |
+|------|------|-----------|
+| Admin | `super_admin` | tout ; seul à gérer les administrateurs, la tarification, les interrupteurs, les suppressions |
+| Sécurité | `moderation` | comptes, KYC, signalements, avis, conversations et photos avec motif, litiges (suivi) |
+| Finance | `finance` | transactions, paiements, marges, litiges (trancher), caisses, voyageurs à payer |
+| Commercial | `commercial` | e-mails et campagnes (adresses des membres masquées) |
+| Lecture | `lecture` | tableaux de bord agrégés, sans donnée personnelle |
+| Réseau | `reseau` | tous les points relais et leurs agents, sans argent ni suppression |
+| Agent relais | `point_relais` | ses points relais, selon ses permissions par point |
+
+Côté serveur, `admin_a_le_role()` regarde les rôles **effectifs** (attribués + hérités) ; `admin_mon_profil()` les renvoie au
+front (`roles`), avec les rôles attribués (`roles_attribues`). Les masquages de l'UI (`lib/permissions.ts`) ne sont que de
+l'affichage. Une invitation déléguée n'attribue que des rôles que l'invitant possède.
 
 ## Créer le tout premier compte admin (super_admin)
 

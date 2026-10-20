@@ -32,7 +32,7 @@ export function LoginPage() {
             Mot de passe
             <ChampMotDePasse value={password} onChange={setPassword} required />
           </label>
-          {error && <p className="auth-error">{error}</p>}
+          {error && <p className={`auth-error ${error.length <= 60 ? 'auth-error--ligne' : ''}`}>{error}</p>}
           <button type="submit" disabled={loading}>{loading ? 'Connexion…' : 'Se connecter'}</button>
         </form>
     </AuthShell>

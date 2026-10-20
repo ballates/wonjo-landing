@@ -2,6 +2,7 @@ import { decimales } from '../lib/nombre';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { chargerFicheTransaction } from '../lib/ficheTransaction';
+import { PhotosTransaction } from './PhotosTransaction';
 import { Avatar } from './Avatar';
 import { NumeroTelephone } from './NumeroTelephone';
 import { ConversationTransaction } from './ConversationTransaction';
@@ -74,12 +75,10 @@ export function TransactionModal({ demandeId, onClose }: { demandeId: string; on
 
   useEffect(() => {
     // Preche au survol du bouton "Fiche" (lib/ficheTransaction) : souvent
-    // deja en cache a l'ouverture. La fiche s'affiche des que la RPC repond ;
-    // les photos (fonction Edge, plus lente) arrivent ensuite.
+    // deja en cache a l'ouverture. Les photos ne se chargent plus ici : motif obligatoire (437).
     let actif = true;
-    const { fiche, photos: photosP } = chargerFicheTransaction(demandeId);
+    const { fiche } = chargerFicheTransaction(demandeId);
     fiche.then((data) => { if (actif) setF(data); }, (e: Error) => { if (actif) setError(e.message); });
-    photosP.then((p) => { if (actif) setPhotos(p); });
     return () => { actif = false; };
   }, [demandeId]);
 
@@ -100,7 +99,7 @@ export function TransactionModal({ demandeId, onClose }: { demandeId: string; on
     ? (plusieurs ? { indefini: 'des enveloppes', defini: 'les enveloppes' } : { indefini: 'une enveloppe', defini: 'l\'enveloppe' })
     : { indefini: 'un colis', defini: 'le colis' };
   const por = <span className="nom-chip nom-chip--por">{premierMot(prenomPorteur)}</span>;
-  const timeline = photos ? construireTimeline(f, photos, libelles) : [];
+  const timeline = construireTimeline(f, photos ?? [], libelles);
   const roleLabel = (role: string | null) => (role === 'expediteur' ? (f.expediteur_nom ?? 'Expéditeur') : role === 'porteur' ? (f.porteur_nom ?? 'Voyageur') : null);
 
   return (
@@ -187,7 +186,6 @@ export function TransactionModal({ demandeId, onClose }: { demandeId: string; on
 
         <div className="info-card">
           <p className="section-title">Suivi de la transaction {photos && photos.length > 0 && <span className="hint">: cliquez sur une étape avec photo pour l'agrandir</span>}</p>
-          {!photos && <p className="loading-state">Chargement du suivi…</p>}
           <ul className="stepper-vertical">
             {timeline.map((e, i) => (
               <li key={e.cle} className={`stepper-vertical-item ${e.photo ? 'stepper-vertical-item--photo' : ''}`}>
@@ -210,6 +208,8 @@ export function TransactionModal({ demandeId, onClose }: { demandeId: string; on
             ))}
           </ul>
         </div>
+
+        <PhotosTransaction demandeId={f.id} nb={photos ? photos.length : null} onPhotos={setPhotos} />
 
         {moderateur && <ConversationTransaction demandeId={f.id} />}
 
