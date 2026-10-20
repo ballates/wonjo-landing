@@ -5,6 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import { DataTable, type Column } from '../components/DataTable';
 import { Drapeau } from '../components/Drapeau';
 import { Modal } from '../components/Modal';
+import { InfoBulle } from '../components/InfoBulle';
 import { Select } from '../components/Select';
 import { Badge } from '../components/Badge';
 import { Person } from '../components/Avatar';
@@ -16,6 +17,7 @@ import { ChampHoraires } from '../components/ChampHoraires';
 import { useConfirmation } from '../components/Confirmation';
 import { AEncaisserSection } from '../components/pointsRelais/AEncaisserSection';
 import { DepotsSection } from '../components/pointsRelais/DepotsSection';
+import { ApercuSection } from '../components/pointsRelais/ApercuSection';
 import { GuichetSection } from '../components/pointsRelais/GuichetSection';
 import { VoyageursSection } from '../components/pointsRelais/VoyageursSection';
 import { RemboursementsSection } from '../components/pointsRelais/RemboursementsSection';
@@ -57,10 +59,17 @@ function deviseImposee(pays: string): string | null {
   if (CEMAC.includes(pays)) return 'XAF';
   return null;
 }
+// Monnaie locale des autres pays africains : proposee des qu'on choisit le pays (modifiable). Hors franc CFA, rien n'est impose par le serveur.
+const DEVISE_PAYS: Record<string, string> = {
+  MA: 'MAD', DZ: 'DZD', TN: 'TND', EG: 'EGP', LY: 'LYD', NG: 'NGN', GH: 'GHS', KE: 'KES', TZ: 'TZS', UG: 'UGX', RW: 'RWF', BI: 'BIF',
+  ET: 'ETB', ZA: 'ZAR', GN: 'GNF', CD: 'CDF', MR: 'MRU', MG: 'MGA', MU: 'MUR', AO: 'AOA', MZ: 'MZN', ZM: 'ZMW', LR: 'LRD', SL: 'SLE',
+  GM: 'GMD', CV: 'CVE', DJ: 'DJF', SD: 'SDG', NA: 'NAD', BW: 'BWP', MW: 'MWK',
+};
 // Plafonds proposes pour le pilote (docs/POINTS_RELAIS.md § 14), en franc CFA.
+const TOUS = 'tous'; // valeur du filtre « Tous les points »
 const PLAFONDS_CFA = { dossier: '150000', jour: '500000', especes: '300000' };
 
-type Onglet = 'encaisser' | 'depots' | 'guichet' | 'voyageurs' | 'rembourser' | 'recus' | 'caisse' | 'reseau' | 'monpoint';
+type Onglet = 'apercu' | 'encaisser' | 'depots' | 'guichet' | 'voyageurs' | 'rembourser' | 'recus' | 'caisse' | 'reseau' | 'monpoint';
 
 export function PointsRelaisPage() {
   const { roles, profil } = useAuth();
@@ -77,27 +86,9 @@ export function PointsRelaisPage() {
   const [agentsDe, setAgentsDe] = useState<PointRelais | null>(null);
   const [onglet, setOnglet] = useState<Onglet | null>(null);
   const { etats: interrupteurs } = useInterrupteursPointsRelais();
-  const [pointEncaisser, setPointEncaisser] = useState('');
+  const [pointEncaisser, setPointEncaisser] = useState(TOUS);
   const [message, setMessage] = useState<string | null>(null);
   const { confirmer, informer, fenetre } = useConfirmation();
-
-  async function creerProfil(p: PointRelais) {
-    setError(null);
-    setMessage(null);
-    const { error: e } = await supabase.rpc('admin_creer_profil_point_relais', { p_point_id: p.id });
-    if (e) { setError(e.message); return; }
-    await informer({
-      titre: `Compte du point « ${p.nom} » prêt`,
-      libelleOui: 'Compris',
-      texte: (
-        <>
-          <p style={{ margin: '0 0 8px' }}>Quand un agent confie un colis au guichet, la demande part dans l'app <strong>au nom du point</strong> : le voyageur voit « Wonjo {p.ville} », avec le badge « vérifié par Wonjo ».</p>
-          <p style={{ margin: '0 0 8px' }}>Ce compte vient d'être créé, ou existait déjà : cliquer de nouveau ne change rien. Personne ne peut s'y connecter, il sert seulement à porter ces demandes.</p>
-          <p style={{ margin: 0 }}>Rien d'autre à faire : l'onglet Guichet peut maintenant confier des colis pour ce point.</p>
-        </>
-      ),
-    });
-  }
 
   // [414] Fermer : plus de nouveau dossier, ceux en cours se terminent. Rouvrir a tout moment.
   async function changerEtat(p: PointRelais, actif: boolean) {
@@ -195,30 +186,44 @@ export function PointsRelaisPage() {
     const ids = JSON.parse(cleIds) as Record<string, string>;
     const parPoint = async <T,>(liste: string, f: (id: string) => Promise<T>): Promise<T[]> => Promise.all(liste.split(',').filter(Boolean).map(f));
     const somme = (xs: number[]) => xs.reduce((a, n) => a + n, 0);
+    // Un seul appel serveur par liste pour TOUS les points (admin_pr_multi, 447), puis on ne garde que les points de chaque onglet.
+    const multi = async (fonction: string) => {
+      const { data } = await supabase.rpc('admin_pr_multi', { p_fonction: fonction });
+      return ((data ?? []) as (Record<string, unknown> & { point_id: string })[]);
+    };
+    const de = (rows: (Record<string, unknown> & { point_id: string })[], liste: string) => {
+      const ok = new Set(liste.split(',').filter(Boolean));
+      return rows.filter((r) => ok.has(r.point_id));
+    };
     async function compter() {
-      const lignes = async (rpc: string, id: string) => ((await supabase.rpc(rpc, { p_point_id: id })).data ?? []) as Record<string, unknown>[];
-      const [encaisser, depots, guichet, voyageurs, siege, rembourser, caisse] = await Promise.all([
-        parPoint(ids.encaisser, async (id) => (await lignes('admin_pr_a_encaisser', id)).filter((r) => !r.expire).length),
-        parPoint(ids.depots, async (id) => (await lignes('admin_pr_depots', id)).filter((r) => !r.depot_at || r.statut_colis === 'accepte').length),
-        parPoint(ids.guichet, async (id) => {
-          const dossiers = await lignes('admin_pr_dossiers_guichet', id);
-          const aEncaisser = dossiers.filter((r) => !r.paiement_valide_at && r.statut_colis === 'en_attente').length;
-          const codes = dossiers.filter((r) => r.statut_colis === 'arrive').length;
-          const nonLus = somme((await lignes('admin_pr_chats_non_lus', id)).map((r) => Number(r.non_lus)));
-          return { aEncaisser, codes, nonLus };
-        }),
-        parPoint(ids.voyageurs, async (id) => (await lignes('admin_pr_voyageurs_a_payer', id)).length),
+      const [rEnc, rDep, rDos, rChats, rVoy, rRemb, siege, caisse, rCloture] = await Promise.all([
+        ids.encaisser ? multi('a_encaisser') : Promise.resolve([]),
+        ids.depots ? multi('depots') : Promise.resolve([]),
+        ids.guichet ? multi('dossiers_guichet') : Promise.resolve([]),
+        ids.guichet ? multi('chats_non_lus') : Promise.resolve([]),
+        ids.voyageurs ? multi('voyageurs_a_payer') : Promise.resolve([]),
+        ids.rembourser ? multi('a_rembourser') : Promise.resolve([]),
         // Finance centrale : voyageurs à payer par mobile money (hors contestation).
         (superAdmin || finance) ? supabase.rpc('admin_siege_voyageurs_a_payer').then(({ data }) => ((data ?? []) as { contestation: boolean }[]).filter((r) => !r.contestation).length) : Promise.resolve(0),
-        parPoint(ids.rembourser, async (id) => (await lignes('admin_pr_a_rembourser', id)).length),
         parPoint(ids.caisse, async (id) => {
           const { data } = await supabase.rpc('admin_pr_caisse', { p_point_id: id });
           return ((data as { attente?: { de_moi: boolean }[] } | null)?.attente ?? []).filter((a) => !a.de_moi).length;
         }),
+        ids.caisse ? multi('cloture_etat') : Promise.resolve([]),
       ]);
-      const g = { aEncaisser: somme(guichet.map((x) => x.aEncaisser)), codes: somme(guichet.map((x) => x.codes)), nonLus: somme(guichet.map((x) => x.nonLus)) };
+      const encaisser = de(rEnc, ids.encaisser).filter((r) => !r.expire).length;
+      const depots = de(rDep, ids.depots).filter((r) => !r.depot_at || r.statut_colis === 'accepte').length;
+      const dossiers = de(rDos, ids.guichet);
+      const voyageurs = de(rVoy, ids.voyageurs).length;
+      const rembourser = de(rRemb, ids.rembourser).length;
+      const guichet = {
+        aEncaisser: dossiers.filter((r) => !r.paiement_valide_at && r.statut_colis === 'en_attente').length,
+        codes: dossiers.filter((r) => r.statut_colis === 'arrive').length,
+        nonLus: somme(de(rChats, ids.guichet).map((r) => Number(r.non_lus))),
+      };
+      const g = guichet;
       if (actif) {
-        setAFaire({ encaisser: somme(encaisser), depots: somme(depots), guichet: g.aEncaisser + g.codes + g.nonLus, voyageurs: somme(voyageurs) + siege, rembourser: somme(rembourser), caisse: somme(caisse) });
+        setAFaire({ encaisser, depots, guichet: g.aEncaisser + g.codes + g.nonLus, voyageurs: voyageurs + siege, rembourser, caisse: somme(caisse) + de(rCloture, ids.caisse).filter((r) => r.a_bouge && !r.cloturee).length });
         // Le détail de la pastille du Guichet, au survol : de quoi se compose le chiffre.
         setDetailGuichet([g.aEncaisser && `${g.aEncaisser} à encaisser`, g.codes && `${g.codes} code${g.codes > 1 ? 's' : ''} à saisir`, g.nonLus && `${g.nonLus} message${g.nonLus > 1 ? 's' : ''} non lu${g.nonLus > 1 ? 's' : ''}`].filter(Boolean).join(' · '));
       }
@@ -239,38 +244,41 @@ export function PointsRelaisPage() {
     ...(pointsDepots.length > 0 ? [{ cle: 'depots' as const, label: 'Dépôts et remises' }] : []),
     ...(pointsVoyageurs.length > 0 || superAdmin || finance ? [{ cle: 'voyageurs' as const, label: 'Voyageurs à payer' }] : []),
     ...(pointsRembourser.length > 0 ? [{ cle: 'rembourser' as const, label: 'À rembourser' }] : []),
-    ...(pointsCaisse.length > 0 ? [{ cle: 'recus' as const, label: 'Reçus' }, { cle: 'caisse' as const, label: 'Caisse' }] : []),
+    ...(pointsCaisse.length > 0 ? [{ cle: 'recus' as const, label: 'Reçus' }, { cle: 'caisse' as const, label: 'Caisse' }, { cle: 'apercu' as const, label: 'Aperçu' }] : []),
     ...(agent ? [{ cle: 'monpoint' as const, label: mesPoints.length > 1 ? 'Mes points' : 'Mon point' }] : []),
   ];
   // À l'ouverture : le premier onglet de travail (le réseau se configure une fois, on n'y arrive pas à chaque visite) ; sans point encore, le réseau.
-  const premierDeTravail = onglets.find((o) => o.cle !== 'reseau' && o.cle !== 'monpoint') ?? onglets[0];
+  const premierDeTravail = onglets.find((o) => o.cle !== 'reseau' && o.cle !== 'monpoint' && o.cle !== 'apercu') ?? onglets[0];
   const actif: Onglet | undefined = onglet && onglets.some((o) => o.cle === onglet) ? onglet : premierDeTravail?.cle;
   // Un seul point choisi pour tous les sous-onglets operationnels, pris dans la liste du sous-onglet ouvert.
-  const pointsOnglet = actif === 'depots' ? pointsDepots : actif === 'guichet' ? pointsGuichet : actif === 'voyageurs' ? pointsVoyageurs : actif === 'rembourser' ? pointsRembourser : (actif === 'caisse' || actif === 'recus') ? pointsCaisse : pointsEncaissement;
-  const pointChoisi = pointsOnglet.find((p) => p.id === pointEncaisser) ?? pointsOnglet[0];
+  const pointsOnglet = actif === 'depots' ? pointsDepots : actif === 'guichet' ? pointsGuichet : actif === 'voyageurs' ? pointsVoyageurs : actif === 'rembourser' ? pointsRembourser : (actif === 'caisse' || actif === 'recus' || actif === 'apercu') ? pointsCaisse : pointsEncaissement;
+  // « Tous les points » par defaut (sauf au guichet, qui agit au nom d'UN point) : chaque point garde son bloc, etiquete de son nom.
+  const tousPossible = pointsOnglet.length > 1;
+  const pointChoisi = pointsOnglet.find((p) => p.id === pointEncaisser) ?? (tousPossible ? undefined : pointsOnglet[0]);
+  const modeTous = tousPossible && !pointChoisi;
+  const blocs = modeTous ? pointsOnglet : pointChoisi ? [pointChoisi] : [];
 
   const columns: Column<PointRelais>[] = [
     { key: 'nom', label: 'Point', value: (p) => p.nom, render: (p) => <strong className="pr-nowrap">{p.nom}</strong> },
     { key: 'pays', label: 'Pays', value: (p) => p.pays_nom ?? p.pays_code, filter: 'options',
       render: (p) => <span className="pr-nowrap">{p.pays_nom ?? p.pays_code}</span> },
-    { key: 'encaissement', label: 'Encaissement', value: (p) => p.comptes_mobile_money.length,
-      render: (p) => (
-        <span className="hint">
-          {p.comptes_mobile_money.map((c) => LABEL_OPERATEUR[c.operateur]).join(', ') || 'Aucun mobile money'}
-          {p.accepte_especes ? ' · espèces' : ''}
-        </span>
+    // Deux colonnes : le point peut encaisser par mobile money (un ou plusieurs operateurs) ET/OU en especes, ce sont deux choses distinctes.
+    { key: 'mobile', label: 'Mobile money', value: (p) => p.comptes_mobile_money.map((c) => LABEL_OPERATEUR[c.operateur]).join(' '),
+      render: (p) => p.comptes_mobile_money.length === 0 ? <span className="hint">Aucun</span> : (
+        <span className="pr-nowrap">{[...new Set(p.comptes_mobile_money.map((c) => LABEL_OPERATEUR[c.operateur]))].join(', ')}</span>
       ) },
-    { key: 'plafond', label: 'Plafond / dossier', value: (p) => p.plafond_dossier ?? 0, render: (p) => montantLocal(p.plafond_dossier, p.devise) },
-    { key: 'agents', label: 'Agents', value: (p) => p.nb_agents, width: 90 },
-    { key: 'statut', label: 'Statut', value: (p) => (p.actif ? 'Ouvert' : 'Fermé'), filter: 'options', width: 110,
+    { key: 'especes', label: 'Espèces', value: (p) => (p.accepte_especes ? 'Acceptées' : 'Refusées'), filter: 'options',
+      render: (p) => <Badge tone={p.accepte_especes ? 'green' : 'muted'}>{p.accepte_especes ? 'Acceptées' : 'Refusées'}</Badge> },
+    { key: 'plafond', label: 'Plafond / dossier', value: (p) => p.plafond_dossier ?? 0, render: (p) => <span className="pr-nowrap">{montantLocal(p.plafond_dossier, p.devise)}</span> },
+    { key: 'agents', label: 'Agents', value: (p) => p.nb_agents },
+    { key: 'statut', label: 'Statut', value: (p) => (p.actif ? 'Ouvert' : 'Fermé'), filter: 'options',
       render: (p) => <Badge tone={p.actif ? 'green' : 'muted'}>{p.actif ? 'Ouvert' : 'Fermé'}</Badge> },
     ...(reseau ? [{
-      key: 'actions', label: '', width: 540,
+      key: 'actions', label: '', width: 300,
       render: (p: PointRelais) => (
         <div className="action-row">
           <button className="btn btn-soft btn-sm" onClick={() => setEdition(p)}><IconSquarePencil /> Modifier</button>
           <button className="btn btn-soft btn-sm" onClick={() => setAgentsDe(p)}>Agents</button>
-          <button className="btn btn-soft btn-sm" title="Crée (une seule fois) le compte Wonjo du point : le nom sous lequel les demandes du guichet arrivent chez les voyageurs" onClick={() => creerProfil(p)}>Compte du point</button>
           {p.actif
             ? <button className="btn btn-sm btn-danger-outline" onClick={() => changerEtat(p, false)}>Fermer</button>
             : <>
@@ -286,12 +294,9 @@ export function PointsRelaisPage() {
     <div>
       <div className="page-head">
         <div>
-          <h1>Points relais</h1>
-          <p className="page-sub">
-            {reseau
-              ? 'Guichets Wonjo en Afrique : paiements à encaisser, comptes mobile money, plafonds et agents.'
-              : agent ? 'Votre point relais : paiements à encaisser et ce que vous pouvez y faire.' : 'Guichets Wonjo en Afrique (consultation).'}
-          </p>
+          <h1>Points relais<InfoBulle>{reseau
+            ? 'Guichets Wonjo en Afrique : paiements à encaisser, comptes mobile money, plafonds et agents.'
+            : agent ? 'Votre point relais : paiements à encaisser et ce que vous pouvez y faire.' : 'Guichets Wonjo en Afrique (consultation).'}</InfoBulle></h1>
         </div>
         {reseau && actif === 'reseau' && <button className="btn btn-primary" onClick={() => setEdition('nouveau')}>Nouveau point relais</button>}
       </div>
@@ -317,27 +322,45 @@ export function PointsRelaisPage() {
 
       {actif === 'voyageurs' && (superAdmin || finance) && <SiegeVoyageursSection />}
 
-      {(actif === 'encaisser' || actif === 'depots' || actif === 'guichet' || actif === 'voyageurs' || actif === 'rembourser' || actif === 'recus' || actif === 'caisse') && pointChoisi && (
+      {(actif === 'apercu' || actif === 'encaisser' || actif === 'depots' || actif === 'guichet' || actif === 'voyageurs' || actif === 'rembourser' || actif === 'recus' || actif === 'caisse') && blocs.length > 0 && (
         <>
-          {pointsOnglet.length > 1 && (
+          {pointsOnglet.length > 1 && actif !== 'apercu' && actif !== 'encaisser' && actif !== 'depots' && actif !== 'rembourser' && actif !== 'recus' && actif !== 'voyageurs' && actif !== 'guichet' && (
             <div className="pr-tabs-point">
               <span className="hint">Point relais :</span>
               <Select
                 ariaLabel="Point relais"
-                value={pointChoisi.id}
+                value={modeTous ? TOUS : pointChoisi?.id ?? ''}
                 onChange={setPointEncaisser}
                 minWidth={240}
-                options={pointsOnglet.map((p) => ({ value: p.id, label: p.nom, hint: `${p.ville} · ${p.pays_nom ?? p.pays_code}` }))}
+                options={[
+                  ...(tousPossible ? [{ value: TOUS, label: 'Tous' }] : []),
+                  ...pointsOnglet.map((p) => ({ value: p.id, label: p.nom })),
+                ]}
               />
             </div>
           )}
-          {actif === 'encaisser' && <AEncaisserSection key={pointChoisi.id} point={pointChoisi} />}
-          {actif === 'depots' && <DepotsSection key={pointChoisi.id} point={pointChoisi} />}
-          {actif === 'guichet' && <GuichetSection key={pointChoisi.id} point={pointChoisi} nomsPays={nomsPays} />}
-          {actif === 'voyageurs' && <VoyageursSection key={pointChoisi.id} point={pointChoisi} />}
-          {actif === 'rembourser' && <RemboursementsSection key={pointChoisi.id} point={pointChoisi} />}
-          {actif === 'recus' && <RecusSection key={pointChoisi.id} point={pointChoisi} />}
-          {actif === 'caisse' && <CaisseSection key={pointChoisi.id} point={pointChoisi} finance={superAdmin || finance} />}
+          {actif === 'apercu'
+            ? <ApercuSection points={pointsOnglet} />
+            : actif === 'encaisser'
+            ? <AEncaisserSection points={pointsOnglet} />
+            : actif === 'depots'
+            ? <DepotsSection points={pointsOnglet} />
+            : actif === 'rembourser'
+            ? <RemboursementsSection points={pointsOnglet} />
+            : actif === 'recus'
+            ? <RecusSection points={pointsOnglet} />
+            : actif === 'voyageurs'
+            ? <VoyageursSection points={pointsOnglet} />
+            : actif === 'guichet'
+            ? <GuichetSection points={pointsOnglet} nomsPays={nomsPays} />
+            : actif === 'caisse' && modeTous && (superAdmin || finance)
+            ? <CaisseSection key="reseau" point={blocs[0]} finance reseauSeul onChoisirPoint={setPointEncaisser} />
+            : blocs.map((p) => (
+              <div key={p.id} className="pr-bloc-point">
+                {modeTous && <p className="pr-etiquette-point"><strong>{p.nom}</strong></p>}
+                {actif === 'caisse' && <CaisseSection point={p} finance={superAdmin || finance} />}
+              </div>
+            ))}
         </>
       )}
 
@@ -368,7 +391,8 @@ export function PointsRelaisPage() {
         <InterrupteurPointsRelais
           cle="points_relais_actif"
           titre="Points relais dans l'app"
-          sousTitre="Allumé, les points relais apparaissent dans l'app et les expéditeurs peuvent leur confier des colis. Éteint, tout redevient invisible : les dossiers déjà ouverts restent en base."
+          compact
+          sousTitre="Allumé : les points relais apparaissent dans l'app. Éteint : tout est invisible, les dossiers déjà ouverts continuent."
           avertissementAllumer="Allumé, les clients voient les points relais et peuvent payer en espèces ou en mobile money. Vérifiez que les points sont ouverts et que leurs agents sont prêts."
         />
       )}
@@ -376,6 +400,8 @@ export function PointsRelaisPage() {
       {actif === 'reseau' && (
         !points ? <p className="loading-state">Chargement…</p> : (
           <DataTable
+            title="Points relais"
+            integre
             rows={points}
             columns={columns}
             rowKey={(p) => p.id}
@@ -445,11 +471,11 @@ function PointModal({ point, onClose, onSaved }: { point: PointRelais | null; on
     // Changer de pays vide une ville qui n'appartient pas au nouveau pays.
     if (code !== paysCode && ville && !villes.some((v) => v.pays_code.trim() === code && v.ville === ville)) setVille('');
     setPaysCode(code);
-    const d = deviseImposee(code);
+    const d = deviseImposee(code) ?? DEVISE_PAYS[code] ?? null;
     if (d) {
       setDevise(d);
       // Nouveau point en zone CFA : on propose les plafonds du pilote, modifiables.
-      if (!point) {
+      if (!point && deviseImposee(code)) {
         if (!plDossier) setPlDossier(PLAFONDS_CFA.dossier);
         if (!plJour) setPlJour(PLAFONDS_CFA.jour);
         if (!plEspeces) setPlEspeces(PLAFONDS_CFA.especes);
@@ -494,76 +520,90 @@ function PointModal({ point, onClose, onSaved }: { point: PointRelais | null; on
   const unite = devise === 'XOF' || devise === 'XAF' ? 'FCFA' : devise || 'monnaie locale';
 
   return (
-    <Modal onClose={onClose} wide>
-      <h2 className="modal-title">{point ? `Modifier « ${point.nom} »` : 'Nouveau point relais'}</h2>
-      <div className="modal-body">
-        <div className="form-grid">
-          <div className="field-row">
-            <label>Nom du point<input type="text" value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Ex. Wonjo Dakar Plateau" /></label>
-            <label>Téléphone<ChampTelephone valeur={telephone} onChange={setTelephone} pays={paysCode} nomsPays={nomsPays} ariaLabel="Téléphone du point" /></label>
-          </div>
-          <div className="field-row">
-            <label>Pays<Select ariaLabel="Pays" value={paysCode} onChange={choisirPays} options={paysOptions} /></label>
-            <label>Ville<ChampVille valeur={ville} onChange={setVille} villes={villesDuPays} disabled={!paysCode} placeholder={paysCode ? 'Ex. Dakar' : 'Choisissez d\'abord le pays'} /></label>
-          </div>
-          <label>Adresse<ChampAdresse valeur={adresse} onChange={setAdresse} pays={paysCode} ville={ville} placeholder="Rue, quartier, repère : des suggestions s'affichent" /></label>
-          <div className="champ-horaires-bloc"><span className="champ-horaires-titre">Horaires d'ouverture</span><ChampHoraires valeur={horaires} onChange={setHoraires} /></div>
-          <div className="field-row">
-            <label>
-              Monnaie
-              <input type="text" value={devise} disabled={!!imposee} maxLength={3} onChange={(e) => setDevise(e.target.value.toUpperCase())} placeholder="Ex. MAD" />
-              {imposee && <span className="hint">Imposée : franc CFA, taux fixe avec l'euro.</span>}
-            </label>
-          </div>
-
-          <div>
-            <strong style={{ fontSize: 13 }}>Comptes mobile money du point</strong>
-            <p className="hint">Ce que l'expéditeur verra pour payer. Le titulaire est le nom affiché par l'opérateur au moment du transfert.</p>
-            {comptes.map((c, i) => (
-              <div key={i} className="compte-mm">
-                <Select
-                  ariaLabel="Opérateur"
-                  value={c.operateur}
-                  onChange={(v) => setComptes((l) => l.map((x, j) => (j === i ? { ...x, operateur: v as Operateur } : x)))}
-                  options={OPERATEURS.map((o) => ({ value: o.value, label: o.label, icon: <span className="moyen-pastille" style={{ background: o.couleur }} aria-hidden="true" /> }))}
-                />
-                <input type="text" className="compte-mm-titulaire" value={c.titulaire} placeholder="Titulaire (nom affiché par l'opérateur)" aria-label="Titulaire"
-                       onChange={(e) => setComptes((l) => l.map((x, j) => (j === i ? { ...x, titulaire: e.target.value } : x)))} />
-                <div className="compte-mm-tel">
-                  <ChampTelephone key={`${i}-${paysCode}`} valeur={c.numero} pays={paysCode} nomsPays={nomsPays} ariaLabel={`Numéro ${LABEL_OPERATEUR[c.operateur]}`}
-                                  onChange={(v) => setComptes((l) => l.map((x, j) => (j === i ? { ...x, numero: v } : x)))} />
-                </div>
-                <button className="btn btn-sm" onClick={() => setComptes((l) => l.filter((_, j) => j !== i))}>Retirer</button>
-              </div>
-            ))}
-            {comptes.length < 5 && (
-              <button className="btn btn-soft btn-sm" style={{ marginTop: 8 }} onClick={() => setComptes((l) => [...l, { operateur: 'orange_money', numero: '', titulaire: '' }])}>
-                Ajouter un compte
-              </button>
-            )}
-          </div>
-
-          <label style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <input type="checkbox" checked={especes} onChange={(e) => setEspeces(e.target.checked)} /> Accepte les paiements en espèces au guichet
+    <Modal onClose={onClose}>
+      <div className="pm-tete">
+        <h2>{point ? `Modifier « ${point.nom} »` : 'Nouveau point relais'}</h2>
+        <div className="pm-statut">
+          <label className={`corridor-toggle ${actif ? 'is-on' : ''}`} title={actif ? 'Le point est actif : il apparaît dans l\'app' : 'Le point est inactif'}>
+            <input type="checkbox" checked={actif} onChange={(e) => setActif(e.target.checked)} aria-label="Point relais actif" />
+            <span className="corridor-toggle-switch" />
           </label>
+          <span>Point relais</span>
+          <Badge tone={actif ? 'green' : 'muted'}>{actif ? 'Actif' : 'Inactif'}</Badge>
+        </div>
+      </div>
+      <div className="modal-body">
+        <div className="pm-grille">
+          <section className="pm-carte">
+            <div className="pm-champs">
+              <label>Nom<input type="text" value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Ex. Wonjo Dakar Plateau" /></label>
+              <label>Téléphone<ChampTelephone valeur={telephone} onChange={setTelephone} pays={paysCode} nomsPays={nomsPays} ariaLabel="Téléphone du point" /></label>
+            </div>
+            <div className="pm-champs pm-champs--lieu">
+              <label>Pays<Select ariaLabel="Pays" value={paysCode} onChange={choisirPays} options={paysOptions} /></label>
+              <label>Ville<ChampVille valeur={ville} onChange={setVille} villes={villesDuPays} disabled={!paysCode} placeholder={paysCode ? 'Ex. Dakar' : 'Choisir le pays'} /></label>
+              <label>Adresse<ChampAdresse valeur={adresse} onChange={setAdresse} pays={paysCode} ville={ville} placeholder="Rue, quartier, repère" /></label>
+            </div>
+          </section>
 
-          <div>
-            <strong style={{ fontSize: 13 }}>Plafonds ({unite})</strong>
-            <p className="hint">Montants au-delà desquels le serveur refuse l'opération, pour limiter la perte en cas d'erreur ou de fraude.</p>
-            <div className="field-row" style={{ gridTemplateColumns: '1fr 1fr 1fr', marginTop: 8 }}>
+          <section className="pm-carte">
+            <div className="pm-enc-tete">
+              <h3>Encaissement</h3>
+              <label className="pm-monnaie">Monnaie
+                <input type="text" value={devise} disabled={!!imposee} maxLength={3} onChange={(e) => setDevise(e.target.value.toUpperCase())} placeholder="MAD" />
+              </label>
+              <div className="pm-bascule">
+                <label className={`corridor-toggle ${especes ? 'is-on' : ''}`} title={especes ? 'Le point accepte les espèces' : 'Le point refuse les espèces'}>
+                  <input type="checkbox" checked={especes} onChange={(e) => setEspeces(e.target.checked)} aria-label="Accepte les espèces" />
+                  <span className="corridor-toggle-switch" />
+                </label>
+                <span>Espèces</span>
+              </div>
+              <span style={{ flex: 1 }} />
+              {comptes.length < 5 && (
+                <button type="button" className="btn btn-soft btn-sm" onClick={() => setComptes((l) => [...l, { operateur: 'orange_money', numero: '', titulaire: '' }])}>+ Compte mobile money</button>
+              )}
+            </div>
+            {comptes.length === 0 ? <p className="pm-vide">Aucun compte mobile money</p> : (
+              <div className="pm-comptes-grille">
+                {comptes.map((c, i) => (
+                  <div key={i} className="compte-mm">
+                    <Select
+                      ariaLabel="Opérateur"
+                      value={c.operateur}
+                      onChange={(v) => setComptes((l) => l.map((x, j) => (j === i ? { ...x, operateur: v as Operateur } : x)))}
+                      options={OPERATEURS.map((o) => ({ value: o.value, label: o.label, icon: <span className="moyen-pastille" style={{ background: o.couleur }} aria-hidden="true" /> }))}
+                    />
+                    <input type="text" className="compte-mm-titulaire" value={c.titulaire} placeholder="Titulaire" aria-label="Titulaire"
+                           onChange={(e) => setComptes((l) => l.map((x, j) => (j === i ? { ...x, titulaire: e.target.value } : x)))} />
+                    <div className="compte-mm-tel">
+                      <ChampTelephone key={`${i}-${paysCode}`} valeur={c.numero} pays={paysCode} nomsPays={nomsPays} ariaLabel={`Numéro ${LABEL_OPERATEUR[c.operateur]}`}
+                                      onChange={(v) => setComptes((l) => l.map((x, j) => (j === i ? { ...x, numero: v } : x)))} />
+                    </div>
+                    <button className="btn btn-sm" onClick={() => setComptes((l) => l.filter((_, j) => j !== i))}>Retirer</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className="pm-carte pm-carte--large">
+            <h3>Horaires d'ouverture</h3>
+            <ChampHoraires valeur={horaires} onChange={setHoraires} compact />
+          </section>
+
+          <section className="pm-carte pm-carte--large">
+            <h3>Plafonds ({unite})</h3>
+            <div className="pm-trio">
               <label>Par dossier<ChampMontant valeur={plDossier} onChange={setPlDossier} unite={unite} ariaLabel="Plafond par dossier" /></label>
               <label>Par agent et par jour<ChampMontant valeur={plJour} onChange={setPlJour} unite={unite} ariaLabel="Plafond par agent et par jour" /></label>
               <label>Espèces détenues<ChampMontant valeur={plEspeces} onChange={setPlEspeces} unite={unite} ariaLabel="Plafond d'espèces détenues" /></label>
             </div>
-          </div>
-
-          <label style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <input type="checkbox" checked={actif} onChange={(e) => setActif(e.target.checked)} /> Point actif
-          </label>
-          <p className="hint">Un point actif doit avoir une adresse, un téléphone, au moins un moyen d'encaissement et ses trois plafonds.</p>
+          </section>
         </div>
         {error && <p className="page-error">{error}</p>}
-        <div className="action-row" style={{ justifyContent: 'flex-end', marginTop: 12 }}>
+        <div className="pm-pied">
+          <span style={{ flex: 1 }} />
           <button className="btn" onClick={onClose} disabled={busy}>Annuler</button>
           <button className="btn btn-primary" onClick={enregistrer} disabled={busy}>{busy ? 'Enregistrement…' : 'Enregistrer'}</button>
         </div>

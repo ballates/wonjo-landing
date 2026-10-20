@@ -1,6 +1,7 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { precharger } from '../lib/precharge';
 import { useAuth } from '../auth/AuthContext';
 import { LABELS_ROLES, estSeulementPointRelais, peutEnvoyerEmails, peutGererAdmins, peutGererCorridors, peutModerer, peutVoirKyc, peutVoirLitiges, peutVoirPointsRelais, peutVoirTransactions } from '../lib/permissions';
 import { useTheme } from '../lib/theme';
@@ -77,7 +78,7 @@ export function Layout() {
   const liens = [
     // Un agent de point relais ne voit pas le tableau de bord (chiffres de toute la plateforme).
     { to: '/', label: 'Tableau de bord', icon: <IconDashboard />, visible: !estSeulementPointRelais(roles), end: true },
-    { to: '/moderation', label: 'Sécurité', icon: <IconShield />, visible: peutModerer(roles) || peutVoirLitiges(roles) },
+    { to: '/moderation', label: 'Confiance', icon: <IconShield />, visible: peutModerer(roles) || peutVoirLitiges(roles) },
     { to: '/kyc', label: 'KYC', icon: <IconId />, visible: peutVoirKyc(roles) },
     { to: '/transactions', label: 'Transactions', icon: <IconExchange />, visible: peutVoirTransactions(roles) },
     { to: '/avis', label: 'Avis', icon: <IconStar />, visible: peutModerer(roles) },
@@ -141,7 +142,8 @@ export function Layout() {
 
         <div className="sidebar-nav">
           {liens.filter((l) => l.visible).map((l) => (
-            <NavLink key={l.to} to={l.to} end={l.end} title={collapsed ? l.label : undefined} className="nav-link">
+            <NavLink key={l.to} to={l.to} end={l.end} title={collapsed ? l.label : undefined} className="nav-link"
+                     onMouseEnter={() => precharger(l.to)} onFocus={() => precharger(l.to)} onTouchStart={() => precharger(l.to)}>
               <span className="nav-icon">{l.icon}</span>
               {!collapsed && <span className="nav-label">{l.label}</span>}
             </NavLink>

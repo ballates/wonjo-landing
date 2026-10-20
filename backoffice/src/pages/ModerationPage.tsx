@@ -12,7 +12,7 @@ import { ServerTable, type ServerColumn } from '../components/ServerTable';
 import { Modal } from '../components/Modal';
 import { useConfirmation } from '../components/Confirmation';
 import { useFicheCompte, VoirFicheButton } from '../components/FicheCompte';
-import { LABELS_NIVEAU, LABELS_PAIEMENT, LABELS_STATUT_COLIS, LABELS_STATUT_KYC, LABELS_STATUT_SIGNALEMENT, casserNom, casserPrenom, dateHeure, dateSeule, depuis, nomComplet } from '../lib/labels';
+import { LABELS_NIVEAU, LABELS_PAIEMENT, LABELS_STATUT_COLIS, LABELS_STATUT_KYC, LABELS_STATUT_SIGNALEMENT, casserNom, casserPrenom, dateHeure, dateSeule, depuis, estComptePoint, nomComplet } from '../lib/labels';
 import { useDebounce } from '../lib/useDebounce';
 import type { CompteRecherche, Litige, Signalement, TransactionBloquee } from '../lib/types';
 
@@ -123,7 +123,7 @@ function ComptesTab() {
     { key: 'avatar', label: 'Avatar', render: (c: CompteRecherche) => <Avatar src={c.photo_url} nom={nomComplet(c.prenom, c.nom)} size={36} />, width: 70 },
     { key: 'prenom', label: 'Prénom', render: (c: CompteRecherche) => <strong>{casserPrenom(c.prenom)}</strong> },
     { key: 'nom', label: 'Nom', sortKey: 'nom', render: (c: CompteRecherche) => casserNom(c.nom) },
-    { key: 'email', label: 'Email', render: (c: CompteRecherche) => c.email },
+    { key: 'email', label: 'Email', render: (c: CompteRecherche) => (estComptePoint(c.email) ? <Badge tone="muted">Point relais</Badge> : c.email) },
     {
       key: 'statut', label: 'Statut', filterKey: 'statut',
       filterOptions: [{ value: 'actif', label: 'Actif' }, { value: 'bloque', label: 'Bloqué' }],
@@ -165,7 +165,7 @@ function ComptesTab() {
           <button type="button" className="btn-link" onClick={() => { setItems(null); setFiltreDoublons(false); }}>Voir tous les comptes</button>
         </p>
         {!items ? <p className="loading-state">Chargement…</p> : (
-          <DataTable rows={items} columns={columnsDoublons} rowKey={(c) => c.id} searchPlaceholder="Rechercher un nom, un email…" emptyText="Aucun compte ne correspond." />
+          <DataTable rows={items} columns={columnsDoublons} rowKey={(c) => c.id} title="Comptes" integre searchPlaceholder="Rechercher un nom, un email…" emptyText="Aucun compte ne correspond." />
         )}
         {modal}
       </>
@@ -181,6 +181,8 @@ function ComptesTab() {
   return (
     <>
       <ServerTable
+        title="Comptes"
+        integre
         rows={items ?? []}
         columns={columns}
         rowKey={(c) => c.id}
@@ -275,6 +277,8 @@ function SignalementsTab() {
       {error && <p className="page-error">{error}</p>}
       {!items ? <p className="loading-state">Chargement…</p> : (
         <DataTable
+          title="Signalements"
+          integre
           rows={items}
           columns={columns}
           rowKey={(s) => s.id}
@@ -606,8 +610,7 @@ function LitigesTab() {
   return (
     <>
       {peutVoirRevenus(roles) && <VersementsAValider onChange={charger} />}
-      <p className="hint">Arbitrages demandés en premier : réponse promise sous 2 jours ouvrés.</p>
-      <DataTable rows={items} columns={columns} rowKey={(l) => l.id} initialSort={{ key: 'arbitrage', dir: 'desc' }} emptyText="Aucun litige en cours." />
+      <DataTable rows={items} columns={columns} rowKey={(l) => l.id} title="Litiges" integre initialSort={{ key: 'arbitrage', dir: 'desc' }} emptyText="Aucun litige en cours." />
       <DossiersBloques onChange={charger} />
       {modal}
       {aTrancher && (
@@ -803,9 +806,9 @@ function DossiersBloques({ onChange }: { onChange: () => void }) {
   if (!items) return <p className="loading-state">Chargement…</p>;
   return (
     <>
-      <p className="section-title" style={{ marginTop: 28 }}>Dossiers bloqués hors litige</p>
-      <p className="hint">Restitutions en cours et transports en retard, ou signalés par un membre.</p>
-      <DataTable rows={items} columns={columns} rowKey={(d) => d.id} initialSort={{ key: 'signale', dir: 'desc' }} emptyText="Aucun dossier bloqué." />
+      <div style={{ marginTop: 28 }}>
+      <DataTable rows={items} columns={columns} rowKey={(d) => d.id} title="Dossiers bloqués hors litige" integre initialSort={{ key: 'signale', dir: 'desc' }} emptyText="Aucun dossier bloqué." />
+      </div>
       {modal}
       {action && (
         <DossierBloqueModal

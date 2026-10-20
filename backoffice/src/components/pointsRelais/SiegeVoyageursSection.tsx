@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Modal } from '../Modal';
+import { InfoBulle } from '../InfoBulle';
 import { Badge } from '../Badge';
 import { DataTable, type Column } from '../DataTable';
 import { Copiable } from './Copiable';
 import { InterrupteurPointsRelais } from './InterrupteurPointsRelais';
-import { COULEUR_OPERATEUR, LABEL_OPERATEUR, dateCourte, libelleDevise, montantEuros, montantLocal, type Operateur } from '../../lib/pointsRelais';
+import { COULEUR_OPERATEUR, LABEL_OPERATEUR, dateCourte, dateJour, libelleDevise, montantEuros, montantLocal, type Operateur } from '../../lib/pointsRelais';
 
 // Voyageurs à payer par la FINANCE CENTRALE (migrations 425 et 427, docs/POINTS_RELAIS.md § 7) : un voyageur sans compte Stripe a configuré
 // son mobile money (nom du titulaire = pièce d'identité, code par e-mail) ; 24 h après la livraison la finance lui envoie l'argent, puis
@@ -64,27 +65,33 @@ export function SiegeVoyageursSection() {
   useEffect(charger, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const colonnes: Column<AAPayer>[] = [
-    { key: 'ref', label: 'Dossier', value: (v) => v.reference, width: 110, render: (v) => <div className="pr-cellule"><span className="pr-ref">#{v.reference}</span>{v.origine === 'app' && <span className="hint">Via l'app</span>}</div> },
-    { key: 'voyageur', label: 'Voyageur', value: (v) => v.porteur_nom ?? '', render: (v) => <div className="pr-cellule"><strong>{v.porteur_nom ?? '-'}</strong>{v.porteur_telephone && <span className="hint">{v.porteur_telephone}</span>}</div> },
+    { key: 'ref', label: 'Dossier', value: (v) => v.reference, width: 100, render: (v) => <span className="pr-nowrap"><span className="pr-ref">#{v.reference}</span>{v.origine === 'app' && <span className="hint" title="Dossier venu de l'app"> · app</span>}</span> },
+    { key: 'voyageur', label: 'Voyageur', value: (v) => v.porteur_nom ?? '', render: (v) => <strong className="pr-nowrap">{v.porteur_nom ?? '-'}</strong> },
+    { key: 'tel', label: 'Téléphone', value: (v) => v.porteur_telephone ?? '', render: (v) => v.porteur_telephone ? <span className="pr-nowrap">{v.porteur_telephone}</span> : <span className="hint">-</span> },
     { key: 'trajet', label: 'Trajet', value: (v) => v.trajet, render: (v) => <span className="pr-nowrap">{v.trajet}</span> },
     { key: 'moyen', label: 'Où envoyer', value: (v) => v.mm_numero ?? '',
-      render: (v) => v.mm_numero ? <div className="pr-cellule"><span className="hint">{operateurDe(v.mm_operateur, v.mm_operateur_autre)}</span><Copiable valeur={v.mm_numero} />{v.titulaire && <span className="hint">{v.titulaire}</span>}</div>
-        : <Badge tone="amber">{v.compte_stripe ? 'Compte Stripe (virement)' : 'Aucun moyen enregistré'}</Badge> },
-    { key: 'montant', label: 'À envoyer', value: (v) => Number(v.montant_local), width: 150,
-      render: (v) => <div className="pr-cellule"><strong className="pr-nowrap">{montantLocal(v.montant_local, v.devise)}</strong><span className="hint">{montantEuros(v.montant_eur)}</span></div> },
-    { key: 'livre', label: 'Prêt depuis', value: (v) => v.pret_at ?? '', filter: 'date', width: 140, render: (v) => (v.pret_at ? dateCourte(v.pret_at) : '-') },
-    { key: 'actions', label: '', width: 280,
+      render: (v) => v.mm_numero ? <span className="pr-nowrap"><span className="hint">{operateurDe(v.mm_operateur, v.mm_operateur_autre)} · </span><Copiable valeur={v.mm_numero} />{v.titulaire && <span className="hint" title="Titulaire du compte"> · {v.titulaire}</span>}</span>
+        : <span title={v.compte_stripe ? 'Le voyageur a un compte Stripe : le virement se fait via Stripe' : 'Le voyageur n\'a enregistré aucun moyen de versement'}><Badge tone="amber">{v.compte_stripe ? 'Stripe' : 'Aucun moyen'}</Badge></span> },
+    { key: 'montant', label: 'À envoyer', value: (v) => Number(v.montant_local), render: (v) => <strong className="pr-nowrap">{montantLocal(v.montant_local, v.devise)}</strong> },
+    { key: 'euros', label: 'En euros', value: (v) => Number(v.montant_eur), render: (v) => <span className="pr-nowrap">{montantEuros(v.montant_eur)}</span> },
+    { key: 'livre', label: 'Prêt depuis', value: (v) => v.pret_at ?? '', filter: 'date', width: 110, render: (v) => (v.pret_at ? dateJour(v.pret_at) : '-') },
+    { key: 'actions', label: '', width: 190,
       render: (v) => v.contestation
         ? <Badge tone="danger">Gelé : contestation</Badge>
         : v.retenu_jusqu_a && !v.compte_stripe
-        ? <div className="pr-cellule"><Badge tone="amber">Numéro modifié il y a moins de 48 h</Badge><span className="hint">Retenu jusqu'au {dateCourte(v.retenu_jusqu_a)}</span></div>
+        ? <span title="Numéro de versement modifié il y a moins de 48 h"><Badge tone="amber">Retenu jusqu'au {dateCourte(v.retenu_jusqu_a)}</Badge></span>
         : (
-          <div className="action-row">
+          <div className="pr-paie">
             {v.compte_stripe && v.origine === 'point' && (
-              <button className="btn btn-primary btn-sm pr-nowrap" title="Transfert depuis le solde Stripe de Wonjo, pour ce voyageur seulement"
-                      onClick={() => { setMessage(null); setViaStripe(v); }}>Payer via Stripe</button>
+              <button className="pr-paie-btn pr-paie-btn--stripe" title="Transfert depuis le solde Stripe de Wonjo, pour ce voyageur seulement"
+                      onClick={() => { setMessage(null); setViaStripe(v); }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6z" /></svg>
+                Via Stripe
+              </button>
             )}
-            <button className={`btn btn-sm pr-nowrap ${v.compte_stripe && v.origine === 'point' ? 'btn-soft' : 'btn-primary'}`} onClick={() => { setMessage(null); setPayer(v); }}>
+            <button className={`pr-paie-btn ${v.compte_stripe && v.origine === 'point' ? 'pr-paie-btn--autre' : 'pr-paie-btn--stripe'}`}
+                    title={v.compte_stripe && v.origine === 'point' ? 'Payer par un autre moyen (mobile money…) et noter la référence' : undefined}
+                    onClick={() => { setMessage(null); setPayer(v); }}>
               {v.compte_stripe && v.origine === 'point' ? 'Autre moyen' : 'Payer'}
             </button>
           </div>
@@ -105,20 +112,22 @@ export function SiegeVoyageursSection() {
     <div style={{ marginBottom: 24 }}>
       <InterrupteurPointsRelais
         cle="points_relais_virement_avance"
-        titre="Virement avancé aux voyageurs avec un compte Stripe"
-        sousTitre="Un client a payé en espèces au point et le voyageur a un compte Stripe : allumé, Wonjo lui vire l'argent depuis son solde Stripe dès que les fonds sont libérés, puis se rembourse avec la caisse. Éteint, ce voyageur apparaît ci-dessous et la finance le paie à la main."
+        titre="Paiement automatique des voyageurs par Stripe"
+        compact
+        sousTitre="Allumé : les voyageurs qui ont un compte Stripe sont payés automatiquement. Éteint : la finance les paie à la main."
         avertissementAllumer="Le virement part de votre solde Stripe disponible : un solde insuffisant fait échouer le transfert (le dossier reste alors à traiter). Allumez seulement après un essai en mode test."
       />
       <div className="pr-entete">
         <div>
-          <h3>À payer par la finance</h3>
-          <p className="hint">Voyageurs à payer 24 h après la livraison. Sans compte Stripe : envoyez l'argent sur leur mobile money, puis enregistrez la référence. Avec un compte Stripe : « Payer via Stripe » vire depuis le solde Stripe de Wonjo, pour ce voyageur seulement.</p>
+          <h3>À payer par la finance<InfoBulle>Payés 24 h après la livraison. Mobile money : envoyez, puis notez la référence. Compte Stripe : « Via Stripe ».</InfoBulle></h3>
         </div>
       </div>
       {error && <p className="page-error">{error}</p>}
       {message && <p className="success-text" style={{ marginBottom: 12 }}>{message}</p>}
       {!aPayer ? <p className="loading-state">Chargement…</p> : (
+        <div className="pr-dense">
         <DataTable rows={aPayer} columns={colonnes} rowKey={(v) => v.demande_id} integre title="Voyageurs à payer" emptyText="Aucun voyageur à payer pour le moment : les paiements apparaissent 24 h après la livraison." pageSize={10} />
+        </div>
       )}
       {payes.length > 0 && (
         <details style={{ marginTop: 16 }}>
@@ -244,25 +253,32 @@ function StripeModal({ item, onClose, onPaye }: { item: AAPayer; onClose: () => 
     onPaye(`${item.porteur_nom ?? 'Le voyageur'} payé par Stripe : ${montantEuros((data as { montant_eur?: number })?.montant_eur ?? item.montant_eur)} (transfert ${(data as { transferId?: string })?.transferId ?? ''}). Il a reçu une confirmation dans l'app.`);
   }
 
+  const nom = item.porteur_nom ?? 'le voyageur';
   return (
-    <Modal onClose={onClose}>
-      <h2 className="modal-title">Payer via Stripe · #{item.reference}</h2>
-      <div className="modal-body">
-        <div className="pr-a-recevoir">
-          <span>Transfert vers le compte Stripe de {item.porteur_nom ?? 'le voyageur'}</span>
-          <strong>{montantEuros(item.montant_eur)}</strong>
-          <small>{montantLocal(item.montant_local, item.devise)} · {item.trajet}</small>
+    <Modal onClose={onClose} narrow>
+      <div className="vs-tete">
+        <span className="vs-pastille" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h6l-1 8 9-12h-6z" /></svg>
+        </span>
+        <div>
+          <h2>Payer via Stripe</h2>
+          <p>Dossier #{item.reference} · {item.trajet}</p>
         </div>
-        <p className="hint" style={{ marginTop: 12 }}>
-          Le transfert part immédiatement du <strong>solde Stripe disponible de Wonjo</strong>, pour ce voyageur seulement. Il ne peut pas être annulé d'ici.
-          Si le solde disponible est insuffisant, Stripe refuse et rien ne part : réapprovisionnez puis réessayez. L'argent encaissé au point reste dans la caisse du point.
-        </p>
-        <label style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, fontWeight: 600, marginTop: 12 }}>
-          <input type="checkbox" checked={verifie} onChange={(e) => setVerifie(e.target.checked)} style={{ marginTop: 3 }} />
-          <span>J'ai vérifié le solde Stripe et je confirme le transfert de {montantEuros(item.montant_eur)} à {item.porteur_nom ?? 'ce voyageur'}.</span>
+      </div>
+      <div className="modal-body" style={{ gap: 14, paddingTop: 16 }}>
+        <div className="vs-flux" role="group" aria-label="Sens du transfert">
+          <div className="vs-bord"><small>De</small><strong>Solde Stripe de Wonjo</strong></div>
+          <span className="vs-fleche" aria-hidden="true" />
+          <div className="vs-bord vs-bord--dest"><small>Vers</small><strong>{nom}</strong></div>
+          <div className="vs-montant"><strong>{montantEuros(item.montant_eur)}</strong><span>{montantLocal(item.montant_local, item.devise)}</span></div>
+        </div>
+        <p className="vs-note"><b>Le virement est immédiat et ne s'annule pas.</b> Si le solde Stripe est insuffisant, il est refusé et rien ne part : réapprovisionnez puis recommencez. La caisse du point reste intacte.</p>
+        <label className={`vs-confirme ${verifie ? 'on' : ''}`}>
+          <input type="checkbox" checked={verifie} onChange={(e) => setVerifie(e.target.checked)} />
+          <span>J'ai vérifié le solde Stripe et je confirme le transfert de <strong>{montantEuros(item.montant_eur)}</strong> à {nom}.</span>
         </label>
         {error && <p className="page-error" style={{ marginTop: 12 }}>{error}</p>}
-        <div className="action-row" style={{ justifyContent: 'flex-end', marginTop: 16 }}>
+        <div className="vs-pied">
           <button className="btn" onClick={onClose} disabled={busy}>Annuler</button>
           <button className="btn btn-primary" onClick={valider} disabled={busy || !verifie}>
             {busy ? 'Transfert en cours…' : `Virer ${montantEuros(item.montant_eur)}`}

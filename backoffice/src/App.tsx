@@ -1,11 +1,12 @@
 import { lazy, type ComponentType, type ReactNode } from 'react';
-import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth, type AdminRole } from './auth/AuthContext';
 import { LoginPage } from './auth/LoginPage';
 import { SetPasswordPage } from './auth/SetPasswordPage';
 import { MfaEnrollPage } from './auth/MfaEnrollPage';
 import { MfaChallengePage } from './auth/MfaChallengePage';
 import { Layout } from './components/Layout';
+import { PAGES } from './lib/precharge';
 import {
   estSeulementPointRelais, peutEnvoyerEmails, peutGererAdmins, peutGererCorridors, peutModerer, peutVoirKyc, peutVoirLitiges,
   peutVoirPointsRelais, peutVoirTransactions,
@@ -16,18 +17,19 @@ import {
 function page<K extends string>(charger: () => Promise<Record<K, ComponentType>>, nom: K) {
   return lazy(() => charger().then((m) => ({ default: m[nom] })));
 }
-const DashboardPage = page(() => import('./pages/DashboardPage'), 'DashboardPage');
-const ModerationPage = page(() => import('./pages/ModerationPage'), 'ModerationPage');
-const TransactionsPage = page(() => import('./pages/TransactionsPage'), 'TransactionsPage');
-const AvisPage = page(() => import('./pages/AvisPage'), 'AvisPage');
-const KycPage = page(() => import('./pages/KycPage'), 'KycPage');
-const AdminsPage = page(() => import('./pages/AdminsPage'), 'AdminsPage');
-const EmailsPage = page(() => import('./pages/EmailsPage'), 'EmailsPage');
-const TarificationPage = page(() => import('./pages/TarificationPage'), 'TarificationPage');
-const AuditPage = page(() => import('./pages/AuditPage'), 'AuditPage');
-const PointsRelaisPage = page(() => import('./pages/PointsRelaisPage'), 'PointsRelaisPage');
+// Les imports sont dans lib/precharge.ts : le menu telecharge un paquet des le survol, avant le clic.
+const DashboardPage = page(PAGES['/'] as () => Promise<Record<'DashboardPage', ComponentType>>, 'DashboardPage');
+const ModerationPage = page(PAGES['/moderation'] as () => Promise<Record<'ModerationPage', ComponentType>>, 'ModerationPage');
+const TransactionsPage = page(PAGES['/transactions'] as () => Promise<Record<'TransactionsPage', ComponentType>>, 'TransactionsPage');
+const AvisPage = page(PAGES['/avis'] as () => Promise<Record<'AvisPage', ComponentType>>, 'AvisPage');
+const KycPage = page(PAGES['/kyc'] as () => Promise<Record<'KycPage', ComponentType>>, 'KycPage');
+const AdminsPage = page(PAGES['/admins'] as () => Promise<Record<'AdminsPage', ComponentType>>, 'AdminsPage');
+const EmailsPage = page(PAGES['/emails'] as () => Promise<Record<'EmailsPage', ComponentType>>, 'EmailsPage');
+const TarificationPage = page(PAGES['/tarification'] as () => Promise<Record<'TarificationPage', ComponentType>>, 'TarificationPage');
+const AuditPage = page(PAGES['/audit'] as () => Promise<Record<'AuditPage', ComponentType>>, 'AuditPage');
+const PointsRelaisPage = page(PAGES['/points-relais'] as () => Promise<Record<'PointsRelaisPage', ComponentType>>, 'PointsRelaisPage');
 
-// Meme regle que le menu (Layout) : une URL tapee a la main (#/admins...)
+// Meme regle que le menu (Layout) : une URL tapee a la main (/backoffice/admins...)
 // renvoie au tableau de bord au lieu d'afficher une page en erreur. Le
 // serveur reste la seule vraie protection.
 function Protege({ si, children }: { si: (roles: AdminRole[]) => boolean; children: ReactNode }) {
@@ -79,7 +81,7 @@ function Gate() {
       );
     case 'authorized':
       return (
-        <HashRouter>
+        <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
           <Routes>
             <Route element={<Layout />}>
               <Route index element={<Accueil />} />
@@ -100,7 +102,7 @@ function Gate() {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Routes>
-        </HashRouter>
+        </BrowserRouter>
       );
   }
 }

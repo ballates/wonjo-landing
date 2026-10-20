@@ -1,6 +1,8 @@
 import { decimales } from '../lib/nombre';
 import { useEffect, useState } from 'react';
 import { Select } from '../components/Select';
+import { FiltrePeriode } from '../components/FiltrePeriode';
+import { libellePlage, plageDuRaccourci, type Plage } from '../lib/periode';
 import {
   ResponsiveContainer, AreaChart, Area, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, LabelList, PieChart, Pie, Cell, Legend,
@@ -388,6 +390,7 @@ function FinanceTab() {
   const [erreurFrais, setErreurFrais] = useState<string | null>(null);
   const [annulations, setAnnulations] = useState<RepartitionAnnulations | null>(null);
   const [topAnnulateurs, setTopAnnulateurs] = useState<TopAnnulateur[]>([]);
+  const [plage, setPlage] = useState<Plage>(() => plageDuRaccourci('30d'));
   const [tauxTaxe, setTauxTaxe] = useState(0);
   const [tauxTaxeSaisi, setTauxTaxeSaisi] = useState('');
   const [busyTaxe, setBusyTaxe] = useState(false);
@@ -403,11 +406,20 @@ function FinanceTab() {
     });
   }
 
-  function chargerMarges() {
-    supabase.rpc('admin_stats_revenus_marge', { p_jours: 30 }).then(({ data, error: rpcError }) => {
+  // Ce qui suit la plage de dates : transports termines jour par jour et marge acquise sur la plage (migration 456).
+  function chargerPeriode(p: Plage) {
+    const plageRpc = { p_debut: p.from.toISOString(), p_fin: p.to.toISOString() };
+    supabase.rpc('admin_stats_revenus_marge', { p_jours: null, ...plageRpc }).then(({ data, error: rpcError }) => {
       if (rpcError) { setError(rpcError.message); return; }
       setRevenus((data ?? []) as RevenuJourMarge[]);
     });
+    supabase.rpc('admin_stats_marge', { p_jours: null, ...plageRpc }).then(({ data, error: rpcError }) => {
+      if (rpcError) { setError(rpcError.message); return; }
+      setMarge30(data as StatsMarge);
+    });
+  }
+
+  function chargerMarges() {
     supabase.rpc('admin_stats_marge', { p_jours: null }).then(({ data, error: rpcError }) => {
       if (rpcError) { setError(rpcError.message); return; }
       const m = data as StatsMarge;
@@ -415,10 +427,6 @@ function FinanceTab() {
       setFraisFixeSaisi(String(m.estimation_fixe));
       setFraisPctSaisi(String(Math.round(m.estimation_pct * 100000) / 1000));
       setFraisConfirmes(m.frais_confirmes);
-    });
-    supabase.rpc('admin_stats_marge', { p_jours: 30 }).then(({ data, error: rpcError }) => {
-      if (rpcError) { setError(rpcError.message); return; }
-      setMarge30(data as StatsMarge);
     });
     supabase.rpc('admin_repartition_marge').then(({ data, error: rpcError }) => {
       if (rpcError) { setError(rpcError.message); return; }
@@ -446,7 +454,10 @@ function FinanceTab() {
     setBusyFrais(false);
     if (rpcError) { setErreurFrais(rpcError.message); return; }
     chargerMarges();
+    chargerPeriode(plage);
   }
+
+  useEffect(() => { chargerPeriode(plage); }, [plage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     chargerMarges();
@@ -485,6 +496,7 @@ function FinanceTab() {
   const commissionAVenir = val('escrow', 'commission');
   const commission30j = revenus.reduce((s, r) => s + Number(r.commission), 0);
   const net = mode === 'nette';
+  const periode = libellePlage(plage);
   const margeEtape = (statut: string) => Number(margesEtapes.find((r) => r.statut_paiement === statut)?.marge_nette ?? 0);
   const typesPositifs = repartitionType.map((r) => ({ ...r, valeur: Math.max(0, Number(net ? r.marge_nette : r.commission)) }));
   const totalTransactions = repartition.reduce((s, r) => s + Number(r.nb), 0);
@@ -507,6 +519,7 @@ function FinanceTab() {
             ? 'Marge nette : commission et frais de valeur déclarée, moins les frais Stripe.'
             : 'Commission brute : avant les frais Stripe.'}
         </p>
+        <FiltrePeriode valeur={plage} onChange={setPlage} />
         <div className="action-row" role="group" aria-label="Base de calcul des chiffres">
           <button type="button" className={`chip-filter ${net ? 'on' : ''}`} aria-pressed={net} onClick={() => choisirMode('nette')}>Marge nette</button>
           <button type="button" className={`chip-filter ${!net ? 'on' : ''}`} aria-pressed={!net} onClick={() => choisirMode('brute')}>Commission brute</button>
@@ -520,8 +533,8 @@ function FinanceTab() {
         <Kpi index={1} label={net ? 'Marge nette à venir' : 'Commission à venir'}
           value={net ? (marge?.marge_nette_a_venir ?? 0) : commissionAVenir} format={euros}
           hint={net ? 'Payé, retenu en séquestre' : 'Encaissée à la livraison'} />
-        <Kpi index={2} label={net ? 'Marge nette (30 jours)' : 'Commission (30 jours)'}
-          value={net ? (marge30?.marge_nette_acquise ?? 0) : commission30j} format={euros} hint="Transports terminés ce mois-ci" />
+        <Kpi index={2} label={net ? 'Marge nette de la période' : 'Commission de la période'}
+          value={net ? (marge30?.marge_nette_acquise ?? 0) : commission30j} format={euros} hint={`Transports terminés : ${periode.toLowerCase()}`} />
         <Kpi index={3} label="Transactions payées" value={payees} hint={`sur ${totalTransactions} demandes`} />
         <Kpi index={4} label="Remboursements" value={val('rembourse', 'montant')} format={euros} hint={`${val('rembourse', 'nb')} transaction(s)`} />
       </div>
@@ -532,7 +545,7 @@ function FinanceTab() {
           <p className="chart-sub">Stripe garde ses frais, même sur un remboursement : un petit envoi peut ne rien rapporter.</p>
           <div className="cards">
             <Kpi index={0} label="Marge nette acquise" value={marge.marge_nette_acquise} format={euros} hint="Transports terminés, tout l'historique" />
-            <Kpi index={1} label="Marge nette (30 jours)" value={marge30?.marge_nette_acquise ?? 0} format={euros} hint={`${marge30?.nb_livrees ?? 0} transport(s) terminé(s)`} />
+            <Kpi index={1} label="Marge nette de la période" value={marge30?.marge_nette_acquise ?? 0} format={euros} hint={`${marge30?.nb_livrees ?? 0} transport(s) terminé(s) : ${periode.toLowerCase()}`} />
             <Kpi index={2} label="Marge nette à venir" value={marge.marge_nette_a_venir} format={euros} hint="Payé, en séquestre" />
             <Kpi index={3} label="Marge par transport" value={marge.nb_livrees > 0 ? marge.marge_nette_acquise / marge.nb_livrees : 0} format={euros} hint="Moyenne, transports terminés" />
           </div>
@@ -715,7 +728,7 @@ function FinanceTab() {
       </div>
 
       <div className="chart-card">
-        <h3>Transports terminés, jour par jour (30 derniers jours)</h3>
+        <h3>Transports terminés, jour par jour ({periode.toLowerCase()})</h3>
         <p className="chart-sub">Colis livrés et voyageurs payés. Les frais Stripe des remboursements sont dans le bloc Marge nette.</p>
         {serieJours.length > 0 && (
           <ResponsiveContainer width="100%" height={220}>

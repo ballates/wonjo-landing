@@ -2,6 +2,7 @@ import { ChampMontant } from '../ChampMontant';
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Modal } from '../Modal';
+import { InfoBulle } from '../InfoBulle';
 import { Badge } from '../Badge';
 import { DataTable, type Column } from '../DataTable';
 import { BasculeUnite, type Unite } from '../BasculeUnite';
@@ -42,31 +43,40 @@ const LIBELLE_MOYEN: Record<string, string> = { ...LABEL_OPERATEUR, especes: 'Es
 const COULEUR_MOYEN = (m: string) => (m === 'especes' ? '#1D9E75' : COULEUR_OPERATEUR[m as Operateur] ?? '#8A879E');
 const OPERABLE = ['versement_siege', 'approvisionnement', 'ajustement'];
 
-export function CaisseSection({ point, finance }: { point: PointRelais; finance: boolean }) {
+// reseauSeul : vue « Tous les points » de la finance (une ligne par point, total du reseau) ; onChoisirPoint ouvre le detail d'un point.
+export function CaisseSection({ point, finance, reseauSeul = false, onChoisirPoint }: {
+  point: PointRelais; finance: boolean; reseauSeul?: boolean; onChoisirPoint?: (id: string) => void;
+}) {
   const [caisse, setCaisse] = useState<Caisse | null>(null);
   const [mouvements, setMouvements] = useState<Mouvement[] | null>(null);
   const [rapprochements, setRapprochements] = useState<Rapprochement[]>([]);
   const [reseau, setReseau] = useState<PointReseau[] | null>(null);
-  // Vue du réseau (finance) : chaque point dans sa monnaie, ou tout en euros pour comparer et additionner. Les poches, l'historique et
-  // les rapprochements restent dans la monnaie du point : c'est l'argent réellement compté.
-  const [uniteReseau, setUniteReseau] = useState<Unite>('local');
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [declarer, setDeclarer] = useState<TypeOperation | null>(null);
   const [rapprocher, setRapprocher] = useState<Solde | null>(null);
   const [refuser, setRefuser] = useState<Attente | null>(null);
   const [contrepasser, setContrepasser] = useState<Mouvement | null>(null);
+  const [etat, setEtat] = useState<{ cloturee: boolean; a_bouge: boolean } | null>(null);
+  const [cloturer, setCloturer] = useState(false);
+  const [regularisations, setRegularisations] = useState<Record<number, { par_nom: string | null; at: string; motif: string }>>({});
+  const [aRegulariser, setARegulariser] = useState<Rapprochement | null>(null);
 
   function charger() {
+    if (reseauSeul) {
+      supabase.rpc('admin_pr_caisses_reseau').then(({ data, error: e }) => { if (e) setError(e.message); else setReseau((data ?? []) as PointReseau[]); });
+      return;
+    }
     supabase.rpc('admin_pr_caisse', { p_point_id: point.id }).then(({ data, error: e }) => {
       if (e) { setError(e.message); return; }
       setCaisse(data as Caisse);
     });
     supabase.rpc('admin_pr_mouvements', { p_point_id: point.id, p_limite: 300 }).then(({ data }) => setMouvements((data ?? []) as Mouvement[]));
     supabase.rpc('admin_pr_rapprochements', { p_point_id: point.id }).then(({ data }) => setRapprochements((data ?? []) as Rapprochement[]));
-    if (finance) supabase.rpc('admin_pr_caisses_reseau').then(({ data }) => setReseau((data ?? []) as PointReseau[]));
+    supabase.rpc('admin_pr_regularisations', { p_point_id: point.id }).then(({ data }) => setRegularisations(Object.fromEntries(((data ?? []) as { rapprochement_id: number; par_nom: string | null; at: string; motif: string }[]).map((x) => [x.rapprochement_id, x]))));
+    supabase.rpc('admin_pr_cloture_etat', { p_point_id: point.id }).then(({ data }) => setEtat(((data ?? [])[0] ?? null) as { cloturee: boolean; a_bouge: boolean } | null));
   }
-  useEffect(() => { setCaisse(null); setMouvements(null); charger(); }, [point.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setCaisse(null); setMouvements(null); charger(); }, [point.id, reseauSeul]); // eslint-disable-line react-hooks/exhaustive-deps
   useTauxEuros([point.devise, ...(reseau ?? []).map((r) => r.devise)]); // taux du serveur pour l'équivalent en euros
 
   async function valider(a: Attente) {
@@ -99,76 +109,58 @@ export function CaisseSection({ point, finance }: { point: PointRelais; finance:
 
   return (
     <div>
-      {finance && reseau && reseau.length > 0 && (
+      {reseauSeul && (
         <>
-        <div className="pr-bascule-ligne" style={{ marginBottom: 8 }}>
-          <p className="hint">Argent détenu par point{uniteReseau === 'eur' ? ' · converti en euros au taux du serveur' : ''}.</p>
-          <BasculeUnite valeur={uniteReseau} onChange={setUniteReseau} libelleLocal="Monnaie du point" ariaLabel="Unité de la vue du réseau" />
-        </div>
-        <div className="pr-reseau-caisse">
-          {reseau.map((r) => (
-            <div key={r.point_id} className={`pr-reseau-ligne ${r.point_id === point.id ? 'actif' : ''}`}>
-              <strong>{r.nom}</strong>
-              <span>{uniteReseau === 'eur'
-                ? (tauxDe(r.devise) != null || r.devise === 'EUR' ? (r.devise === 'EUR' ? montantEuros(Number(r.solde_especes) + Number(r.solde_mobile)) : equivalentEuros(Number(r.solde_especes) + Number(r.solde_mobile), r.devise).replace(/^≈ /, '')) : 'taux non renseigné')
-                : montantLocal(Number(r.solde_especes) + Number(r.solde_mobile), r.devise)}</span>
-              <span className="hint">{r.operations_en_attente ? `${r.operations_en_attente} à valider` : 'rien à valider'}</span>
-              {r.ecart_non_nul ? <Badge tone="danger">Écart</Badge> : r.rapproche_at ? <Badge tone="green">Rapproché</Badge> : <Badge tone="muted">Jamais rapproché</Badge>}
-            </div>
-          ))}
-          {uniteReseau === 'eur' && (() => {
-            const lignes = reseau.map((r) => ({ devise: r.devise, v: Number(r.solde_especes) + Number(r.solde_mobile) }));
-            const connues = lignes.filter((l) => l.devise === 'EUR' || tauxDe(l.devise) != null);
-            const total = connues.reduce((a, l) => a + (l.devise === 'EUR' ? l.v : l.v / (tauxDe(l.devise) as number)), 0);
-            return (
-              <div className="pr-reseau-ligne pr-reseau-total">
-                <strong>Total du réseau</strong>
-                <span>{montantEuros(Math.round(total * 100) / 100)}</span>
-                <span className="hint">{connues.length < lignes.length ? `${lignes.length - connues.length} point(s) sans taux, non comptés` : `${lignes.length} point${lignes.length > 1 ? 's' : ''}`}</span>
-              </div>
-            );
-          })()}
-        </div>
+          {error && <p className="page-error">{error}</p>}
+          {!reseau ? <p className="loading-state">Chargement…</p> : <ReseauCaisse reseau={reseau} onChoisir={onChoisirPoint} />}
         </>
       )}
-
+      {reseauSeul ? null : <>
       <div className="pr-entete">
         <div>
-          <h3>Caisse · {point.nom}</h3>
-          <p className="hint">Argent détenu par le point, poche par poche. Toute opération est déclarée par une personne et validée par une autre ; l'historique ne se modifie jamais.</p>
+          <h3>Caisse · {point.nom}<InfoBulle>Argent détenu par le point, poche par poche. Toute opération est déclarée par une personne et validée par une autre ; l'historique ne se modifie jamais.</InfoBulle></h3>
         </div>
-        <div className="pr-total"><span>Total détenu</span><strong>{montantLocal(total, devise)}</strong>{!!equivalentEuros(total, devise) && <small className="pr-equiv">{equivalentEuros(total, devise)}</small>}</div>
+        <div className="pr-total pr-total--ligne"><span>Total détenu</span><strong>{montantLocal(total, devise)}</strong>{!!equivalentEuros(total, devise) && <small className="pr-equiv">{equivalentEuros(total, devise)}</small>}</div>
       </div>
 
       {message && <p className="success-text" style={{ marginBottom: 12 }}>{message}</p>}
       {error && <p className="page-error">{error}</p>}
 
-      <div className="action-row" style={{ marginBottom: 14 }}>
-        <button className="btn btn-primary" onClick={() => { setMessage(null); setDeclarer('versement_siege'); }}>Versement au siège</button>
-        {finance && <button className="btn btn-soft" onClick={() => { setMessage(null); setDeclarer('approvisionnement'); }}>Approvisionner le point</button>}
-        <button className="btn btn-soft" onClick={() => { setMessage(null); setDeclarer('ajustement'); }}>Déclarer un écart</button>
+      <div className="ca-actions">
+        <button className="btn btn-primary btn-sm" onClick={() => { setMessage(null); setCloturer(true); }} disabled={!caisse}>Clôturer la journée</button>
+        {etat && (
+          etat.cloturee ? <Badge tone="green">Clôturée aujourd'hui</Badge>
+            : etat.a_bouge ? <Badge tone="amber">À clôturer</Badge>
+            : null
+        )}
+        <span className="ca-sep" aria-hidden="true" />
+        <button className="btn btn-soft btn-sm" onClick={() => { setMessage(null); setDeclarer('versement_siege'); }}>Versement au siège</button>
+        {finance && <button className="btn btn-soft btn-sm" onClick={() => { setMessage(null); setDeclarer('approvisionnement'); }}>Approvisionner</button>}
+        <button className="btn btn-soft btn-sm" onClick={() => { setMessage(null); setDeclarer('ajustement'); }}>Déclarer un écart</button>
       </div>
 
       {!caisse ? <p className="loading-state">Chargement…</p> : (
-        <div className="pr-grid">
+        <div className="ca-poches">
           {caisse.soldes.map((s) => {
             const plafond = s.moyen === 'especes' && caisse.plafond_especes ? Number(caisse.plafond_especes) : null;
+            const ecart = s.dernier_ecart != null && Number(s.dernier_ecart) !== 0;
             return (
-              <article key={s.moyen} className="pr-card">
-                <div className="pr-card-haut">
+              <article key={s.moyen} className="ca-poche">
+                <div className="ca-poche-haut">
                   <span className="pr-poche"><span className="moyen-pastille" style={{ background: COULEUR_MOYEN(s.moyen) }} />{LIBELLE_MOYEN[s.moyen] ?? s.moyen}</span>
-                  {s.dernier_ecart != null && Number(s.dernier_ecart) !== 0
-                    ? <Badge tone="danger">Écart {montantLocal(s.dernier_ecart, devise)}</Badge>
-                    : s.rapproche_at ? <Badge tone="green">Rapproché</Badge> : <Badge tone="muted">Jamais rapproché</Badge>}
+                  {ecart ? <Badge tone="danger">Écart {montantLocal(s.dernier_ecart, devise)}</Badge>
+                    : s.rapproche_at ? <Badge tone="green">Compté</Badge> : <Badge tone="muted">Jamais compté</Badge>}
                 </div>
-                <div className="pr-montant"><strong>{montantLocal(s.solde, devise)}</strong></div>
+                <strong className="ca-poche-montant">{montantLocal(s.solde, devise)}</strong>
                 {plafond && (
                   <div className="pr-jauge" title={`Plafond d'espèces : ${montantLocal(plafond, devise)}`}>
                     <span style={{ width: `${Math.min(100, (Number(s.solde) / plafond) * 100)}%` }} className={Number(s.solde) > plafond * 0.8 ? 'haut' : ''} />
                   </div>
                 )}
-                <div className="pr-ligne"><span className="pr-libelle">Rapproché</span><span>{s.rapproche_at ? dateCourte(s.rapproche_at) : 'jamais'}</span></div>
-                <button className="btn btn-soft pr-action" onClick={() => { setMessage(null); setRapprocher(s); }}>Compter et rapprocher</button>
+                <div className="ca-poche-bas">
+                  <small>{s.rapproche_at ? `Dernier comptage : ${dateCourte(s.rapproche_at)}` : 'Aucun comptage'}</small>
+                  <button type="button" className="ca-lien" onClick={() => { setMessage(null); setRapprocher(s); }}>Compter</button>
+                </div>
               </article>
             );
           })}
@@ -177,7 +169,7 @@ export function CaisseSection({ point, finance }: { point: PointRelais; finance:
 
       {caisse && caisse.attente.length > 0 && (
         <>
-          <div className="pr-entete" style={{ marginTop: 24 }}><div><h3>À valider</h3><p className="hint">Opérations déclarées, pas encore dans l'historique.</p></div></div>
+          <div className="pr-entete" style={{ marginTop: 24 }}><div><h3>À valider<InfoBulle>Opérations déclarées, pas encore dans l'historique.</InfoBulle></h3></div></div>
           <div className="pr-table">
             {caisse.attente.map((a) => (
               <div key={a.id} className="pr-table-ligne pr-table-ligne--attente">
@@ -208,21 +200,42 @@ export function CaisseSection({ point, finance }: { point: PointRelais; finance:
 
       {rapprochements.length > 0 && (
         <>
-          <div className="pr-entete" style={{ marginTop: 24 }}><div><h3>Rapprochements</h3></div></div>
+          <div className="pr-entete" style={{ marginTop: 24 }}><div><h3>Comptages</h3></div></div>
           <div className="pr-table">
-            {rapprochements.slice(0, 20).map((r) => (
-              <div key={r.id} className="pr-table-ligne pr-table-ligne--attente">
-                <span>{dateCourte(r.created_at)}</span>
-                <span>{LIBELLE_MOYEN[r.moyen] ?? r.moyen}</span>
-                <span className="hint">Calculé {montantLocal(r.solde_theorique, devise)} · compté {montantLocal(r.solde_constate, devise)}</span>
-                {Number(r.ecart) === 0 ? <Badge tone="green">Juste</Badge> : <Badge tone="danger">Écart {montantLocal(r.ecart, devise)}</Badge>}
-                <span className="hint">{r.cree_par_nom ?? '-'}{r.note ? ` · ${r.note}` : ''}</span>
-              </div>
-            ))}
+            {rapprochements.slice(0, 20).map((r) => {
+              const regul = regularisations[r.id];
+              const dernier = rapprochements.find((x) => x.moyen === r.moyen)?.id === r.id; // la liste est du plus recent au plus ancien
+              return (
+                <div key={r.id} className="pr-table-ligne pr-table-ligne--attente">
+                  <span>{dateCourte(r.created_at)}</span>
+                  <span>{LIBELLE_MOYEN[r.moyen] ?? r.moyen}</span>
+                  <span className="hint">Calculé {montantLocal(r.solde_theorique, devise)} · compté {montantLocal(r.solde_constate, devise)}</span>
+                  {Number(r.ecart) === 0 ? <Badge tone="green">Juste</Badge>
+                    : regul ? <Badge tone="teal">Écart régularisé</Badge>
+                    : <Badge tone="danger">Écart {Number(r.ecart) > 0 ? '+' : ''}{montantLocal(r.ecart, devise)}</Badge>}
+                  <span className="hint">
+                    {regul ? `Régularisé par ${regul.par_nom ?? '-'} · ${dateCourte(regul.at)} · ${regul.motif}` : `${r.cree_par_nom ?? '-'}${r.note ? ` · ${r.note}` : ''}`}
+                  </span>
+                  {finance && Number(r.ecart) !== 0 && !regul && dernier && (
+                    <button className="pr-paie-btn pr-paie-btn--stripe" onClick={() => { setMessage(null); setARegulariser(r); }}>Régulariser</button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </>
       )}
 
+      </>}
+
+      {aRegulariser && (
+        <RegulariserModal r={aRegulariser} devise={devise} onClose={() => setARegulariser(null)}
+          onFait={(t) => { setARegulariser(null); setMessage(t); charger(); }} />
+      )}
+      {cloturer && caisse && (
+        <ClotureModal point={point} soldes={caisse.soldes} devise={devise} onClose={() => setCloturer(false)}
+          onFait={(t) => { setCloturer(false); setMessage(t); charger(); }} />
+      )}
       {declarer && caisse && (
         <DeclarerModal point={point} type={declarer} soldes={caisse.soldes} devise={devise} onClose={() => setDeclarer(null)}
           onFait={(t) => { setDeclarer(null); setMessage(t); charger(); }} />
@@ -420,6 +433,190 @@ function MotifModal({ titre, libelle, aide, min, onClose, onValider }: {
                   onClick={async () => { setBusy(true); setError(null); const e = await onValider(motif.trim()); setBusy(false); if (e) setError(e); }}>
             {busy ? 'Envoi…' : 'Confirmer'}
           </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+// Vue « Tous les points » : une ligne par point (espèces, mobile money, total), chacun dans sa monnaie ou tout en euros pour comparer,
+// et le total du réseau en euros. Les poches, l'historique et les rapprochements restent dans la monnaie du point (argent réellement compté).
+function versEuros(v: number, devise: string): number | null {
+  if (devise === 'EUR') return v;
+  const t = tauxDe(devise);
+  return t == null ? null : Math.round((v / t) * 100) / 100;
+}
+
+function ReseauCaisse({ reseau, onChoisir }: { reseau: PointReseau[]; onChoisir?: (id: string) => void }) {
+  const [unite, setUnite] = useState<Unite>('local');
+  useTauxEuros(reseau.map((r) => r.devise));
+  const montant = (v: number, devise: string) => {
+    if (unite === 'local') return montantLocal(v, devise);
+    const e = versEuros(v, devise);
+    return e == null ? 'taux ?' : montantEuros(e);
+  };
+  const lignes = reseau.map((r) => ({ ...r, esp: Number(r.solde_especes), mob: Number(r.solde_mobile) }));
+  const connues = lignes.filter((l) => versEuros(l.esp + l.mob, l.devise) != null);
+  const totalEur = connues.reduce((a, l) => a + (versEuros(l.esp + l.mob, l.devise) ?? 0), 0);
+  const aValider = lignes.reduce((a, l) => a + l.operations_en_attente, 0);
+
+  if (reseau.length === 0) return <p className="empty-state">Aucun point relais.</p>;
+  return (
+    <div>
+      <div className="pr-reseau-tete">
+        <h3>Caisses du réseau</h3>
+        {lignes.some((l) => l.ecart_non_nul) && <Badge tone="danger">{lignes.filter((l) => l.ecart_non_nul).length} écart{lignes.filter((l) => l.ecart_non_nul).length > 1 ? 's' : ''} à régulariser</Badge>}
+        <div className="pr-total pr-total--ligne"><span>Total détenu</span><strong>{montantEuros(Math.round(totalEur * 100) / 100)}</strong>
+          <small className="pr-equiv">{connues.length < lignes.length ? `${lignes.length - connues.length} point(s) sans taux, non comptés` : `${lignes.length} point${lignes.length > 1 ? 's' : ''}${aValider ? ` · ${aValider} à valider` : ''}`}</small>
+        </div>
+        <BasculeUnite valeur={unite} onChange={setUnite} libelleLocal="Monnaie du point" ariaLabel="Unité de la vue du réseau" />
+      </div>
+      <div className="pr-reseau-tableau" role="table">
+        <div className="pr-reseau-rang pr-reseau-rang--tete" role="row">
+          <span>Point</span><span>Espèces</span><span>Mobile money</span><span>Total</span><span>À valider</span><span>Comptage</span><span />
+        </div>
+        {lignes.map((l) => (
+          <div key={l.point_id} className="pr-reseau-rang pr-reseau-rang--ligne" role="row" onClick={() => onChoisir?.(l.point_id)}>
+            <span className="pr-reseau-nom"><strong>{l.nom}</strong></span>
+            <span>{montant(l.esp, l.devise)}</span>
+            <span>{montant(l.mob, l.devise)}</span>
+            <strong>{montant(l.esp + l.mob, l.devise)}</strong>
+            <span className="hint">{l.operations_en_attente ? `${l.operations_en_attente} à valider` : '-'}</span>
+            <span>{l.ecart_non_nul ? <Badge tone="danger">Écart</Badge> : l.rapproche_at ? <Badge tone="green">Rapproché</Badge> : <Badge tone="muted">Jamais</Badge>}</span>
+            <button type="button" className="pr-paie-btn pr-paie-btn--autre" onClick={(e) => { e.stopPropagation(); onChoisir?.(l.point_id); }} title="Ouvrir la caisse de ce point">Détail ›</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Clôture de la journée (449) : on compte TOUTES les poches d'un coup, à l'aveugle. Un écart n'est révélé (par poche, jamais de combien) qu'après
+// l'envoi ; rien n'est enregistré tant qu'il n'est pas expliqué.
+function ClotureModal({ point, soldes, devise, onClose, onFait }: {
+  point: PointRelais; soldes: Solde[]; devise: string; onClose: () => void; onFait: (t: string) => void;
+}) {
+  const [valeurs, setValeurs] = useState<Record<string, string>>({});
+  const [note, setNote] = useState('');
+  const [ecartPoches, setEcartPoches] = useState<string[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const nombre = (m: string) => Number((valeurs[m] ?? '').replace(/\s/g, ''));
+  const saisi = (m: string) => (valeurs[m] ?? '').trim() !== '' && Number.isFinite(nombre(m)) && nombre(m) >= 0;
+  const complet = soldes.every((x) => saisi(x.moyen));
+
+  async function envoyer() {
+    setBusy(true);
+    setError(null);
+    const { data, error: e } = await supabase.rpc('admin_pr_cloturer', {
+      p_point_id: point.id, p_comptages: soldes.map((x) => ({ moyen: x.moyen, solde: nombre(x.moyen) })), p_note: note.trim(),
+    });
+    setBusy(false);
+    if (e) { setError(e.message); return; }
+    const r = data as { ok: boolean; ecart?: boolean; moyens?: string[]; ecarts?: number };
+    if (!r.ok) { setEcartPoches(r.moyens ?? []); return; }
+    onFait(r.ecarts ? `Journée clôturée avec ${r.ecarts} écart${r.ecarts > 1 ? 's' : ''} : visible${r.ecarts > 1 ? 's' : ''} par la finance.` : 'Journée clôturée : la caisse correspond à l\'historique.');
+  }
+
+  const comptees = soldes.filter((x) => saisi(x.moyen)).length;
+  const date = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+  return (
+    <Modal onClose={onClose} narrow>
+      <div className="cl-tete">
+        <span className="cl-pastille" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M8 3v4M16 3v4M3 11h18M9 16l2 2 4-4" /></svg>
+        </span>
+        <div>
+          <h2>Clôturer la journée</h2>
+          <p>{point.nom} · {date}</p>
+        </div>
+      </div>
+      <div className="modal-body" style={{ gap: 10, paddingTop: 12 }}>
+        <p className="cl-aide">Comptez chaque poche : les espèces dans la caisse, et le solde affiché dans l'application de chaque opérateur.</p>
+        <div className="cl-liste">
+          {soldes.map((x) => {
+            const fait = saisi(x.moyen);
+            const ecart = ecartPoches?.includes(x.moyen);
+            return (
+              <label key={x.moyen} className={`cl-ligne ${fait ? 'fait' : ''} ${ecart ? 'ecart' : ''}`}>
+                <span className="cl-nom">
+                  <span className="moyen-pastille" style={{ background: COULEUR_MOYEN(x.moyen) }} />
+                  <strong>{LIBELLE_MOYEN[x.moyen] ?? x.moyen}</strong>
+                  {ecart && <Badge tone="danger">À vérifier</Badge>}
+                </span>
+                <ChampMontant valeur={valeurs[x.moyen] ?? ''} onChange={(v) => setValeurs((o) => ({ ...o, [x.moyen]: v }))} unite={libelleDevise(devise)}
+                              ariaLabel={`Solde constaté ${LIBELLE_MOYEN[x.moyen] ?? x.moyen}`} autoFocus={x === soldes[0]} placeholder="0" />
+              </label>
+            );
+          })}
+        </div>
+        {ecartPoches !== null && (
+          <div className="cl-ecart">
+            <p><strong>Ça ne correspond pas à l'historique</strong> pour {ecartPoches.map((m) => LIBELLE_MOYEN[m] ?? m).join(', ')}. Recomptez si besoin, puis expliquez ce qui s'est passé : l'écart sera enregistré et visible par la finance.</p>
+            <textarea rows={2} maxLength={300} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Ce qui s'est passé (obligatoire, 10 caractères au moins)" autoFocus />
+            <button type="button" className="ca-lien" onClick={() => { setEcartPoches(null); setNote(''); }}>Recompter</button>
+          </div>
+        )}
+        {error && <p className="page-error">{error}</p>}
+        <div className="cl-pied">
+          <span className="cl-progres" title={`${comptees} poche${comptees > 1 ? 's' : ''} sur ${soldes.length}`}>
+            <span className="cl-barre"><span style={{ width: `${soldes.length ? (comptees / soldes.length) * 100 : 0}%` }} /></span>
+            <small>{comptees}/{soldes.length} comptée{comptees > 1 ? 's' : ''}</small>
+          </span>
+          <button className="btn" onClick={onClose} disabled={busy}>Annuler</button>
+          <button className="btn btn-primary" onClick={envoyer} disabled={busy || !complet || (ecartPoches !== null && note.trim().length < 10)}>
+            {busy ? 'Envoi…' : ecartPoches !== null ? 'Clôturer avec cette explication' : 'Clôturer'}
+          </button>
+        </div>
+        <p className="cl-aide cl-aide--bas">Un écart n'efface rien : il se corrige par un ajustement validé par la finance.</p>
+      </div>
+    </Modal>
+  );
+}
+
+// Régulariser un écart (451) : la finance ou un Admin remet l'historique d'accord avec le comptage. Le montant et le sens viennent de l'écart.
+function RegulariserModal({ r, devise, onClose, onFait }: { r: Rapprochement; devise: string; onClose: () => void; onFait: (t: string) => void }) {
+  const [motif, setMotif] = useState(r.note ?? '');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const ecart = Number(r.ecart);
+  const manque = ecart < 0;
+
+  async function valider() {
+    setBusy(true);
+    setError(null);
+    const { error: e } = await supabase.rpc('admin_pr_regulariser', { p_rapprochement_id: r.id, p_motif: motif.trim() });
+    setBusy(false);
+    if (e) { setError(e.message); return; }
+    onFait(`Écart régularisé : ${LIBELLE_MOYEN[r.moyen] ?? r.moyen} ${manque ? 'diminué' : 'augmenté'} de ${montantLocal(Math.abs(ecart), devise)}. L'historique correspond au comptage.`);
+  }
+
+  return (
+    <Modal onClose={onClose} narrow>
+      <div className="cl-tete">
+        <span className="cl-pastille" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+        </span>
+        <div>
+          <h2>Régulariser l'écart</h2>
+          <p style={{ textTransform: 'none' }}>{LIBELLE_MOYEN[r.moyen] ?? r.moyen} · comptage du {dateCourte(r.created_at)}</p>
+        </div>
+      </div>
+      <div className="modal-body" style={{ gap: 10, paddingTop: 12 }}>
+        <div className="rg-chiffres">
+          <div><small>Historique</small><strong>{montantLocal(r.solde_theorique, devise)}</strong></div>
+          <div><small>Compté</small><strong>{montantLocal(r.solde_constate, devise)}</strong></div>
+          <div className={manque ? 'rg-manque' : 'rg-surplus'}><small>{manque ? 'Il manquait' : 'En trop'}</small><strong>{montantLocal(Math.abs(ecart), devise)}</strong></div>
+        </div>
+        <p className="cl-aide">Un ajustement de <strong>{montantLocal(Math.abs(ecart), devise)}</strong> sera {manque ? 'retiré de' : 'ajouté à'} l'historique de la poche pour qu'il corresponde au comptage. Rien d'autre ne change et l'opération reste visible, avec votre nom.</p>
+        <label className="cl-motif">Motif (obligatoire)
+          <textarea rows={2} maxLength={300} value={motif} onChange={(e) => setMotif(e.target.value)} placeholder="Ce qui explique l'écart, comme vous l'avez constaté" />
+        </label>
+        {error && <p className="page-error">{error}</p>}
+        <div className="cl-pied">
+          <span style={{ flex: 1 }} />
+          <button className="btn" onClick={onClose} disabled={busy}>Annuler</button>
+          <button className="btn btn-primary" onClick={valider} disabled={busy || motif.trim().length < 10}>{busy ? 'Enregistrement…' : 'Régulariser'}</button>
         </div>
       </div>
     </Modal>

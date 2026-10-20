@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>Page introuvable - Wonjo</title>
+    <script>
+      // GitHub Pages ne connait pas les adresses internes du back-office (/backoffice/audit...) : on les renvoie a l'application, qui rétablit
+      // l'adresse (voir backoffice/public/demarrage.js). Toute autre adresse inconnue affiche la page ci-dessous.
+      (function () {
+        var l = window.location;
+        var base = '/backoffice/';
+        if (l.pathname.indexOf(base) === 0 && l.pathname.length > base.length) {
+          l.replace(
+            l.protocol + '//' + l.host + base + '?/' + l.pathname.slice(base.length).replace(/&/g, '~and~') +
+            (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') + l.hash
+          );
+        }
+      })();
+    </script>
+    <style>
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; font-family: system-ui, sans-serif; background: #f6f5fb; color: #1a1a2e; text-align: center; padding: 24px; }
+      h1 { font-size: 22px; margin: 0 0 8px; }
+      p { margin: 0 0 18px; color: #5b5a70; }
+      a { color: #2f6f7e; font-weight: 700; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Page introuvable</h1>
+      <p>Cette adresse n'existe pas.</p>
+      <a href="/">Retour à l'accueil</a>
+    </main>
+  </body>
+</html>

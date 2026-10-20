@@ -153,6 +153,11 @@ export function echeanceRelative(iso: string, maintenant = Date.now()): { texte:
   return { texte: `dans ${duree}`, urgence: ms < 6 * 3600000 ? 'urgent' : ms < 24 * 3600000 ? 'proche' : 'ok' };
 }
 
+// 21/10/26 : jour, mois, annee sur deux chiffres, sans jour de semaine ni heure.
+export function dateJour(iso: string): string {
+  return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+}
+
 export function dateCourte(iso: string): string {
   return new Date(iso).toLocaleString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }

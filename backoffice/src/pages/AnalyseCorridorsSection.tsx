@@ -112,7 +112,7 @@ export function AnalyseCorridorsSection() {
           <div>
             <h3>Revenu et activité par corridor</h3>
             <p className="chart-sub">
-              Sur un remboursement : Wonjo rend sa commission (« Rendu ») et perd en plus les frais que Stripe a pris à l'encaissement et ne rend jamais (« Frais Stripe perdus »). « Encaissé » : commission gardée, sur les demandes payées.
+              Remboursement : commission rendue (« Rendu »), frais Stripe perdus (« Frais Stripe perdus »). « Encaissé » : commission gardée.
             </p>
           </div>
         </div>

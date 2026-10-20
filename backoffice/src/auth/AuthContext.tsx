@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
+import { viderCache } from '../lib/precharge';
 
 // Etats du parcours de connexion admin :
 //  - signed_out         : pas de session
@@ -256,6 +257,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signOut(message?: string) {
+    viderCache();
     try { sessionStorage.removeItem(CLE_ACTIVITE); localStorage.removeItem(CLE_ACTIVITE); } catch { /* stockage indisponible */ }
     // 'local' : sans cela signOut() est GLOBAL et revoque toutes les sessions du compte,
     // y compris celle de l'application sur le telephone.

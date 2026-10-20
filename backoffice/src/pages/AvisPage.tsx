@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { MasquageModal } from '../components/MasquageModal';
+import { InfoBulle } from '../components/InfoBulle';
 import { ServerTable, type ServerColumn } from '../components/ServerTable';
 import { StatutBadge } from '../components/Badge';
 import { TransactionModal } from '../components/TransactionModal';
@@ -89,11 +90,12 @@ export function AvisPage() {
     <div>
       <div className="page-head">
         <div>
-          <h1>Avis</h1>
-          <p className="page-sub">Tous les avis laissés entre expéditeurs et voyageurs, avec accès à la transaction concernée.</p>
+          <h1>Avis<InfoBulle>Tous les avis laissés entre expéditeurs et voyageurs, avec accès à la transaction concernée.</InfoBulle></h1>
         </div>
       </div>
       <ServerTable
+        title="Avis"
+        integre
         rows={items ?? []}
         columns={columns}
         rowKey={(a) => a.id}

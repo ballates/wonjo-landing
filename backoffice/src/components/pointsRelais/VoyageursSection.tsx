@@ -1,9 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Modal } from '../Modal';
+import { InfoBulle } from '../InfoBulle';
+import { DataTable, type Column } from '../DataTable';
+import { PanneauLateral } from '../PanneauLateral';
+import { useMultiPoints } from '../../lib/useMultiPoints';
+import { BandePoints, TOUS_LES_POINTS, type CompteurPoint } from './BandePoints';
 import { Badge } from '../Badge';
 import {
-  COULEUR_OPERATEUR, LABEL_OPERATEUR, dateCourte, libelleDevise, montantEuros, montantLocal, moyenDepuisOperateur,
+  COULEUR_OPERATEUR, LABEL_OPERATEUR, dateCourte, dateJour, libelleDevise, montantEuros, montantLocal, moyenDepuisOperateur,
   type MoyenRecu, type Operateur, type PointRelais,
 } from '../../lib/pointsRelais';
 
@@ -31,87 +36,111 @@ interface AVerser {
   mm_numero: string | null;
 }
 
-export function VoyageursSection({ point }: { point: PointRelais }) {
-  const [items, setItems] = useState<AVerser[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
+type LigneAVerser = AVerser & { point: PointRelais };
+
+// Tous les points dans un tableau ; le detail et l'action (qui demande le code de retrait du voyageur) dans le panneau lateral.
+export function VoyageursSection({ points }: { points: PointRelais[] }) {
+  const { items, error, recharger: charger } = useMultiPoints<AVerser>(points, 'voyageurs_a_payer');
   const [message, setMessage] = useState<string | null>(null);
-  const [aPayer, setAPayer] = useState<AVerser | null>(null);
+  const [ouvert, setOuvert] = useState<string | null>(null);
+  const [aPayer, setAPayer] = useState<LigneAVerser | null>(null);
+  const [choix, setChoix] = useState(TOUS_LES_POINTS);
+  const plusieurs = points.length > 1;
 
-  function charger() {
-    supabase.rpc('admin_pr_voyageurs_a_payer', { p_point_id: point.id }).then(({ data, error: e }) => {
-      if (e) { setError(e.message); setItems([]); return; }
-      setError(null);
-      setItems((data ?? []) as AVerser[]);
-    });
-  }
-  useEffect(() => { setItems(null); charger(); }, [point.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const compteurs = useMemo(() => {
+    const c: Record<string, CompteurPoint> = {};
+    for (const i of items ?? []) (c[i.point.id] ??= { total: 0, urgents: 0 }).total += 1;
+    return c;
+  }, [items]);
+  const visibles = useMemo(() => (items ?? []).filter((i) => choix === TOUS_LES_POINTS || i.point.id === choix), [items, choix]);
+  const ligneOuverte = visibles.find((i) => i.demande_id === ouvert) ?? null;
+  const bloque = (i: AVerser) => i.contestation || i.essais_restants === 0;
+  const libelleBouton = (i: AVerser) => (i.contestation ? 'Gelé' : i.essais_restants === 0 ? 'Code bloqué' : 'Payer');
+  const titreBouton = (i: AVerser) => (i.contestation ? 'Contestation en cours : paiement gelé' : i.essais_restants === 0 ? 'Code bloqué après 5 essais : contactez le support Wonjo' : undefined);
 
-  const total = useMemo(() => (items ?? []).reduce((s, i) => s + Number(i.montant_local), 0), [items]);
+  const colonnes: Column<LigneAVerser>[] = [
+    ...(plusieurs ? [{ key: 'point', label: 'Point', value: (i: LigneAVerser) => i.point.nom, filter: 'options' as const, render: (i: LigneAVerser) => <strong className="pr-nowrap">{i.point.nom}</strong> }] : []),
+    { key: 'ref', label: 'Référence', value: (i) => i.reference, render: (i) => <span className="pr-ref">#{i.reference}</span> },
+    { key: 'voyageur', label: 'Voyageur', value: (i) => i.porteur_nom ?? '', render: (i) => <strong className="pr-nowrap">{i.porteur_nom ?? 'Voyageur'}</strong> },
+    { key: 'tel', label: 'Téléphone', value: (i) => i.porteur_telephone ?? '', render: (i) => (i.porteur_telephone ? <span className="pr-nowrap">{i.porteur_telephone}</span> : <span className="hint">-</span>) },
+    { key: 'trajet', label: 'Trajet', value: (i) => i.trajet ?? '', render: (i) => <span className="pr-nowrap">{i.trajet}</span> },
+    { key: 'montant', label: 'À verser', value: (i) => Number(i.montant_local), render: (i) => <strong className="pr-nowrap">{montantLocal(i.montant_local, i.devise)}</strong> },
+    { key: 'euros', label: 'En euros', value: (i) => Number(i.montant_eur), render: (i) => <span className="pr-nowrap">{montantEuros(i.montant_eur)}</span> },
+    { key: 'livre', label: 'Livré', value: (i) => i.livre_at ?? '', filter: 'date', render: (i) => (i.livre_at ? dateJour(i.livre_at) : '-') },
+    { key: 'etat', label: 'Point de paiement', value: (i) => (i.contestation ? 'Contestation : gelé' : i.point_de_versement ? 'Point d\'arrivée' : 'Point du dépôt'), filter: 'options',
+      render: (i) => (i.contestation ? <Badge tone="danger">Gelé</Badge> : <Badge tone={i.point_de_versement ? 'teal' : 'muted'}>{i.point_de_versement ? 'Arrivée' : 'Dépôt'}</Badge>) },
+    { key: 'actions', label: '', width: 130, render: (i) => (
+      <button className="pr-paie-btn pr-paie-btn--stripe" disabled={bloque(i)} title={titreBouton(i)}
+              onClick={(e) => { e.stopPropagation(); setMessage(null); setAPayer(i); }}>{libelleBouton(i)}</button>
+    ) },
+  ];
 
   return (
     <div>
       <div className="pr-entete">
         <div>
-          <h3>Voyageurs à payer</h3>
-          <p className="hint">
-            Colis livrés depuis 24 h, sans litige. Payez le voyageur seulement avec son <strong>code de retrait</strong> : il le trouve dans l'app, sur la fiche du colis.
-          </p>
+          <h3>Voyageurs à payer<InfoBulle>Colis livrés depuis 24 h, sans litige. Payez le voyageur seulement avec son <strong>code de retrait</strong>, visible dans l'app sur la fiche du colis.</InfoBulle></h3>
         </div>
-        {items && items.length > 0 && (
-          <div className="pr-total">
-            <span>{items.length} à payer</span>
-            <strong>{montantLocal(total, point.devise)}</strong>
-          </div>
-        )}
       </div>
 
       {message && <p className="success-text" style={{ marginBottom: 12 }}>{message}</p>}
       {error && <p className="page-error">{error}</p>}
 
-      {!items ? <p className="loading-state">Chargement…</p> : items.length === 0 ? (
-        <div className="empty-state">Aucun voyageur à payer pour le moment.</div>
-      ) : (
-        <div className="pr-grid">
-          {items.map((i) => (
-            <article key={i.demande_id} className="pr-card">
-              <div className="pr-card-haut">
-                <span className="pr-ref">#{i.reference}</span>
-                {i.contestation
-                  ? <Badge tone="danger">Contestation : gelé</Badge>
-                  : <Badge tone={i.point_de_versement ? 'teal' : 'muted'}>{i.point_de_versement ? 'Point d\'arrivée' : 'Point du dépôt'}</Badge>}
-              </div>
-              <div className="pr-montant">
-                <strong>{montantLocal(i.montant_local, i.devise)}</strong>
-                <span>{montantEuros(i.montant_eur)} · prix du voyageur</span>
-              </div>
-              <div className="pr-ligne">
-                <span className="pr-libelle">Voyageur</span>
-                <span>
-                  {i.porteur_nom ?? 'Voyageur'}
-                  {i.porteur_telephone && <> · <a className="pr-tel" href={`tel:${i.porteur_telephone.replace(/[^\d+]/g, '')}`}>{i.porteur_telephone}</a></>}
-                </span>
-              </div>
-              <div className="pr-ligne"><span className="pr-libelle">Trajet</span><span>{i.trajet}</span></div>
-              {i.mm_numero && (
-                <div className="pr-ligne"><span className="pr-libelle">À envoyer sur</span><strong>{LABEL_MOYEN_VERSEMENT[i.mm_operateur ?? ''] ?? 'Mobile money'} {i.mm_numero}</strong></div>
-              )}
-              {i.livre_at && <div className="pr-ligne"><span className="pr-libelle">Livré</span><span>{dateCourte(i.livre_at)}</span></div>}
-              {i.essais_restants < 5 && (
-                <div className="pr-ligne"><span className="pr-libelle">Code</span><span style={{ color: 'var(--badge-amber-fg)' }}>{i.essais_restants} essai{i.essais_restants > 1 ? 's' : ''} restant{i.essais_restants > 1 ? 's' : ''}</span></div>
-              )}
-              <button className="btn btn-primary pr-action" disabled={i.contestation || i.essais_restants === 0}
-                      onClick={() => { setMessage(null); setAPayer(i); }}
-                      title={i.essais_restants === 0 ? 'Code bloqué après 5 essais : contactez le support Wonjo' : undefined}>
-                {i.essais_restants === 0 ? 'Code bloqué' : 'Payer le voyageur'}
+      {!items ? <p className="loading-state">Chargement…</p> : (
+        <>
+          <BandePoints points={points} compteurs={compteurs} choix={choix} onChoix={setChoix} />
+          <div className="pr-dense">
+            <DataTable rows={visibles} columns={colonnes} rowKey={(i) => i.demande_id} integre title="Voyageurs à payer par le point" pageSize={10}
+                       initialSort={{ key: 'livre', dir: 'asc' }} onRowClick={(i) => setOuvert(i.demande_id)}
+                       emptyText="Aucun voyageur à payer pour le moment." />
+          </div>
+        </>
+      )}
+
+      {ligneOuverte && (
+        <PanneauLateral
+          titre={<>#{ligneOuverte.reference}</>}
+          sousTitre={<>{ligneOuverte.point.nom} · {ligneOuverte.porteur_nom ?? 'Voyageur'}</>}
+          onClose={() => setOuvert(null)}
+          pied={(
+            <>
+              <button className="btn" onClick={() => setOuvert(null)}>Fermer</button>
+              <button className="btn btn-primary" disabled={bloque(ligneOuverte)} title={titreBouton(ligneOuverte)}
+                      onClick={() => { setMessage(null); setAPayer(ligneOuverte); }}>
+                {bloque(ligneOuverte) ? libelleBouton(ligneOuverte) : 'Payer le voyageur'}
               </button>
-            </article>
-          ))}
-        </div>
+            </>
+          )}
+        >
+          {(() => {
+            const i = ligneOuverte;
+            return (
+              <>
+                <div className="panneau-montant">
+                  <strong>{montantLocal(i.montant_local, i.devise)}</strong>
+                  <span>{montantEuros(i.montant_eur)} · prix du voyageur</span>
+                </div>
+                <dl className="panneau-liste">
+                  <dt>Voyageur</dt>
+                  <dd>{i.porteur_nom ?? 'Voyageur'}{i.porteur_telephone && <> · <a className="pr-tel" href={`tel:${i.porteur_telephone.replace(/[^\d+]/g, '')}`}>{i.porteur_telephone}</a></>}</dd>
+                  <dt>Trajet</dt><dd>{i.trajet}</dd>
+                  {i.mm_numero && <><dt>À envoyer sur</dt><dd><strong>{LABEL_MOYEN_VERSEMENT[i.mm_operateur ?? ''] ?? 'Mobile money'} {i.mm_numero}</strong></dd></>}
+                  {i.livre_at && <><dt>Livré</dt><dd>{dateCourte(i.livre_at)}</dd></>}
+                  <dt>Paiement</dt><dd>{i.contestation ? 'Contestation : gelé' : i.point_de_versement ? 'Point d\'arrivée' : 'Point du dépôt'}</dd>
+                  {i.essais_restants < 5 && (
+                    <><dt>Code</dt><dd style={{ color: 'var(--badge-amber-fg)' }}>{i.essais_restants} essai{i.essais_restants > 1 ? 's' : ''} restant{i.essais_restants > 1 ? 's' : ''}</dd></>
+                  )}
+                  <dt>Point</dt><dd>{i.point.nom}</dd>
+                </dl>
+              </>
+            );
+          })()}
+        </PanneauLateral>
       )}
 
       {aPayer && (
-        <PayerModal point={point} item={aPayer} onClose={() => { setAPayer(null); charger(); }}
-          onPaye={(texte) => { setAPayer(null); setMessage(texte); charger(); }} />
+        <PayerModal point={aPayer.point} item={aPayer} onClose={() => { setAPayer(null); charger(); }}
+          onPaye={(texte) => { setAPayer(null); setOuvert(null); setMessage(texte); charger(); }} />
       )}
     </div>
   );

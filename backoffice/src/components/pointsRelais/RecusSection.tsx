@@ -1,7 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { InfoBulle } from '../InfoBulle';
 import { supabase } from '../../lib/supabase';
-import { Modal } from '../Modal';
 import { DataTable, type Column } from '../DataTable';
+import { PanneauLateral } from '../PanneauLateral';
+import { useMultiPoints } from '../../lib/useMultiPoints';
+import { BandePoints, TOUS_LES_POINTS, type CompteurPoint } from './BandePoints';
 import { useConfirmation } from '../Confirmation';
 import { BadgeStatutRecu, RecuActions } from './RecuActions';
 import { dateCourte, montantLocal, type PointRelais } from '../../lib/pointsRelais';
@@ -11,45 +14,56 @@ import { LIBELLE_STATUT_RECU, dateRecu, montantEurRecu, montantRecu, type Recu }
 // annulé, caduc si la demande a été annulée depuis), et pour chacun : PDF, impression, e-mail, annulation (motif obligatoire,
 // seulement tant qu'il n'a pas servi). Un reçu ne se modifie ni ne s'efface : la liste est une trace.
 
-interface LigneRecu {
+interface LigneRecuBrute {
   id: string; numero: string; statut: string; emis_at: string; payeur_nom: string | null; montant_local: number; devise: string;
   reference: string | null; demande_id: string; emis_par_nom: string | null; utilise_at: string | null; annule_motif: string | null; envois: number;
 }
 
-export function RecusSection({ point }: { point: PointRelais }) {
-  const [recus, setRecus] = useState<LigneRecu[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [ouvert, setOuvert] = useState<string | null>(null);
+type LigneRecu = LigneRecuBrute & { point: PointRelais };
 
-  function charger() {
-    supabase.rpc('admin_pr_lister_recus', { p_point_id: point.id }).then(({ data, error: e }) => {
-      if (e) { setError(e.message); setRecus([]); return; }
-      setRecus((data ?? []) as LigneRecu[]);
-    });
-  }
-  useEffect(charger, [point.id]); // eslint-disable-line react-hooks/exhaustive-deps
+export function RecusSection({ points }: { points: PointRelais[] }) {
+  const { items: recus, error, recharger: charger } = useMultiPoints<LigneRecuBrute>(points, 'lister_recus');
+  const [ouvert, setOuvert] = useState<string | null>(null);
+  const [choix, setChoix] = useState(TOUS_LES_POINTS);
+  const plusieurs = points.length > 1;
+
+  const compteurs = useMemo(() => {
+    const c: Record<string, CompteurPoint> = {};
+    for (const r of recus ?? []) {
+      const x = (c[r.point.id] ??= { total: 0, urgents: 0 });
+      x.total += 1;
+      if (r.statut === 'emis') x.urgents += 1;
+    }
+    return c;
+  }, [recus]);
+  const visibles = useMemo(() => (recus ?? []).filter((r) => choix === TOUS_LES_POINTS || r.point.id === choix), [recus, choix]);
 
   const colonnes: Column<LigneRecu>[] = [
-    { key: 'numero', label: 'Reçu', value: (r) => r.numero, render: (r) => <strong>{r.numero}</strong>, width: 150 },
-    { key: 'date', label: 'Édité le', value: (r) => r.emis_at, render: (r) => dateCourte(r.emis_at), width: 160, filter: 'date' },
-    { key: 'payeur', label: 'Payé par', value: (r) => r.payeur_nom ?? '', render: (r) => <>{r.payeur_nom ?? '-'}{r.reference ? <span className="hint"> · #{r.reference}</span> : null}</> },
-    { key: 'montant', label: 'Montant', value: (r) => Number(r.montant_local), render: (r) => <strong>{montantLocal(r.montant_local, r.devise)}</strong>, width: 140 },
-    { key: 'statut', label: 'État', value: (r) => LIBELLE_STATUT_RECU[r.statut] ?? r.statut, filter: 'options', width: 110, render: (r) => <BadgeStatutRecu statut={r.statut} /> },
-    { key: 'par', label: 'Édité par', value: (r) => r.emis_par_nom ?? '', width: 150 },
+    ...(plusieurs ? [{ key: 'point', label: 'Point', value: (r: LigneRecu) => r.point.nom, filter: 'options' as const, render: (r: LigneRecu) => <strong className="pr-nowrap">{r.point.nom}</strong> }] : []),
+    { key: 'numero', label: 'Reçu', value: (r) => r.numero, render: (r) => <strong>{r.numero}</strong> },
+    { key: 'date', label: 'Édité le', value: (r) => r.emis_at, render: (r) => dateCourte(r.emis_at), filter: 'date' },
+    { key: 'payeur', label: 'Payé par', value: (r) => r.payeur_nom ?? '', render: (r) => <span className="pr-nowrap">{r.payeur_nom ?? '-'}{r.reference ? <span className="hint"> · #{r.reference}</span> : null}</span> },
+    { key: 'montant', label: 'Montant', value: (r) => Number(r.montant_local), render: (r) => <strong className="pr-nowrap">{montantLocal(r.montant_local, r.devise)}</strong> },
+    { key: 'statut', label: 'État', value: (r) => LIBELLE_STATUT_RECU[r.statut] ?? r.statut, filter: 'options', render: (r) => <BadgeStatutRecu statut={r.statut} /> },
+    { key: 'par', label: 'Édité par', value: (r) => r.emis_par_nom ?? '', render: (r) => <span className="pr-nowrap">{r.emis_par_nom ?? '-'}</span> },
   ];
 
   return (
     <div>
       <div className="pr-entete">
         <div>
-          <h3>Reçus d'espèces · {point.nom}</h3>
-          <p className="hint">Chaque paiement en espèces s'encaisse avec un reçu édité ici : numéro unique, jamais réutilisé, vérifié à l'encaissement.</p>
+          <h3>Reçus d'espèces<InfoBulle>Chaque paiement en espèces s'encaisse avec un reçu édité ici : numéro unique, vérifié à l'encaissement.</InfoBulle></h3>
         </div>
       </div>
       {error && <p className="page-error">{error}</p>}
       {!recus ? <p className="loading-state">Chargement des reçus…</p> : (
-        <DataTable rows={recus} columns={colonnes} rowKey={(r) => r.id} title="Reçus" integre emptyText="Aucun reçu édité pour le moment."
-                   initialSort={{ key: 'date', dir: 'desc' }} pageSize={15} onRowClick={(r) => setOuvert(r.id)} />
+        <>
+          <BandePoints points={points} compteurs={compteurs} choix={choix} onChoix={setChoix} />
+          <div className="pr-dense">
+            <DataTable rows={visibles} columns={colonnes} rowKey={(r) => r.id} title="Reçus" integre emptyText="Aucun reçu édité pour le moment."
+                       initialSort={{ key: 'date', dir: 'desc' }} pageSize={15} onRowClick={(r) => setOuvert(r.id)} />
+          </div>
+        </>
       )}
       {ouvert && <RecuModal id={ouvert} onClose={() => setOuvert(null)} onChange={charger} />}
     </div>
@@ -85,9 +99,7 @@ function RecuModal({ id, onClose, onChange }: { id: string; onClose: () => void;
 
   const c = recu?.contenu;
   return (
-    <Modal onClose={onClose}>
-      <h2 className="modal-title">Reçu {recu?.numero ?? ''}</h2>
-      <div className="modal-body">
+    <PanneauLateral titre={<>Reçu {recu?.numero ?? ''}</>} sousTitre={c?.dossier?.trajet ?? undefined} onClose={onClose}>
         {error && <p className="page-error">{error}</p>}
         {!recu && !error && <p className="loading-state">Chargement…</p>}
         {recu && c && (
@@ -111,8 +123,7 @@ function RecuModal({ id, onClose, onChange }: { id: string; onClose: () => void;
             </div>
           </>
         )}
-      </div>
       {fenetre}
-    </Modal>
+    </PanneauLateral>
   );
 }

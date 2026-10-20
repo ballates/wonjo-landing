@@ -30,7 +30,7 @@ export interface ServerColumn<T> {
 export function ServerTable<T>({
   rows, columns, rowKey, loading, emptyText = 'Aucun résultat.',
   search, onSearchChange, searchPlaceholder = 'Rechercher…',
-  toolbar, title,
+  toolbar, title, integre = false,
   total, page, pageSize, onPageChange,
   sort, onSortChange,
   filtres, onFiltreChange,
@@ -46,6 +46,7 @@ export function ServerTable<T>({
   searchPlaceholder?: string;
   toolbar?: ReactNode;
   title?: ReactNode;
+  integre?: boolean;
   total: number;
   page: number;
   pageSize: number;
@@ -92,7 +93,7 @@ export function ServerTable<T>({
   const filtresActifs = columns.filter(filtreActifPour);
 
   return (
-    <div>
+    <div className={integre ? 'dt-integre' : undefined}>
       <div className={`dt-toolbar ${title ? 'dt-toolbar--titled' : ''}`}>
         {title && <h3 className="dt-title">{title}</h3>}
         {toolbar}

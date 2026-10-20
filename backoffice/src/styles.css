@@ -583,6 +583,9 @@ select:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px r
   margin-bottom: 20px;
 }
 .panel h3, .chart-card h3 { margin: 0 0 4px; font-size: 15px; }
+.chart-card--compact { padding: 10px 14px; }
+.chart-card--compact .chart-head { margin-bottom: 2px; }
+.chart-card--compact .chart-sub { margin: 0; }
 .chart-sub { margin: 0 0 12px; font-size: 12.5px; color: var(--muted); }
 
 .chart-with-side { display: flex; gap: 16px; align-items: flex-start; }
@@ -2198,6 +2201,7 @@ tr.is-modifie td { background: var(--accent-soft); }
 .pr-filtres-effacer:hover { background: var(--hover); }
 .pr-compteur { margin: 6px 2px 0; font-size: 13px; color: var(--muted); }
 .pr-compteur strong { color: var(--text); font-size: 15px; }
+.pr-filtres .pr-compteur--filtres { margin: 0 2px 8px auto; white-space: nowrap; }
 .pr-trajet--cliquable { cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease; }
 .pr-trajet--cliquable:hover { transform: translateY(-2px); border-color: var(--teal); box-shadow: 0 10px 24px rgba(20,18,40,0.10); }
 .pr-trajet--cliquable:focus-visible { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(74,136,150,0.25); }
@@ -2396,14 +2400,14 @@ a.pr-btn-icone { text-decoration: none; }
 /* Fiche d'un dossier */
 .pr-fiche-grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
 .pr-fiche-grille section { padding: 12px 14px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--border); }
-.pr-fiche-grille h4 { margin: 0 0 6px; font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
-.pr-fiche-grille p { margin: 0 0 4px; font-size: 14px; }
+.pr-fiche-grille h4 { margin: 0 0 6px; font-size: 11.5px; font-weight: 700; color: var(--muted); }
+.pr-fiche-grille p { margin: 0 0 4px; font-size: 13px; }
 .pr-copiable { display: inline-flex; align-items: center; gap: 8px; font-variant-numeric: tabular-nums; }
 .pr-copiable button { border: 1px solid var(--border); background: var(--surface); color: var(--muted); border-radius: 8px; padding: 2px 8px; font-size: 11.5px; font-weight: 700; cursor: pointer; }
 .pr-copiable button:hover { border-color: var(--teal); color: var(--teal); }
 .pr-lien-wa { font-size: 12.5px; font-weight: 700; color: var(--accent-ink, var(--teal)); }
 .pr-fiche-etapes { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-.pr-fiche-etapes li { display: flex; flex-direction: column; font-size: 13px; color: var(--muted); padding-left: 18px; position: relative; }
+.pr-fiche-etapes li { display: flex; flex-direction: column; font-size: 12.5px; color: var(--muted); padding-left: 18px; position: relative; }
 .pr-fiche-etapes li::before { content: ''; position: absolute; left: 2px; top: 5px; width: 9px; height: 9px; border-radius: 50%; border: 2px solid var(--border); background: var(--surface); }
 .pr-fiche-etapes li.fait { color: var(--text); }
 .pr-fiche-etapes li.fait::before { background: #1D9E75; border-color: #1D9E75; }
@@ -2452,7 +2456,7 @@ a.pr-btn-icone { text-decoration: none; }
 /* Fiche d'un dossier : résumé, personnes, dates */
 .pr-fiche-resume { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; }
 .pr-fiche-tuile { display: flex; flex-direction: column; gap: 3px; padding: 12px 14px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--border); min-width: 0; }
-.pr-fiche-tuile > span { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.pr-fiche-tuile > span { font-size: 11px; font-weight: 700; color: var(--muted); }
 .pr-fiche-tuile > strong { font-size: 17px; line-height: 1.25; }
 .pr-fiche-tuile > strong.pr-fiche-desc { font-size: 14.5px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .pr-fiche-tuile small { font-size: 12.5px; color: var(--muted); }
@@ -2460,9 +2464,9 @@ a.pr-btn-icone { text-decoration: none; }
 .pr-fiche-personnes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; }
 .pr-fiche-personne { display: flex; gap: 11px; align-items: flex-start; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); min-width: 0; }
 .pr-fiche-personne > div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.pr-fiche-personne strong { font-size: 14.5px; }
-.pr-fiche-role { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
-.pr-fiche-personne .pr-copiable { font-size: 13px; flex-wrap: wrap; }
+.pr-fiche-personne strong { font-size: 13.5px; }
+.pr-fiche-role { font-size: 11px; font-weight: 700; color: var(--muted); }
+.pr-fiche-personne .pr-copiable { font-size: 12.5px; flex-wrap: wrap; }
 .pr-fiche-histo { display: flex; flex-wrap: wrap; gap: 8px 22px; padding: 10px 14px; border-radius: 12px; background: var(--surface-2); font-size: 12.5px; color: var(--muted); }
 .pr-fiche-histo span { display: inline-flex; align-items: center; gap: 7px; }
 .pr-fiche-histo i { width: 9px; height: 9px; border-radius: 50%; border: 2px solid var(--border); background: var(--surface); }
@@ -2477,15 +2481,15 @@ a.pr-btn-icone { text-decoration: none; }
 .pr-fiche-personne { align-items: center !important; gap: 12px !important; padding: 10px 14px !important; }
 .pr-fiche-qui { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .pr-fiche-contact { display: flex !important; flex-direction: row !important; align-items: center; gap: 14px !important; flex-wrap: wrap; justify-content: flex-end; }
-.pr-fiche-contact .pr-copiable { font-size: 13.5px; }
+.pr-fiche-contact .pr-copiable { font-size: 12.5px; }
 @media (max-width: 760px) { .pr-fiche-personne { flex-wrap: wrap; } .pr-fiche-contact { width: 100%; justify-content: flex-start; } }
 .pr-dossiers-table th, .pr-dossiers-table td { padding: 10px 6px; }
 
 /* Tuiles du résumé de la fiche : plus basses, description en plus petit */
 .pr-fiche-tuile { padding: 9px 13px !important; gap: 1px !important; }
-.pr-fiche-tuile > strong { font-size: 15.5px !important; }
+.pr-fiche-tuile > strong { font-size: 14.5px !important; }
 .pr-fiche-tuile > strong.pr-fiche-desc { font-size: 12.5px !important; font-weight: 600 !important; -webkit-line-clamp: 2 !important; line-height: 1.35; }
-.pr-fiche-tuile small { font-size: 12px !important; }
+.pr-fiche-tuile small { font-size: 11.5px !important; }
 
 /* Fiche plus compacte : parcours plus bas, personnes sur des lignes basses et en plus petit */
 .pr-parcours { padding: 10px 14px !important; margin-bottom: 12px !important; }
@@ -2549,3 +2553,318 @@ a.pr-btn-icone { text-decoration: none; }
 
 /* En-tête de la fiche : titre, état et bouton Messages sur la même ligne */
 .cg-entete .btn { flex: none; }
+
+/* Tableaux du back-office a lire d'un coup d'oeil, une ligne par element : cellules resserrees, police reduite. */
+.pr-dense th, .pr-dense td { padding: 9px 8px; font-size: 12px; }
+.pr-dense th:first-child, .pr-dense td:first-child { padding-left: 14px; }
+.pr-dense th:last-child, .pr-dense td:last-child { padding-right: 14px; }
+.pr-dense .hint { font-size: 11.5px; }
+.pr-dense .pr-copiable { gap: 5px; }
+.pr-dense .pr-copiable button { width: 22px !important; height: 22px !important; }
+.pr-paie { display: flex; align-items: center; justify-content: flex-end; gap: 6px; white-space: nowrap; }
+.pr-paie-btn { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 12px; border-radius: 999px; border: 1px solid transparent; font: inherit; font-size: 12px; font-weight: 650; cursor: pointer; white-space: nowrap; transition: filter 0.15s ease, border-color 0.15s ease, background 0.15s ease; }
+.pr-paie-btn--stripe { background: var(--brand-gradient); color: #fff; box-shadow: var(--cta-shadow); }
+.pr-paie-btn--stripe:hover { filter: brightness(1.08); }
+.pr-paie-btn--autre { background: transparent; color: var(--muted); border-color: var(--border); }
+.pr-paie-btn--autre:hover { color: var(--accent-ink); border-color: var(--teal); background: var(--accent-soft); }
+
+/* Filtre « Tous les points » : un bloc par point, etiquete de son nom. */
+.pr-bloc-point + .pr-bloc-point { margin-top: 28px; padding-top: 22px; border-top: 1px solid var(--border); }
+.pr-etiquette-point { display: flex; align-items: baseline; gap: 10px; margin: 0 0 14px; }
+.pr-etiquette-point strong { font-size: 15px; padding: 3px 12px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); }
+.pr-etiquette-point span { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+
+/* Caisse du reseau : un tableau compact plutot que des cartes. */
+.pr-reseau-tableau { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow-sm); overflow: hidden; margin-bottom: 18px; }
+.pr-reseau-rang { display: grid; grid-template-columns: minmax(150px, 1.3fr) repeat(3, minmax(110px, 1fr)) 90px 110px 90px; align-items: center; gap: 10px; padding: 9px 14px; border: 0; border-bottom: 1px solid var(--border); background: transparent; font: inherit; font-size: 12.5px; text-align: left; color: var(--text); font-variant-numeric: tabular-nums; }
+.pr-reseau-rang:last-child { border-bottom: 0; }
+div.pr-reseau-rang--ligne { cursor: pointer; }
+div.pr-reseau-rang--ligne:hover { background: var(--hover); }
+.pr-reseau-rang--tete { padding: 8px 14px; background: var(--surface-2); color: var(--muted); font-size: 12.5px; font-weight: 700; }
+.pr-reseau-nom { display: flex; flex-direction: column; gap: 0; min-width: 0; }
+.pr-reseau-nom small { font-size: 11.5px; color: var(--muted); }
+@media (max-width: 760px) { .pr-reseau-rang { grid-template-columns: 1fr 1fr; } .pr-reseau-rang--tete { display: none; } }
+
+/* Poches d'une caisse : cartes plus compactes. */
+.pr-grid--caisse { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.pr-grid--caisse .pr-card { padding: 11px 13px; gap: 5px; border-radius: var(--radius); }
+.pr-grid--caisse .pr-montant { margin: 0; }
+.pr-grid--caisse .pr-montant strong { font-size: 19px; }
+.pr-grid--caisse .pr-ligne { font-size: 12px; grid-template-columns: 80px 1fr; }
+.pr-grid--caisse .pr-action { margin-top: 2px; height: 30px; font-size: 12.5px; }
+
+/* Panneau lateral : detail d'une ligne, a droite du tableau. */
+.panneau-fond { position: fixed; inset: 0; z-index: 40; background: rgba(10,10,20,0.28); display: flex; justify-content: flex-end; }
+.panneau { width: min(460px, 100vw); height: 100%; display: flex; flex-direction: column; background: var(--surface); border-left: 1px solid var(--border); box-shadow: -12px 0 32px rgba(0,0,0,0.16); }
+.panneau-tete { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 18px 20px 14px; border-bottom: 1px solid var(--border); }
+.panneau-titres h2 { margin: 0; font-size: 17px; }
+.panneau-titres p { margin: 3px 0 0; font-size: 12.5px; color: var(--muted); }
+.panneau-fermer { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; border: 1px solid var(--border); background: var(--surface-2); color: var(--muted); cursor: pointer; }
+.panneau-fermer:hover { color: var(--ink); background: var(--hover); }
+.panneau-corps { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
+.panneau-pied { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; background: var(--surface); }
+.panneau-montant { display: flex; flex-direction: column; gap: 2px; padding: 14px 16px; border-radius: var(--radius); background: var(--surface-2); border: 1px solid var(--border); }
+.panneau-montant strong { font-size: 24px; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.panneau-montant span { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+.panneau-liste { display: grid; grid-template-columns: 110px 1fr; gap: 10px 12px; margin: 0; font-size: 13px; }
+.panneau-liste dt { color: var(--muted); font-weight: 600; }
+.panneau-liste dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+
+/* Bande de synthese par point (filtre cliquable avec compteurs). */
+.bande-points { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.bande-carte { display: inline-flex; flex-direction: row; align-items: center; gap: 14px; min-width: 0; padding: 7px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); text-align: left; font: inherit; color: var(--text); cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease; }
+.bande-carte:hover { border-color: var(--teal); }
+.bande-carte.on { border-color: var(--teal); background: var(--accent-soft); }
+.bande-nom { display: flex; flex-direction: column; }
+.bande-nom strong { font-size: 13px; white-space: nowrap; }
+.bande-chiffres { display: flex; align-items: baseline; }
+.bande-chiffres b { font-size: 15px; font-variant-numeric: tabular-nums; line-height: 1; padding: 2px 7px; border-radius: 4px; background: var(--surface-2); }
+.bande-carte.on .bande-chiffres b { background: var(--surface); }
+
+/* Total detenu d'une caisse : une ligne, en haut a droite de l'entete. */
+.pr-entete:has(.pr-total--ligne) { align-items: flex-start; }
+.pr-total--ligne { flex-direction: row; align-items: baseline; gap: 10px; padding: 6px 14px; border-radius: 999px; }
+.pr-total--ligne strong { font-size: 17px; }
+.pr-total--ligne small.pr-equiv { margin-left: 0; }
+
+/* Fenetre « Payer via Stripe » (compacte) */
+.vs-tete { display: flex; align-items: center; gap: 10px; padding: 16px 56px 0 20px; }
+.vs-tete h2 { margin: 0; font-size: 17px; }
+.vs-tete p { margin: 1px 0 0; font-size: 12px; color: var(--muted); }
+.vs-pastille { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: var(--brand-gradient); color: #fff; box-shadow: var(--cta-shadow); }
+.vs-flux { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.vs-bord { flex: 1 1 130px; display: flex; flex-direction: column; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-2); min-width: 0; }
+.vs-bord small { font-size: 10.5px; color: var(--muted); font-weight: 600; line-height: 1.2; }
+.vs-bord strong { font-size: 13px; overflow-wrap: anywhere; line-height: 1.25; }
+.vs-bord--dest { border-color: var(--teal); background: var(--accent-soft); }
+.vs-fleche { flex: none; width: 16px; height: 2px; background: var(--muted); position: relative; }
+.vs-fleche::after { content: ''; position: absolute; right: -1px; top: -3px; width: 7px; height: 7px; border-top: 2px solid var(--muted); border-right: 2px solid var(--muted); transform: rotate(45deg); }
+.vs-montant { flex: 1 1 100%; display: flex; align-items: baseline; justify-content: center; gap: 8px; padding: 6px 0 2px; }
+.vs-montant strong { font-size: 26px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.vs-montant span { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+.vs-note { margin: 0; font-size: 12px; line-height: 1.45; color: var(--muted); }
+.vs-note b { color: var(--text); }
+.vs-confirme { display: flex; align-items: flex-start; gap: 9px; padding: 8px 11px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); font-size: 12.5px; font-weight: 600; cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease; }
+.vs-confirme.on { border-color: var(--teal); background: var(--accent-soft); }
+.vs-confirme input { margin-top: 2px; }
+.vs-pied { display: flex; justify-content: flex-end; gap: 8px; margin-top: 2px; }
+
+/* Caisse d'un point : barre d'actions et poches compactes. */
+.ca-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.ca-sep { width: 1px; height: 22px; background: var(--border); margin: 0 4px; }
+.ca-poches { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 240px)); gap: 10px; }
+.ca-poche { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); }
+.ca-poche-haut { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ca-poche-haut .pr-poche { font-size: 13px; }
+.ca-poche-montant { font-size: 19px; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; line-height: 1.2; }
+.ca-poche .pr-jauge { margin: 0; height: 4px; }
+.ca-poche-bas { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: auto; padding-top: 4px; border-top: 1px solid var(--border); }
+.ca-poche-bas small { font-size: 11px; color: var(--muted); }
+.ca-lien { border: 0; background: transparent; padding: 0; font: inherit; font-size: 12px; font-weight: 700; color: var(--accent-ink); cursor: pointer; }
+.ca-lien:hover { text-decoration: underline; }
+.ca-cloture-liste { display: grid; gap: 8px; }
+.ca-cloture-liste label { display: grid; grid-template-columns: 140px 1fr; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 8px; border: 1px solid transparent; }
+.ca-cloture-liste label.ecart { border-color: var(--badge-danger-fg); background: var(--badge-danger-bg); }
+@media (max-width: 560px) { .ca-cloture-liste label { grid-template-columns: 1fr; } }
+
+.pr-reseau-tete { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 12px; }
+.pr-reseau-tete h3 { margin: 0; font-size: 16px; }
+.pr-reseau-tete .pr-total { margin-left: auto; }
+
+/* Fenetre « Cloturer la journee » */
+.cl-tete { display: flex; align-items: center; gap: 10px; padding: 16px 56px 0 20px; }
+.cl-tete h2 { margin: 0; font-size: 17px; }
+.cl-tete p { margin: 1px 0 0; font-size: 12px; color: var(--muted); text-transform: capitalize; }
+.cl-pastille { flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--brand-gradient); color: #fff; box-shadow: var(--cta-shadow); }
+.cl-aide { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+.cl-aide--bas { font-size: 11.5px; }
+.cl-liste { display: grid; gap: 6px; }
+.cl-ligne { display: grid; grid-template-columns: minmax(120px, 0.8fr) 1.2fr; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); transition: border-color 0.15s ease, background 0.15s ease; }
+.cl-ligne.fait { border-color: var(--teal); background: var(--accent-soft); }
+.cl-ligne.ecart { border-color: var(--badge-danger-fg); background: var(--badge-danger-bg); }
+.cl-nom { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; font-size: 13px; }
+.cl-ecart { display: grid; gap: 8px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--badge-danger-fg); background: var(--badge-danger-bg); }
+.cl-ecart p { margin: 0; font-size: 12.5px; line-height: 1.45; }
+.cl-ecart textarea { width: 100%; resize: vertical; }
+.cl-ecart .ca-lien { justify-self: start; }
+.cl-pied { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+.cl-progres { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.cl-barre { display: block; height: 4px; border-radius: 2px; background: var(--surface-2); overflow: hidden; }
+.cl-barre span { display: block; height: 100%; background: var(--teal); border-radius: 2px; transition: width 0.2s ease; }
+.cl-progres small { font-size: 11px; color: var(--muted); }
+@media (max-width: 560px) { .cl-ligne { grid-template-columns: 1fr; } }
+
+/* Montant a saisir dans la cloture : un grand chiffre aligne a droite sur la ligne, sans cadre de formulaire. */
+.cl-ligne { cursor: text; }
+.cl-ligne:focus-within { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(74,136,150,0.15); }
+.cl-ligne .champ-montant { justify-self: end; width: 100%; max-width: 230px; }
+.cl-ligne .champ-montant input { border: 0 !important; background: transparent !important; box-shadow: none !important; outline: none; text-align: right; height: 38px; padding: 0 52px 0 0; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
+.cl-ligne .champ-montant input::placeholder { color: var(--muted); opacity: 0.45; }
+.cl-ligne .champ-montant-unite { right: 0; font-size: 12px; }
+.cl-ligne.fait .champ-montant input { color: var(--accent-ink); }
+
+/* Regularisation d'un ecart */
+.rg-chiffres { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.rg-chiffres > div { display: flex; flex-direction: column; gap: 1px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-2); }
+.rg-chiffres small { font-size: 11px; color: var(--muted); font-weight: 600; }
+.rg-chiffres strong { font-size: 14px; font-variant-numeric: tabular-nums; }
+.rg-chiffres .rg-manque { border-color: var(--badge-danger-fg); background: var(--badge-danger-bg); }
+.rg-chiffres .rg-surplus { border-color: var(--badge-amber-fg); background: var(--badge-amber-bg); }
+.cl-motif { display: flex; flex-direction: column; gap: 5px; font-weight: 700; font-size: 12.5px; }
+.cl-motif textarea { width: 100%; resize: vertical; font-weight: 400; }
+
+/* Fenetre « Nouveau point relais » : cartes cote a cote, horaires compacts, pas de sous-titres. */
+.modal:has(.pm-grille) { width: 900px; max-width: 100%; }
+.pm-grille { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+.pm-carte { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); min-width: 0; }
+.pm-carte--large { grid-column: 1 / -1; }
+.pm-carte h3 { margin: 0; font-size: 13px; font-weight: 800; }
+.pm-carte label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; font-weight: 700; min-width: 0; }
+.pm-duo { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pm-duo--etroit { grid-template-columns: 1fr auto; align-items: end; }
+.pm-trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.pm-bascule { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 700; }
+.pm-bascule label { flex-direction: row; }
+.pm-comptes { display: flex; flex-direction: column; gap: 6px; }
+.pm-comptes-tete { display: flex; align-items: center; justify-content: space-between; font-size: 12.5px; font-weight: 700; }
+.pm-vide { margin: 0; font-size: 12.5px; color: var(--muted); }
+.pm-carte .compte-mm { margin-top: 0; padding: 8px; gap: 6px; border-radius: 10px; }
+.pm-pied { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+@media (max-width: 760px) { .pm-grille, .pm-duo, .pm-trio { grid-template-columns: 1fr; } .pm-duo--etroit { grid-template-columns: 1fr auto; } }
+
+/* Horaires compacts : deux colonnes de jours, lignes basses, sans cadre superflu. */
+.champ-horaires--compact { border: 0; padding: 0; background: transparent; }
+.champ-horaires--compact .champ-horaires-modeles { margin-bottom: 8px; }
+.champ-horaires--compact .champ-horaires-jours { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; }
+.champ-horaires--compact .champ-horaires-jour { min-height: 34px; gap: 8px; padding: 2px 8px; border: 1px solid var(--border); background: var(--surface-2); box-shadow: none; }
+.champ-horaires--compact .champ-horaires-jour.ouvert { background: var(--surface); border-color: var(--teal); }
+.champ-horaires--compact .champ-horaires-nom { width: 32px; font-size: 13px; }
+.champ-horaires--compact .champ-horaires-resume { margin: 8px 0 0; font-size: 12px; }
+@media (max-width: 760px) { .champ-horaires--compact .champ-horaires-jours { grid-template-columns: 1fr; } }
+
+/* Fenetre « Nouveau point relais » : champs a taille normale (hors .form-grid, ils n'avaient plus de hauteur) ; jours d'ouverture a largeur naturelle. */
+.pm-carte input[type=text], .pm-carte input[type=tel], .pm-carte input[type=search] { width: 100%; height: 42px; padding: 0 14px; font-size: 14px; }
+.pm-carte .champ-montant input { padding-right: 58px; }
+.pm-carte .ui-select { display: block; }
+.pm-carte .ui-select-trigger { height: 42px; font-size: 14px; }
+.pm-carte .compte-mm .ui-select-trigger, .pm-carte .compte-mm input[type=text] { height: 40px; }
+.pm-carte .champ-horaires .ui-select { display: inline-block; }
+.pm-carte .champ-horaires .ui-select-trigger { height: 34px; font-size: 12.5px; }
+.champ-horaires--compact .champ-horaires-jours { display: flex; flex-wrap: wrap; gap: 6px 8px; }
+.champ-horaires--compact .champ-horaires-jour { flex: 0 0 auto; }
+.champ-horaires--compact .champ-horaires-jour:not(.ouvert) { padding-right: 12px; }
+.champ-horaires--compact .champ-horaires-ferme { display: none; }
+
+/* Horaires du formulaire de point : jour le plus etroit possible (interrupteur, jour, deux heures). Le bouton « Tous » disparait : les modeles du dessus suffisent. */
+.champ-horaires--compact .champ-horaires-jours { gap: 6px; }
+.champ-horaires--compact .champ-horaires-jour { gap: 6px; padding: 2px 8px 2px 6px; min-height: 32px; }
+.champ-horaires--compact .champ-horaires-copie { display: none; }
+.champ-horaires--compact .champ-horaires-switch { width: 32px; height: 18px; }
+.champ-horaires--compact .champ-horaires-switch span { top: 2px; left: 2px; width: 14px; height: 14px; }
+.champ-horaires--compact .champ-horaires-switch.on span { transform: translateX(14px); }
+.champ-horaires--compact .champ-horaires-nom { width: 28px; font-size: 12.5px; }
+.champ-horaires--compact .ui-select { width: auto; }
+.pm-carte .champ-horaires--compact .ui-select-trigger { height: 28px; padding: 0 6px 0 8px; gap: 3px; font-size: 12px; }
+.champ-horaires--compact .ui-select-trigger .ui-select-chevron { width: 11px; height: 11px; }
+.champ-horaires--compact .champ-horaires-jours { flex-direction: row; align-items: center; }
+.champ-horaires--compact .champ-horaires-nom { width: auto; min-width: 30px; }
+
+/* Fenetre « Nouveau point relais » : une colonne de cartes pleine largeur ; les comptes mobile money s'alignent en grille sans trou. */
+.pm-grille { grid-template-columns: 1fr; }
+.pm-champs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
+.pm-champs-large { grid-column: 1 / -1; }
+.pm-enc-tete { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.pm-monnaie { flex-direction: row !important; align-items: center; gap: 8px !important; }
+.pm-monnaie input { width: 84px !important; }
+.pm-comptes-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 8px; }
+@media (max-width: 760px) { .pm-champs { grid-template-columns: 1fr; } .pm-comptes-grille { grid-template-columns: 1fr; } }
+
+.pm-champs--lieu { grid-template-columns: 1fr 1fr 1.7fr; }
+@media (max-width: 760px) { .pm-champs--lieu { grid-template-columns: 1fr; } }
+
+/* Info-bulle : « i » rond a cote d'un titre ; le texte apparait au survol ou au clic. */
+.info-bulle { position: relative; display: inline-flex; vertical-align: middle; margin-left: 6px; font-weight: 400; }
+.info-bulle-btn { width: 17px; height: 17px; padding: 0; border-radius: 50%; border: 1.5px solid var(--muted); background: transparent; color: var(--muted); font: inherit; font-size: 11px; font-weight: 800; font-style: italic; line-height: 1; cursor: pointer; display: grid; place-items: center; transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease; }
+.info-bulle-btn:hover, .info-bulle.ouvert .info-bulle-btn { color: var(--accent-ink); border-color: var(--teal); background: var(--accent-soft); }
+.info-bulle-pop { display: none; position: absolute; z-index: 60; left: -6px; top: calc(100% + 8px); width: max-content; max-width: min(340px, 80vw); padding: 10px 12px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); box-shadow: 0 12px 28px rgba(0,0,0,0.18); font-size: 12.5px; line-height: 1.5; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--text); text-align: left; white-space: normal; }
+.info-bulle:hover .info-bulle-pop, .info-bulle.ouvert .info-bulle-pop { display: block; }
+
+/* Info-bulle : vrai « i » (point + trait) et bulle assez large pour tenir sur une ligne. */
+.info-bulle-btn { width: 18px; height: 18px; font-style: normal; }
+.info-bulle-pop { max-width: min(860px, 92vw); }
+
+/* Fenetre point : l'etat actif / inactif est dans l'en-tete, toujours visible. */
+.pm-tete { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 20px 64px 0 24px; }
+.pm-tete h2 { margin: 0; font-size: 19px; }
+.pm-statut { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; }
+.pm-statut label { display: inline-flex; }
+
+/* Fenetre « Payer via Stripe » : un peu plus large que la fenetre etroite standard (420 px). */
+.modal.modal--narrow:has(.vs-tete) { width: 470px; }
+
+/* Hauteur proportionnelle a la largeur de la fenetre Via Stripe. */
+.vs-tete { padding-top: 22px; gap: 12px; }
+.vs-pastille { width: 36px; height: 36px; border-radius: 11px; }
+.vs-bord { padding: 10px 12px; }
+.vs-montant { padding: 10px 0 4px; }
+.vs-montant strong { font-size: 28px; }
+.vs-note { line-height: 1.6; font-size: 12.5px; }
+.vs-confirme { padding: 12px 14px; font-size: 13px; }
+.vs-pied { margin-top: 6px; }
+
+/* Apercu : tuiles de chiffres compactes. */
+.ap-tuiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-bottom: 14px; }
+.ap-tuile { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); }
+.ap-tuile small { font-size: 11.5px; color: var(--muted); font-weight: 600; }
+.ap-tuile strong { font-size: 20px; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; line-height: 1.2; }
+.ap-tuile span { font-size: 11.5px; color: var(--muted); }
+.ap-tuile.alerte { border-color: var(--badge-danger-fg); background: var(--badge-danger-bg); }
+.ap-tuile.alerte strong { color: var(--badge-danger-fg); }
+
+/* Apercu : toutes les tuiles sur une seule ligne (defilement horizontal si l'ecran est trop etroit). */
+.ap-tuiles { display: grid; grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: minmax(128px, 1fr); overflow-x: auto; gap: 8px; }
+.ap-tuile { padding: 8px 11px; min-width: 0; }
+.ap-tuile small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ap-tuile strong { font-size: 18px; white-space: nowrap; }
+.ap-tuile span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pr-bascule button { white-space: nowrap; }
+
+/* Filtre de periode (porte du filtre d'administration de Lampas). */
+.fp { position: relative; display: inline-block; }
+.fp-bouton { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: var(--shadow-sm); transition: border-color 0.15s ease, background 0.15s ease; }
+.fp-bouton:hover, .fp-bouton.ouvert { border-color: var(--teal); }
+.fp-chevron { transition: transform 0.15s ease; color: var(--muted); }
+.fp-bouton.ouvert .fp-chevron { transform: rotate(180deg); }
+.fp-popover { position: absolute; right: 0; top: calc(100% + 8px); z-index: 70; display: flex; gap: 14px; padding: 14px; max-width: calc(100vw - 32px); border-radius: 16px; border: 1px solid var(--border); background: var(--surface); box-shadow: 0 18px 40px rgba(0,0,0,0.2); }
+.fp-raccourcis { list-style: none; margin: 0; padding: 0; width: 180px; display: flex; flex-direction: column; gap: 2px; }
+.fp-raccourcis button { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding: 8px 12px; border: 0; border-radius: 9px; background: transparent; color: var(--text); font: inherit; font-size: 13px; text-align: left; cursor: pointer; white-space: nowrap; }
+.fp-raccourcis button:hover { background: var(--hover); }
+.fp-raccourcis button.actif { background: var(--accent-soft); color: var(--accent-ink); font-weight: 700; }
+.fp-calendrier { width: 252px; }
+.fp-mois { display: flex; align-items: center; justify-content: space-between; padding: 0 2px 8px; }
+.fp-mois strong { font-size: 13.5px; text-transform: capitalize; }
+.fp-mois button { width: 28px; height: 28px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-size: 18px; cursor: pointer; }
+.fp-mois button:hover:not(:disabled) { background: var(--hover); color: var(--text); }
+.fp-mois button:disabled { opacity: 0.3; cursor: default; }
+.fp-semaine, .fp-grille { display: grid; grid-template-columns: repeat(7, 1fr); }
+.fp-semaine span { padding: 4px 0; text-align: center; font-size: 11px; font-weight: 700; color: var(--muted); }
+.fp-jour { position: relative; height: 34px; border: 0; background: transparent; color: var(--text); font: inherit; font-size: 13px; cursor: pointer; border-radius: 8px; }
+.fp-jour:hover:not(:disabled):not(.bord) { background: var(--hover); }
+.fp-jour.dedans { background: var(--accent-soft); border-radius: 0; }
+.fp-jour.bord { background: var(--teal); color: #fff; font-weight: 700; }
+.fp-jour.futur { color: var(--muted); opacity: 0.35; cursor: default; }
+.fp-jour.auj::after { content: ''; position: absolute; left: 50%; bottom: 4px; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: currentColor; opacity: 0.6; }
+.fp-aide { margin: 8px 2px 0; font-size: 11.5px; color: var(--muted); }
+@media (max-width: 640px) { .fp-popover { flex-direction: column; } .fp-raccourcis { width: auto; flex-direction: row; overflow-x: auto; } }
+
+/* Filtre de periode : version plus compacte (calendrier moins haut et moins large). */
+.fp-popover { gap: 10px; padding: 10px; border-radius: 14px; }
+.fp-raccourcis { width: 148px; }
+.fp-raccourcis button { padding: 6px 10px; font-size: 12.5px; }
+.fp-calendrier { width: 210px; }
+.fp-mois { padding-bottom: 4px; }
+.fp-mois strong { font-size: 12.5px; }
+.fp-mois button { width: 24px; height: 24px; font-size: 16px; }
+.fp-semaine span { padding: 2px 0; font-size: 10.5px; }
+.fp-jour { height: 28px; font-size: 12px; }
+.fp-aide { margin-top: 4px; font-size: 11px; }

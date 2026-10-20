@@ -71,8 +71,7 @@ export function EnveloppeFormatsCard() {
         )}
       </div>
       <p className="chart-sub">
-        Le prix d'une enveloppe est celui du Pli de la zone multiplié par le coefficient de son format. Le Pli est la référence : coefficient 1, toujours ouvert.
-        Fermer un format le retire des choix proposés ; les demandes déjà créées gardent leur prix.
+        Prix d'une enveloppe = prix du Pli de la zone × coefficient du format. Le Pli (coefficient 1) est la référence, toujours ouvert. Fermer un format le retire des choix ; les demandes existantes gardent leur prix.
       </p>
       <div style={{ overflowX: 'auto' }}>
         <table>

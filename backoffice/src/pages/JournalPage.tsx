@@ -64,19 +64,16 @@ export function JournalPage({ integre = false }: { integre?: boolean }) {
 
   return (
     <div>
-      {integre
-        ? <p className="page-sub" style={{ marginTop: 0 }}>Toutes les actions d'administration, avec leur auteur. Ce journal ne peut être ni modifié ni effacé.</p>
-        : (
-          <div className="page-head">
-            <div>
-              <h1>Actions</h1>
-              <p className="page-sub">Toutes les actions d'administration, avec leur auteur. Ce journal ne peut être ni modifié ni effacé.</p>
-            </div>
+      {!integre && (
+        <div className="page-head">
+          <div>
+            <h1>Actions</h1>
           </div>
-        )}
+        </div>
+      )}
       {error && <p className="page-error">{error}</p>}
       {!items ? <p className="loading-state">Chargement…</p> : (
-        <DataTable rows={items} columns={columns} rowKey={(e) => e.id} initialSort={{ key: 'date', dir: 'desc' }} emptyText="Aucune action enregistrée." onSearchChange={surRecherche} />
+        <DataTable rows={items} columns={columns} rowKey={(e) => e.id} title="Journal des actions" integre initialSort={{ key: 'date', dir: 'desc' }} emptyText="Aucune action enregistrée." onSearchChange={surRecherche} />
       )}
       {modal}
     </div>

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { ecrireCache, lireCache } from '../lib/precharge';
 import { Modal } from '../components/Modal';
 import { IconEye, IconSearch } from '../components/Icons';
 
@@ -38,8 +39,20 @@ interface Apercu { subject: string; html: string }
 
 // Tous les e-mails que Wonjo envoie lui-meme (hors campagnes), avec quand ils partent et un
 // apercu fidele : le contenu est produit par le vrai code d'envoi, sur des valeurs d'exemple.
+type ListeEmailsApp = { emails: EmailApp[]; peutModifier: boolean };
+const CLE_CACHE = 'emails-app';
+// Appelee aussi par l'onglet E-mails des son ouverture : quand on clique sur le sous-onglet, la liste est deja la.
+export function chargerListeEmailsApp() {
+  return supabase.functions.invoke('admin-apercu-email', { body: { action: 'liste' } }).then(({ data, error }) => {
+    if (error || !data?.emails) return { erreur: error?.message ?? 'Impossible de charger la liste.' } as const;
+    const liste: ListeEmailsApp = { emails: data.emails as EmailApp[], peutModifier: !!data.peutModifier };
+    ecrireCache(CLE_CACHE, liste);
+    return { liste } as const;
+  });
+}
+
 export function EmailsAppSection({ onCompte }: { onCompte?: (n: number) => void }) {
-  const [emails, setEmails] = useState<EmailApp[] | null>(null);
+  const [emails, setEmails] = useState<EmailApp[] | null>(() => lireCache<ListeEmailsApp>(CLE_CACHE)?.emails ?? null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [recherche, setRecherche] = useState('');
   const [ouvert, setOuvert] = useState<EmailApp | null>(null);
@@ -47,19 +60,19 @@ export function EmailsAppSection({ onCompte }: { onCompte?: (n: number) => void 
   const [apercu, setApercu] = useState<Apercu | null>(null);
   const [chargement, setChargement] = useState(false);
   const [erreurApercu, setErreurApercu] = useState<string | null>(null);
-  const [peutModifier, setPeutModifier] = useState(false);
+  const [peutModifier, setPeutModifier] = useState(() => lireCache<ListeEmailsApp>(CLE_CACHE)?.peutModifier ?? false);
   // Brouillon : textes en cours de saisie, par champ, pour la langue affichee.
   const [brouillon, setBrouillon] = useState<Record<string, string>>({});
   const [enCours, setEnCours] = useState<'enregistrer' | 'test' | null>(null);
   const [retour, setRetour] = useState<{ ok: boolean; texte: string } | null>(null);
 
   function chargerListe() {
-    return supabase.functions.invoke('admin-apercu-email', { body: { action: 'liste' } }).then(({ data, error }) => {
-      if (error || !data?.emails) { setErreur(error?.message ?? 'Impossible de charger la liste.'); return null; }
-      setEmails(data.emails as EmailApp[]);
-      onCompte?.((data.emails as EmailApp[]).length);
-      setPeutModifier(!!data.peutModifier);
-      return data.emails as EmailApp[];
+    return chargerListeEmailsApp().then((r) => {
+      if (!r.liste) { setErreur(r.erreur ?? null); return null; }
+      setEmails(r.liste.emails);
+      onCompte?.(r.liste.emails.length);
+      setPeutModifier(r.liste.peutModifier);
+      return r.liste.emails;
     });
   }
   useEffect(() => { chargerListe(); }, []);

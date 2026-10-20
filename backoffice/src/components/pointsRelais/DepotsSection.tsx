@@ -1,7 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import QRCode from 'qrcode';
 import { supabase } from '../../lib/supabase';
 import { Modal } from '../Modal';
+import { InfoBulle } from '../InfoBulle';
+import { DataTable, type Column } from '../DataTable';
+import { PanneauLateral } from '../PanneauLateral';
+import { useMultiPoints } from '../../lib/useMultiPoints';
+import { BandePoints, TOUS_LES_POINTS, type CompteurPoint } from './BandePoints';
 import { dateCourte, type PointRelais } from '../../lib/pointsRelais';
 
 // Depots (docs/POINTS_RELAIS.md § 5, etape 6 ; migration 398) : colis payes au point, a deposer, deposes,
@@ -65,80 +70,117 @@ async function reduirePhoto(fichier: File): Promise<Blob> {
   }
 }
 
-export function DepotsSection({ point }: { point: PointRelais }) {
-  const [items, setItems] = useState<Depot[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [aDeposer, setADeposer] = useState<Depot | null>(null);
-  const [aRemettre, setARemettre] = useState<Depot | null>(null);
+type LigneDepot = Depot & { point: PointRelais };
 
-  function charger() {
-    supabase.rpc('admin_pr_depots', { p_point_id: point.id }).then(({ data, error: e }) => {
-      if (e) { setError(e.message); setItems([]); return; }
-      setError(null);
-      setItems((data ?? []) as Depot[]);
-    });
-  }
-  useEffect(() => {
-    setItems(null);
-    charger();
-    const t = window.setInterval(charger, 60_000);
-    return () => window.clearInterval(t);
-  }, [point.id]); // eslint-disable-line react-hooks/exhaustive-deps
+// Tous les points dans un tableau : ce qui attend une action de l'agent (depot a enregistrer, colis pret a remettre) d'abord.
+export function DepotsSection({ points }: { points: PointRelais[] }) {
+  const { items, error, recharger: charger } = useMultiPoints<Depot>(points, 'depots', 60_000);
+  const [message, setMessage] = useState<string | null>(null);
+  const [ouvert, setOuvert] = useState<string | null>(null);
+  const [aDeposer, setADeposer] = useState<LigneDepot | null>(null);
+  const [aRemettre, setARemettre] = useState<LigneDepot | null>(null);
+  const [choix, setChoix] = useState(TOUS_LES_POINTS);
+  const plusieurs = points.length > 1;
+
+  // Ordre de travail : prets a remettre, puis a deposer, puis en attente du voyageur.
+  const rang: Record<Etape, number> = { pret: 0, a_deposer: 1, attente_voyageur: 2 };
+  const compteurs = useMemo(() => {
+    const c: Record<string, CompteurPoint> = {};
+    for (const d of items ?? []) {
+      const x = (c[d.point.id] ??= { total: 0, urgents: 0 });
+      x.total += 1;
+      if (etape(d) !== 'attente_voyageur') x.urgents += 1;
+    }
+    return c;
+  }, [items]);
+  const visibles = useMemo(() => (items ?? []).filter((d) => choix === TOUS_LES_POINTS || d.point.id === choix).sort((a, b) => rang[etape(a)] - rang[etape(b)]), [items, choix]); // eslint-disable-line react-hooks/exhaustive-deps
+  const ligneOuverte = visibles.find((d) => d.demande_id === ouvert) ?? null;
+
+  const action = (d: LigneDepot) => {
+    const e = etape(d);
+    if (e === 'a_deposer') return <button className="pr-paie-btn pr-paie-btn--autre" onClick={(ev) => { ev.stopPropagation(); setMessage(null); setADeposer(d); }}>Enregistrer le dépôt</button>;
+    if (e === 'pret') return <button className="pr-paie-btn pr-paie-btn--stripe" onClick={(ev) => { ev.stopPropagation(); setMessage(null); setARemettre(d); }}>Remettre</button>;
+    return <span className="hint">En attente du voyageur</span>;
+  };
+
+  const colonnes: Column<LigneDepot>[] = [
+    ...(plusieurs ? [{ key: 'point', label: 'Point', value: (d: LigneDepot) => d.point.nom, filter: 'options' as const, render: (d: LigneDepot) => <strong className="pr-nowrap">{d.point.nom}</strong> }] : []),
+    { key: 'ref', label: 'Référence', value: (d) => d.reference, render: (d) => <span className="pr-ref">#{d.reference}</span> },
+    { key: 'etat', label: 'État', value: (d) => LIBELLE_ETAPE[etape(d)], filter: 'options',
+      render: (d) => { const e = etape(d); return <span className={`pr-urgence pr-urgence--${e === 'pret' ? 'urgent' : e === 'a_deposer' ? 'ok' : 'proche'}`}>{LIBELLE_ETAPE[e]}</span>; } },
+    { key: 'colis', label: 'Colis', value: (d) => `${d.type_envoi === 'document' ? 'Document' : `${d.poids_kg ?? 0} kg`} ${d.description ?? ''}`,
+      render: (d) => <span className="pr-nowrap"><strong>{d.type_envoi === 'document' ? 'Document' : `${Number(d.poids_kg ?? 0).toLocaleString('fr-FR')} kg`}</strong>{d.description && <span className="hint"> · {d.description.length > 28 ? `${d.description.slice(0, 28)}…` : d.description}</span>}</span> },
+    { key: 'trajet', label: 'Trajet', value: (d) => d.trajet, render: (d) => <span className="pr-nowrap">{d.trajet}</span> },
+    { key: 'exp', label: 'Expéditeur', value: (d) => `${d.expediteur_nom ?? ''} ${d.expediteur_telephone ?? ''}`,
+      render: (d) => <span className="pr-nowrap">{d.expediteur_nom ?? 'Membre'}{d.expediteur_telephone && <span className="hint"> · {d.expediteur_telephone}</span>}</span> },
+    { key: 'voy', label: 'Voyageur', value: (d) => `${d.porteur_nom ?? ''} ${d.porteur_telephone ?? ''}`,
+      render: (d) => <span className="pr-nowrap">{d.porteur_nom ?? '-'}{d.porteur_telephone && <span className="hint"> · {d.porteur_telephone}</span>}</span> },
+    { key: 'actions', label: '', width: 170, render: action },
+  ];
 
   return (
     <div>
       <div className="pr-entete">
         <div>
-          <h3>Dépôts et remises</h3>
-          <p className="hint">Colis payés au point <strong>{point.nom}</strong> : enregistrez le dépôt quand l'expéditeur vous confie son colis, puis remettez-le au voyageur avec le QR code.</p>
+          <h3>Dépôts et remises<InfoBulle>Colis payés au point : enregistrez le dépôt quand l'expéditeur vous confie son colis, puis remettez-le au voyageur avec le QR code.</InfoBulle></h3>
         </div>
       </div>
       {message && <p className="success-text" style={{ marginBottom: 12 }}>{message}</p>}
       {error && <p className="page-error">{error}</p>}
 
-      {!items ? <p className="loading-state">Chargement…</p> : items.length === 0 ? (
-        <div className="empty-state">Aucun colis payé en attente de dépôt ou de remise.</div>
-      ) : (
-        <div className="pr-grid">
-          {items.map((d) => {
-            const e = etape(d);
+      {!items ? <p className="loading-state">Chargement…</p> : (
+        <>
+          <BandePoints points={points} compteurs={compteurs} choix={choix} onChoix={setChoix} />
+          <div className="pr-dense">
+            <DataTable rows={visibles} columns={colonnes} rowKey={(d) => d.demande_id} integre title="Colis à déposer ou à remettre" pageSize={10}
+                       onRowClick={(d) => setOuvert(d.demande_id)}
+                       emptyText="Aucun colis payé en attente de dépôt ou de remise." />
+          </div>
+        </>
+      )}
+
+      {ligneOuverte && (
+        <PanneauLateral
+          titre={<>#{ligneOuverte.reference}</>}
+          sousTitre={<>{ligneOuverte.point.nom} · {LIBELLE_ETAPE[etape(ligneOuverte)]}</>}
+          onClose={() => setOuvert(null)}
+          pied={(
+            <>
+              <button className="btn" onClick={() => setOuvert(null)}>Fermer</button>
+              {etape(ligneOuverte) === 'a_deposer' && <button className="btn btn-primary" onClick={() => { setMessage(null); setADeposer(ligneOuverte); }}>Enregistrer le dépôt</button>}
+              {etape(ligneOuverte) === 'pret' && <button className="btn btn-primary" onClick={() => { setMessage(null); setARemettre(ligneOuverte); }}>Remettre au voyageur</button>}
+            </>
+          )}
+        >
+          {(() => {
+            const d = ligneOuverte;
             return (
-              <article key={d.demande_id} className={`pr-card pr-card--${e === 'pret' ? 'urgent' : e === 'a_deposer' ? 'ok' : 'proche'}`}>
-                <div className="pr-card-haut">
-                  <span className="pr-ref">#{d.reference}</span>
-                  <span className={`pr-urgence pr-urgence--${e === 'pret' ? 'urgent' : e === 'a_deposer' ? 'ok' : 'proche'}`}>{LIBELLE_ETAPE[e]}</span>
-                </div>
-                <div className="pr-colis">
+              <>
+                <div className="panneau-montant">
                   <strong>{d.type_envoi === 'document' ? 'Document' : `${Number(d.poids_kg ?? 0).toLocaleString('fr-FR')} kg`}</strong>
                   {d.description && <span>{d.description}</span>}
                 </div>
-                <div className="pr-ligne"><span className="pr-libelle">Trajet</span><span>{d.trajet}{d.depart ? ` · départ ${dateCourte(d.depart)}` : ''}</span></div>
-                <div className="pr-ligne"><span className="pr-libelle">Expéditeur</span><span>{d.expediteur_nom ?? 'Membre'}{d.expediteur_telephone && <> · {tel(d.expediteur_telephone)}</>}</span></div>
-                <div className="pr-ligne"><span className="pr-libelle">Voyageur</span><span>{d.porteur_nom ?? '-'}{d.porteur_telephone && <> · {tel(d.porteur_telephone)}</>}</span></div>
-                {d.depot_at && (
-                  <div className="pr-ligne"><span className="pr-libelle">Déposé</span><span>{dateCourte(d.depot_at)}{d.depot_note ? ` · ${d.depot_note}` : ''}</span></div>
-                )}
-                {e === 'attente_voyageur' && <p className="hint">Le voyageur n'a pas encore accepté : la remise sera possible dès qu'il l'aura fait.</p>}
-                {e === 'a_deposer' && (
-                  <button className="btn btn-soft pr-action" onClick={() => { setMessage(null); setADeposer(d); }}>Enregistrer le dépôt</button>
-                )}
-                {e === 'pret' && (
-                  <button className="btn btn-primary pr-action" onClick={() => { setMessage(null); setARemettre(d); }}>Remettre au voyageur</button>
-                )}
-              </article>
+                <dl className="panneau-liste">
+                  <dt>Trajet</dt><dd>{d.trajet}{d.depart ? ` · départ ${dateCourte(d.depart)}` : ''}</dd>
+                  <dt>Expéditeur</dt><dd>{d.expediteur_nom ?? 'Membre'}{d.expediteur_telephone && <> · {tel(d.expediteur_telephone)}</>}</dd>
+                  <dt>Voyageur</dt><dd>{d.porteur_nom ?? '-'}{d.porteur_telephone && <> · {tel(d.porteur_telephone)}</>}</dd>
+                  {d.depot_at && <><dt>Déposé</dt><dd>{dateCourte(d.depot_at)}{d.depot_note ? ` · ${d.depot_note}` : ''}</dd></>}
+                  <dt>Point</dt><dd>{d.point.nom}</dd>
+                </dl>
+                {etape(d) === 'attente_voyageur' && <p className="hint">Le voyageur n'a pas encore accepté : la remise sera possible dès qu'il l'aura fait.</p>}
+              </>
             );
-          })}
-        </div>
+          })()}
+        </PanneauLateral>
       )}
 
       {aDeposer && (
         <DepotModal item={aDeposer} onClose={() => setADeposer(null)}
-                    onFait={() => { setADeposer(null); setMessage(`Dépôt #${aDeposer.reference} enregistré : l'expéditeur a été prévenu.`); charger(); }} />
+                    onFait={() => { setADeposer(null); setOuvert(null); setMessage(`Dépôt #${aDeposer.reference} enregistré : l'expéditeur a été prévenu.`); charger(); }} />
       )}
       {aRemettre && (
-        <RemiseModal item={aRemettre} pointId={point.id} onClose={() => { setARemettre(null); charger(); }}
-                     onRemis={() => { setARemettre(null); setMessage(`Colis #${aRemettre.reference} remis au voyageur.`); charger(); }} />
+        <RemiseModal item={aRemettre} pointId={aRemettre.point.id} onClose={() => { setARemettre(null); charger(); }}
+                     onRemis={() => { setARemettre(null); setOuvert(null); setMessage(`Colis #${aRemettre.reference} remis au voyageur.`); charger(); }} />
       )}
     </div>
   );

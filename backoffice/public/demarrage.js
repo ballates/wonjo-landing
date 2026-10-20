@@ -9,6 +9,20 @@ if (window.self === window.top) {
   window.top.location = window.self.location;
 }
 
+// Adresses propres (sans « # »). Deux retours en arriere, avant le premier rendu :
+//  - retour de la page 404 du site (GitHub Pages ne connait pas /backoffice/audit) : « /backoffice/?/audit&onglet=x » -> « /backoffice/audit?onglet=x » ;
+//  - anciens liens en « #/audit » (e-mails deja envoyes, favoris) : convertis en « /backoffice/audit ».
+(function () {
+  var base = '/backoffice';
+  var search = window.location.search;
+  if (search.charAt(1) === '/') {
+    var chemin = search.slice(2).split('&').map(function (x) { return x.replace(/~and~/g, '&'); }).join('?');
+    window.history.replaceState(null, '', base + '/' + chemin + window.location.hash);
+  }
+  var hash = window.location.hash;
+  if (hash.indexOf('#/') === 0) window.history.replaceState(null, '', base + hash.slice(1));
+})();
+
 try {
   var t = localStorage.getItem('wonjo-backoffice-theme');
   if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);

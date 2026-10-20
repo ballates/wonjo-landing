@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { StatutBadge } from '../components/Badge';
 import { Avatar } from '../components/Avatar';
+import { InfoBulle } from '../components/InfoBulle';
 import { ServerTable, type ServerColumn } from '../components/ServerTable';
 import { TransactionModal } from '../components/TransactionModal';
 import { PaiementsATraiter } from '../components/PaiementsATraiter';
@@ -147,8 +148,7 @@ export function TransactionsPage() {
     <div className="page-transactions">
       <div className="page-head">
         <div>
-          <h1>Transactions</h1>
-          <p className="page-sub">Suivi individuel : qui doit rencontrer qui, où en est la remise, le code de livraison.</p>
+          <h1>Transactions<InfoBulle>Suivi individuel : qui doit rencontrer qui, où en est la remise, le code de livraison.</InfoBulle></h1>
         </div>
       </div>
       {paiements && <PaiementsATraiter onOuvrir={setOuverte} />}

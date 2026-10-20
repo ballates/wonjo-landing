@@ -75,7 +75,7 @@ const MODELES: { label: string; semaine: () => Semaine }[] = [
   { label: 'Tous les jours 8h-20h', semaine: () => modele([0, 1, 2, 3, 4, 5, 6], '08:00', '20:00') },
 ];
 
-export function ChampHoraires({ valeur, onChange }: { valeur: string; onChange: (v: string) => void }) {
+export function ChampHoraires({ valeur, onChange, compact = false }: { valeur: string; onChange: (v: string) => void; compact?: boolean }) {
   const initiale = useMemo(() => lireHoraires(valeur), []); // eslint-disable-line react-hooks/exhaustive-deps
   const [libre, setLibre] = useState(initiale === null);
   const [semaine, setSemaine] = useState<Semaine>(initiale ?? semaineVide());
@@ -114,7 +114,7 @@ export function ChampHoraires({ valeur, onChange }: { valeur: string; onChange: 
 
   const resume = texteHoraires(semaine);
   return (
-    <div className="champ-horaires">
+    <div className={`champ-horaires ${compact ? "champ-horaires--compact" : ""}`}>
       <div className="champ-horaires-modeles">
         {MODELES.map((m) => (
           <button key={m.label} type="button" className="chip-filter" onClick={() => maj(m.semaine())}>{m.label}</button>
@@ -128,13 +128,13 @@ export function ChampHoraires({ valeur, onChange }: { valeur: string; onChange: 
                     className={`champ-horaires-switch ${j.ouvert ? 'on' : ''}`} onClick={() => changerJour(i, { ouvert: !j.ouvert })}>
               <span />
             </button>
-            <span className="champ-horaires-nom">{JOURS_LONGS[i]}</span>
+            <span className="champ-horaires-nom">{compact ? JOURS[i] : JOURS_LONGS[i]}</span>
             {j.ouvert ? (
               <>
-                <Select ariaLabel={`${JOURS_LONGS[i]} : ouverture`} size="sm" value={j.de} options={OPTIONS_HEURE.filter((o) => o.value < '23:30')} onChange={(v) => changerJour(i, { de: v })} minWidth={92} />
-                <span className="champ-horaires-a">à</span>
-                <Select ariaLabel={`${JOURS_LONGS[i]} : fermeture`} size="sm" value={j.a} options={OPTIONS_HEURE.filter((o) => o.value > j.de)} onChange={(v) => changerJour(i, { a: v })} minWidth={92} />
-                <button type="button" className="champ-horaires-copie" title="Appliquer ces heures à tous les jours ouverts" onClick={() => copierSurOuverts(i)}>Pour tous</button>
+                <Select ariaLabel={`${JOURS_LONGS[i]} : ouverture`} size="sm" value={j.de} options={OPTIONS_HEURE.filter((o) => o.value < '23:30')} onChange={(v) => changerJour(i, { de: v })} minWidth={compact ? 66 : 92} />
+                <span className="champ-horaires-a">{compact ? "–" : "à"}</span>
+                <Select ariaLabel={`${JOURS_LONGS[i]} : fermeture`} size="sm" value={j.a} options={OPTIONS_HEURE.filter((o) => o.value > j.de)} onChange={(v) => changerJour(i, { a: v })} minWidth={compact ? 66 : 92} />
+                <button type="button" className="champ-horaires-copie" title="Appliquer ces heures à tous les jours ouverts" onClick={() => copierSurOuverts(i)}>{compact ? "Tous" : "Pour tous"}</button>
               </>
             ) : <span className="champ-horaires-ferme">Fermé</span>}
           </div>

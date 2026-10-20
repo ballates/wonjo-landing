@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { InfoBulle } from '../InfoBulle';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../auth/AuthContext';
 import { peutGererAdmins } from '../../lib/permissions';
@@ -39,9 +40,11 @@ interface Props {
   sousTitre: string;
   /** Mise en garde affichée au moment d'allumer. */
   avertissementAllumer?: string;
+  /** Encart resserre (un sous-titre d'une ligne, marges reduites). */
+  compact?: boolean;
 }
 
-export function InterrupteurPointsRelais({ cle, titre, sousTitre, avertissementAllumer }: Props) {
+export function InterrupteurPointsRelais({ cle, titre, sousTitre, avertissementAllumer, compact = false }: Props) {
   const { roles } = useAuth();
   const modifiable = peutGererAdmins(roles);
   const { etats, erreur: erreurLecture } = useInterrupteursPointsRelais();
@@ -69,10 +72,10 @@ export function InterrupteurPointsRelais({ cle, titre, sousTitre, avertissementA
   }
 
   return (
-    <div className="chart-card" style={{ marginBottom: 16 }}>
+    <div className={`chart-card ${compact ? 'chart-card--compact' : ''}`} style={{ marginBottom: compact ? 12 : 16 }}>
       <div className="chart-head">
         <div className="chart-head-titre">
-          <h3>{titre}</h3>
+          <h3>{titre}<InfoBulle>{sousTitre}</InfoBulle></h3>
           {actuel && <span className={`badge ${actuel.actif ? 'badge-green' : 'badge-muted'}`}>{actuel.actif ? 'Allumé' : 'Éteint'}</span>}
         </div>
         {actuel && (
@@ -82,7 +85,6 @@ export function InterrupteurPointsRelais({ cle, titre, sousTitre, avertissementA
           </label>
         )}
       </div>
-      <p className="chart-sub">{sousTitre}</p>
       {actuel?.modifie_at && (
         <p className="hint">Dernier changement : {dateHeure(actuel.modifie_at)}{actuel.modifie_par ? ` par ${actuel.modifie_par}` : ''}{actuel.motif ? ` — « ${actuel.motif} »` : ''}.</p>
       )}

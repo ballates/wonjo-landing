@@ -23,7 +23,8 @@ export function ChampTelephone({ valeur, onChange, pays, nomsPays, placeholder, 
   compact?: boolean;
 }) {
   const initial = useMemo(() => decomposerNumero(valeur, pays || 'SN'), []); // eslint-disable-line react-hooks/exhaustive-deps
-  const [iso, setIso] = useState(valeur ? initial.iso : (pays || 'SN'));
+  // Sans pays choisi et sans numero, aucun indicatif n'est suppose : on attend le choix du pays (ou de l'indicatif).
+  const [iso, setIso] = useState(valeur ? initial.iso : (pays || ''));
   const [local, setLocal] = useState(valeur ? initial.local : '');
 
   // Le pays du point change et rien n'est saisi : l'indicatif suit.
@@ -51,18 +52,19 @@ export function ChampTelephone({ valeur, onChange, pays, nomsPays, placeholder, 
     onChange(numeroInternational(iso, groupe));
   }
 
-  const aide = aideNumero(iso, numeroInternational(iso, local));
+  const aide = iso ? aideNumero(iso, numeroInternational(iso, local)) : '';
   return (
     <span className="champ-tel-bloc">
     <div className={`champ-tel ${aide ? 'champ-tel--incomplet' : ''} ${invalide ? 'champ-tel--invalide' : ''} ${compact ? 'champ-tel--compact' : ''}`}>
-      <Select ariaLabel={`Indicatif - ${ariaLabel}`} value={iso} onChange={changerIso} options={options} minWidth={112} />
+      <Select ariaLabel={`Indicatif - ${ariaLabel}`} value={iso} onChange={changerIso} options={iso ? options : [{ value: '', label: 'Indicatif' }, ...options]} minWidth={112} />
       <input
         type="tel"
         inputMode="tel"
         autoComplete="tel-national"
         aria-label={ariaLabel}
         value={local}
-        placeholder={placeholder ?? grouperNumero('7'.repeat((TELEPHONE_PAYS[iso]?.groupes ?? [2, 2, 2, 2]).reduce((a, b) => a + b, 0)), iso)}
+        disabled={!iso}
+        placeholder={!iso ? 'Choisissez le pays' : placeholder ?? grouperNumero('7'.repeat((TELEPHONE_PAYS[iso]?.groupes ?? [2, 2, 2, 2]).reduce((a, b) => a + b, 0)), iso)}
         onChange={(e) => changerLocal(e.target.value)}
       />
     </div>

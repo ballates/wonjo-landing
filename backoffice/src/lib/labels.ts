@@ -210,6 +210,9 @@ export function dateSeule(iso: string): string {
 
 // Deux seules valeurs possibles en base (type_envoi IN ('colis','document')) :
 // meme libelle partout ou le type d'envoi est affiche (Colis, Finance, Transactions).
+/** Compte technique d'un point relais (« Wonjo Dakar ») : son adresse n'a pas de boîte, elle ne sert qu'à remplir la case obligatoire. */
+export const estComptePoint = (email: string | null | undefined) => !!email && /^point-relais\+[0-9a-f]{32}@wonjo\.app$/i.test(email);
+
 export const LABELS_TYPE_ENVOI: Record<string, string> = {
   colis: 'Colis', document: 'Enveloppe', inconnu: 'Non renseigné',
 };

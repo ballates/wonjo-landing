@@ -1,6 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Modal } from '../Modal';
+import { InfoBulle } from '../InfoBulle';
+import { DataTable, type Column } from '../DataTable';
+import { PanneauLateral } from '../PanneauLateral';
+import { useMultiPoints } from '../../lib/useMultiPoints';
+import { BandePoints, TOUS_LES_POINTS, type CompteurPoint } from './BandePoints';
 import { Badge } from '../Badge';
 import {
   COULEUR_OPERATEUR, LABEL_OPERATEUR, dateCourte, montantEuros, montantLocal, moyenDepuisOperateur,
@@ -30,83 +35,107 @@ interface ARembourser {
 
 const LIBELLE_MOYEN: Record<string, string> = { ...LABEL_OPERATEUR, especes: 'Espèces', autre_mobile: 'Mobile money' };
 
-export function RemboursementsSection({ point }: { point: PointRelais }) {
-  const [items, setItems] = useState<ARembourser[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
+type LigneRembourser = ARembourser & { point: PointRelais };
+
+// Tous les points dans un tableau, les plus anciens annules en haut ; le detail et l'action dans le panneau lateral.
+export function RemboursementsSection({ points }: { points: PointRelais[] }) {
+  const { items, error, recharger: charger } = useMultiPoints<ARembourser>(points, 'a_rembourser');
   const [message, setMessage] = useState<string | null>(null);
-  const [aRembourser, setARembourser] = useState<ARembourser | null>(null);
+  const [ouvert, setOuvert] = useState<string | null>(null);
+  const [aRembourser, setARembourser] = useState<LigneRembourser | null>(null);
+  const [choix, setChoix] = useState(TOUS_LES_POINTS);
+  const plusieurs = points.length > 1;
 
-  function charger() {
-    supabase.rpc('admin_pr_a_rembourser', { p_point_id: point.id }).then(({ data, error: e }) => {
-      if (e) { setError(e.message); setItems([]); return; }
-      setError(null);
-      setItems((data ?? []) as ARembourser[]);
-    });
-  }
-  useEffect(() => { setItems(null); charger(); }, [point.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const compteurs = useMemo(() => {
+    const c: Record<string, CompteurPoint> = {};
+    for (const i of items ?? []) (c[i.point.id] ??= { total: 0, urgents: 0 }).total += 1;
+    return c;
+  }, [items]);
+  const visibles = useMemo(() => (items ?? []).filter((i) => choix === TOUS_LES_POINTS || i.point.id === choix), [items, choix]);
+  const ligneOuverte = visibles.find((i) => i.demande_id === ouvert) ?? null;
+  const bloque = (i: ARembourser) => i.code_requis && i.essais_restants === 0;
+  const lieu = (i: ARembourser) => (i.parcours === 'guichet' ? 'Client du guichet' : 'Expéditeur de l\'app');
 
-  const total = useMemo(() => (items ?? []).reduce((s, i) => s + Number(i.montant_local), 0), [items]);
+  const colonnes: Column<LigneRembourser>[] = [
+    ...(plusieurs ? [{ key: 'point', label: 'Point', value: (i: LigneRembourser) => i.point.nom, filter: 'options' as const, render: (i: LigneRembourser) => <strong className="pr-nowrap">{i.point.nom}</strong> }] : []),
+    { key: 'ref', label: 'Référence', value: (i) => i.reference, render: (i) => <span className="pr-ref">#{i.reference}</span> },
+    { key: 'annule', label: 'Annulé le', value: (i) => i.pret_at, filter: 'date', render: (i) => dateCourte(i.pret_at) },
+    { key: 'montant', label: 'À rendre', value: (i) => Number(i.montant_local), render: (i) => <span className="pr-nowrap"><strong>{montantLocal(i.montant_local, i.devise)}</strong><span className="hint"> · {montantEuros(i.montant_eur)}</span></span> },
+    { key: 'benef', label: 'Bénéficiaire', value: (i) => `${i.beneficiaire_nom ?? ''} ${i.beneficiaire_telephone ?? ''}`,
+      render: (i) => <span className="pr-nowrap">{i.beneficiaire_nom ?? 'Expéditeur'}{i.beneficiaire_telephone && <span className="hint"> · {i.beneficiaire_telephone}</span>}</span> },
+    { key: 'type', label: 'Type', value: lieu, filter: 'options', render: (i) => <Badge tone={i.parcours === 'guichet' ? 'muted' : 'teal'}>{lieu(i)}</Badge> },
+    { key: 'paye', label: 'Payé par', value: (i) => LIBELLE_MOYEN[i.moyen_encaissement] ?? i.moyen_encaissement, filter: 'options' },
+    { key: 'actions', label: '', width: 130, render: (i) => (
+      <button className="pr-paie-btn pr-paie-btn--stripe" disabled={bloque(i)} title={bloque(i) ? 'Code bloqué après 5 essais : contactez le support Wonjo' : undefined}
+              onClick={(e) => { e.stopPropagation(); setMessage(null); setARembourser(i); }}>{bloque(i) ? 'Code bloqué' : 'Rembourser'}</button>
+    ) },
+  ];
 
   return (
     <div>
       <div className="pr-entete">
         <div>
-          <h3>À rembourser</h3>
-          <p className="hint">
-            Dossiers payés à <strong>{point.nom}</strong> puis annulés. Rendez exactement la somme encaissée ; pour un expéditeur de l'app, demandez son <strong>code de remboursement</strong>.
-          </p>
+          <h3>À rembourser<InfoBulle>Dossiers payés au point puis annulés. Rendez exactement la somme encaissée ; pour un expéditeur de l'app, demandez son <strong>code de remboursement</strong>.</InfoBulle></h3>
         </div>
-        {items && items.length > 0 && (
-          <div className="pr-total">
-            <span>{items.length} à rembourser</span>
-            <strong>{montantLocal(total, point.devise)}</strong>
-          </div>
-        )}
       </div>
 
       {message && <p className="success-text" style={{ marginBottom: 12 }}>{message}</p>}
       {error && <p className="page-error">{error}</p>}
 
-      {!items ? <p className="loading-state">Chargement…</p> : items.length === 0 ? (
-        <div className="empty-state">Aucun remboursement en attente.</div>
-      ) : (
-        <div className="pr-grid">
-          {items.map((i) => (
-            <article key={i.demande_id} className="pr-card">
-              <div className="pr-card-haut">
-                <span className="pr-ref">#{i.reference}</span>
-                <Badge tone={i.parcours === 'guichet' ? 'muted' : 'teal'}>{i.parcours === 'guichet' ? 'Client du guichet' : 'Expéditeur de l\'app'}</Badge>
-              </div>
-              <div className="pr-montant">
-                <strong>{montantLocal(i.montant_local, i.devise)}</strong>
-                <span>{montantEuros(i.montant_eur)}</span>
-              </div>
-              <div className="pr-ligne">
-                <span className="pr-libelle">À rembourser à</span>
-                <span>
-                  {i.beneficiaire_nom ?? 'Expéditeur'}
-                  {i.beneficiaire_telephone && <> · <a className="pr-tel" href={`tel:${i.beneficiaire_telephone.replace(/[^\d+]/g, '')}`}>{i.beneficiaire_telephone}</a></>}
-                </span>
-              </div>
-              <div className="pr-ligne"><span className="pr-libelle">Payé par</span><span>{LIBELLE_MOYEN[i.moyen_encaissement] ?? i.moyen_encaissement}{i.reference_encaissement ? ` · ${i.reference_encaissement}` : ''}</span></div>
-              <div className="pr-ligne"><span className="pr-libelle">Trajet</span><span>{i.trajet}</span></div>
-              <div className="pr-ligne"><span className="pr-libelle">Annulé</span><span>{dateCourte(i.pret_at)}</span></div>
-              {i.code_requis && i.essais_restants < 5 && (
-                <div className="pr-ligne"><span className="pr-libelle">Code</span><span style={{ color: 'var(--badge-amber-fg)' }}>{i.essais_restants} essai{i.essais_restants > 1 ? 's' : ''} restant{i.essais_restants > 1 ? 's' : ''}</span></div>
-              )}
-              <button className="btn btn-primary pr-action" disabled={i.code_requis && i.essais_restants === 0}
-                      onClick={() => { setMessage(null); setARembourser(i); }}
-                      title={i.code_requis && i.essais_restants === 0 ? 'Code bloqué après 5 essais : contactez le support Wonjo' : undefined}>
-                {i.code_requis && i.essais_restants === 0 ? 'Code bloqué' : 'Rembourser'}
+      {!items ? <p className="loading-state">Chargement…</p> : (
+        <>
+          <BandePoints points={points} compteurs={compteurs} choix={choix} onChoix={setChoix} />
+          <div className="pr-dense">
+            <DataTable rows={visibles} columns={colonnes} rowKey={(i) => i.demande_id} integre title="Remboursements en attente" pageSize={10}
+                       initialSort={{ key: 'annule', dir: 'asc' }} onRowClick={(i) => setOuvert(i.demande_id)}
+                       emptyText="Aucun remboursement en attente." />
+          </div>
+        </>
+      )}
+
+      {ligneOuverte && (
+        <PanneauLateral
+          titre={<>#{ligneOuverte.reference}</>}
+          sousTitre={<>{ligneOuverte.point.nom} · {lieu(ligneOuverte)}</>}
+          onClose={() => setOuvert(null)}
+          pied={(
+            <>
+              <button className="btn" onClick={() => setOuvert(null)}>Fermer</button>
+              <button className="btn btn-primary" disabled={bloque(ligneOuverte)} onClick={() => { setMessage(null); setARembourser(ligneOuverte); }}
+                      title={bloque(ligneOuverte) ? 'Code bloqué après 5 essais : contactez le support Wonjo' : undefined}>
+                {bloque(ligneOuverte) ? 'Code bloqué' : 'Rembourser'}
               </button>
-            </article>
-          ))}
-        </div>
+            </>
+          )}
+        >
+          {(() => {
+            const i = ligneOuverte;
+            return (
+              <>
+                <div className="panneau-montant">
+                  <strong>{montantLocal(i.montant_local, i.devise)}</strong>
+                  <span>{montantEuros(i.montant_eur)} · à rendre</span>
+                </div>
+                <dl className="panneau-liste">
+                  <dt>À rembourser à</dt>
+                  <dd>{i.beneficiaire_nom ?? 'Expéditeur'}{i.beneficiaire_telephone && <> · <a className="pr-tel" href={`tel:${i.beneficiaire_telephone.replace(/[^\d+]/g, '')}`}>{i.beneficiaire_telephone}</a></>}</dd>
+                  <dt>Payé par</dt><dd>{LIBELLE_MOYEN[i.moyen_encaissement] ?? i.moyen_encaissement}{i.reference_encaissement ? ` · ${i.reference_encaissement}` : ''}</dd>
+                  <dt>Trajet</dt><dd>{i.trajet}</dd>
+                  <dt>Annulé</dt><dd>{dateCourte(i.pret_at)}</dd>
+                  {i.code_requis && i.essais_restants < 5 && (
+                    <><dt>Code</dt><dd style={{ color: 'var(--badge-amber-fg)' }}>{i.essais_restants} essai{i.essais_restants > 1 ? 's' : ''} restant{i.essais_restants > 1 ? 's' : ''}</dd></>
+                  )}
+                  <dt>Point</dt><dd>{i.point.nom}</dd>
+                </dl>
+              </>
+            );
+          })()}
+        </PanneauLateral>
       )}
 
       {aRembourser && (
-        <RembourserModal point={point} item={aRembourser} onClose={() => { setARembourser(null); charger(); }}
-          onFait={(texte) => { setARembourser(null); setMessage(texte); charger(); }} />
+        <RembourserModal point={aRembourser.point} item={aRembourser} onClose={() => { setARembourser(null); charger(); }}
+          onFait={(texte) => { setARembourser(null); setOuvert(null); setMessage(texte); charger(); }} />
       )}
     </div>
   );

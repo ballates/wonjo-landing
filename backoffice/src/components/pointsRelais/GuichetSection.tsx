@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Modal } from '../Modal';
+import { InfoBulle } from '../InfoBulle';
 import { Badge } from '../Badge';
 import { Avatar } from '../Avatar';
 import { Drapeau } from '../Drapeau';
@@ -9,7 +10,7 @@ import { ChampTelephone } from '../ChampTelephone';
 import { ValidationModal, type AEncaisser } from './AEncaisserSection';
 import { ChatGuichetModal } from './ChatGuichetModal';
 import { LienCarteModal, type DossierCarte } from './LienCarteModal';
-import { dateCourte, equivalentEuros, equivalentLocal, texteTaux, useTauxEuro, fraisProtection, libelleDevise, messageRefusPointRelais, montantEuros, montantLocal, pourcent, type BaremeProtection, type PointRelais } from '../../lib/pointsRelais';
+import { dateCourte, equivalentEuros, equivalentLocal, texteTaux, useTauxEuro, useTauxEuros, fraisProtection, libelleDevise, messageRefusPointRelais, montantEuros, montantLocal, pourcent, type BaremeProtection, type PointRelais } from '../../lib/pointsRelais';
 import { Pagination } from '../Pagination';
 import { DataTable, type Column } from '../DataTable';
 import { ChampMultiChoix } from '../ChampMultiChoix';
@@ -17,8 +18,10 @@ import { ChampDescription, compterMots } from '../ChampDescription';
 import { BasculeUnite, memoriserUnite, uniteMemorisee, type Unite } from '../BasculeUnite';
 import { TrajetDetailModal } from './TrajetDetailModal';
 import { Copiable } from './Copiable';
-import { FriseEtapes, ParcoursDossier, etapeDossier, type NomIcone } from './EtatsDossier';
+import { ParcoursDossier, type NomIcone } from './EtatsDossier';
 import { ChampDate } from '../ChampDate';
+import { BandePoints, TOUS_LES_POINTS, type CompteurPoint } from './BandePoints';
+import { lireMulti } from '../../lib/useMultiPoints';
 import { decomposerNumero, numeroComplet } from '../../lib/telephone';
 
 // Guichet (docs/POINTS_RELAIS.md § 6, migration 400) : un client sans l'app confie un colis au point. L'agent choisit
@@ -103,69 +106,82 @@ const TRIS: { value: Tri; label: string }[] = [
   { value: 'note', label: 'Les mieux notés' },
 ];
 
-const ETAPES_VIDES = [0, 1, 2, 3, 4, 5, 6];
-
 function statutDossier(d: DossierGuichet): { texte: string; tone: 'amber' | 'teal' | 'green' | 'muted' | 'danger'; icone: NomIcone } {
   if (d.statut_colis === 'annule') return { texte: 'Annulé', tone: 'muted', icone: 'annule' };
   if (!d.paiement_valide_at) {
     if (d.moyen_choisi === 'carte') return { texte: d.carte_lien ? 'Lien carte envoyé' : 'À payer par carte', tone: 'amber', icone: 'carte' };
     return { texte: 'À encaisser', tone: 'amber', icone: 'banknote' };
   }
-  if (d.statut_colis === 'en_attente') return { texte: d.statut_paiement === 'autorise' ? 'Carte réservée' : 'Payé · attente voyageur', tone: 'teal', icone: 'attente' };
-  if (d.statut_colis === 'accepte') return { texte: d.depot_at ? 'Prêt à remettre' : 'Accepté · dépôt à faire', tone: 'amber', icone: 'accepte' };
+  if (d.statut_colis === 'en_attente') return { texte: d.statut_paiement === 'autorise' ? 'Carte réservée' : 'Attente voyageur', tone: 'teal', icone: 'attente' };
+  if (d.statut_colis === 'accepte') return { texte: d.depot_at ? 'Prêt à remettre' : 'Accepté', tone: 'amber', icone: 'accepte' };
   if (d.statut_colis === 'livre') return { texte: 'Livré', tone: 'green', icone: 'livre' };
-  if (d.statut_colis === 'arrive') return { texte: 'Arrivé · code à saisir', tone: 'amber', icone: 'arrive' };
+  if (d.statut_colis === 'arrive') return { texte: 'Arrivé', tone: 'amber', icone: 'arrive' };
   if (d.statut_colis === 'en_transit') return { texte: 'En route', tone: 'teal', icone: 'route' };
   return { texte: d.statut_colis === 'remis_porteur' ? 'Remis au voyageur' : d.statut_colis, tone: 'teal', icone: 'remis' };
 }
 
-export function GuichetSection({ point, nomsPays }: { point: PointRelais; nomsPays: Record<string, string> }) {
-  useTauxEuro(point.devise); // les cartes affichent l'équivalent dès que le taux du serveur est arrivé
-  const [trajets, setTrajets] = useState<Trajet[] | null>(null);
-  const [dossiers, setDossiers] = useState<DossierGuichet[] | null>(null);
+type TrajetP = Trajet & { point: PointRelais };
+type DossierP = DossierGuichet & { point: PointRelais };
+type AEncaisserP = AEncaisser & { point: PointRelais };
+type CarteP = DossierCarte & { point: PointRelais };
+
+// Un ou plusieurs points : trajets et dossiers de tous les points accessibles sont fusionnes (colonne « Point », bande de filtre).
+// Un trajet est rattache au point de son pays de depart ; la demande part au nom de CE point.
+export function GuichetSection({ points, nomsPays }: { points: PointRelais[]; nomsPays: Record<string, string> }) {
+  useTauxEuros(points.map((p) => p.devise)); // les cartes affichent l'équivalent dès que le taux du serveur est arrivé
+  const plusieurs = points.length > 1;
+  const cleePoints = points.map((p) => p.id).join(',');
+  const [choixPoint, setChoixPoint] = useState(TOUS_LES_POINTS);
+  const [trajets, setTrajets] = useState<TrajetP[] | null>(null);
+  const [dossiers, setDossiers] = useState<DossierP[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [filtreVille, setFiltreVille] = useState('');
   const [filtrePoids, setFiltrePoids] = useState('');
   const [filtreAvant, setFiltreAvant] = useState('');
-  const [aConfier, setAConfier] = useState<Trajet | null>(null);
-  const [detail, setDetail] = useState<Trajet | null>(null);
+  const [aConfier, setAConfier] = useState<TrajetP | null>(null);
+  const [detail, setDetail] = useState<TrajetP | null>(null);
   const [tri, setTri] = useState<Tri>('depart');
   const [pageTrajets, setPageTrajets] = useState(0);
-  const [aEncaisser, setAEncaisser] = useState<AEncaisser | null>(null);
-  const [chat, setChat] = useState<DossierGuichet | null>(null);
-  const [fiche, setFiche] = useState<DossierGuichet | null>(null);
-  const [filtreTache, setFiltreTache] = useState<'tous' | 'encaisser' | 'code' | 'messages'>('tous');
-  const [filtreEtape, setFiltreEtape] = useState<number | null>(null);
-  const [code, setCode] = useState<DossierGuichet | null>(null);
-  const [carte, setCarte] = useState<DossierCarte | null>(null);
+  const [aEncaisser, setAEncaisser] = useState<AEncaisserP | null>(null);
+  const [chat, setChat] = useState<DossierP | null>(null);
+  const [fiche, setFiche] = useState<DossierP | null>(null);
+  const [filtreTache, setFiltreTache] = useState<'tous' | 'encaisser' | 'code' | 'messages' | 'livres'>('tous');
+  const [code, setCode] = useState<DossierP | null>(null);
+  const [carte, setCarte] = useState<CarteP | null>(null);
   const [nonLus, setNonLus] = useState<Record<string, number>>({});
 
   function charger() {
-    supabase.rpc('admin_pr_trajets', { p_point_id: point.id }).then(({ data, error: e }) => {
-      if (e) { setError(e.message); setTrajets([]); return; }
-      setTrajets((data ?? []) as Trajet[]);
+    lireMulti<Trajet>('trajets', points).then(({ lignes, erreur }) => {
+      if (erreur) setError(erreur);
+      // Deux points d'un meme pays voient les memes trajets : on garde le premier point rencontre.
+      const vus = new Set<string>();
+      setTrajets(lignes.filter((t) => (vus.has(t.annonce_id) ? false : (vus.add(t.annonce_id), true))));
     });
-    supabase.rpc('admin_pr_dossiers_guichet', { p_point_id: point.id }).then(({ data, error: e }) => {
-      if (e) { setError(e.message); setDossiers([]); return; }
-      setDossiers((data ?? []) as DossierGuichet[]);
+    lireMulti<DossierGuichet>('dossiers_guichet', points).then(({ lignes, erreur }) => {
+      if (erreur) setError(erreur);
+      setDossiers(lignes);
     });
     chargerNonLus();
   }
   function chargerNonLus() {
-    supabase.rpc('admin_pr_chats_non_lus', { p_point_id: point.id }).then(({ data }) => {
-      setNonLus(Object.fromEntries(((data ?? []) as { demande_id: string; non_lus: number }[]).map((x) => [x.demande_id, x.non_lus])));
+    lireMulti<{ demande_id: string; non_lus: number }>('chats_non_lus', points).then(({ lignes }) => {
+      setNonLus(Object.fromEntries(lignes.map((x) => [x.demande_id, x.non_lus])));
     });
   }
   // Nouveaux messages des voyageurs : badges rafraichis toutes les 20 s.
   useEffect(() => {
     const t = window.setInterval(chargerNonLus, 20_000);
     return () => window.clearInterval(t);
-  }, [point.id]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { setTrajets(null); setDossiers(null); charger(); }, [point.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [cleePoints]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setTrajets(null); setDossiers(null); charger(); }, [cleePoints]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const villesArrivee = useMemo(() => [...new Set((trajets ?? []).map((t) => t.ville_arrivee))].sort((a, b) => a.localeCompare(b, 'fr')), [trajets]);
-  const visibles = useMemo(() => (trajets ?? []).filter((t) => {
+  // Filtre « point » de la bande : trajets et dossiers du point choisi (ou de tous).
+  const trajetsDuPoint = useMemo(() => (trajets ?? []).filter((t) => choixPoint === TOUS_LES_POINTS || t.point.id === choixPoint), [trajets, choixPoint]);
+  const dossiersDuPoint = useMemo(() => (dossiers ?? []).filter((d) => choixPoint === TOUS_LES_POINTS || d.point.id === choixPoint), [dossiers, choixPoint]);
+
+  const villesArrivee = useMemo(() => [...new Set(trajetsDuPoint.map((t) => t.ville_arrivee))].sort((a, b) => a.localeCompare(b, 'fr')), [trajetsDuPoint]);
+  const visibles = useMemo(() => trajetsDuPoint.filter((t) => {
     if (filtreVille && t.ville_arrivee !== filtreVille) return false;
     const poids = Number(filtrePoids.replace(',', '.'));
     if (filtrePoids && Number.isFinite(poids) && t.kilos_disponibles < poids) return false;
@@ -176,31 +192,31 @@ export function GuichetSection({ point, nomsPays }: { point: PointRelais; nomsPa
     if (tri === 'kilos') return Number(b.kilos_disponibles) - Number(a.kilos_disponibles);
     if (tri === 'note') return Number(b.porteur_note ?? 0) - Number(a.porteur_note ?? 0);
     return new Date(a.depart).getTime() - new Date(b.depart).getTime();
-  }), [trajets, filtreVille, filtrePoids, filtreAvant, tri]);
+  }), [trajetsDuPoint, filtreVille, filtrePoids, filtreAvant, tri]);
   // Retour a la premiere page des qu'un filtre ou le tri change.
-  useEffect(() => { setPageTrajets(0); }, [filtreVille, filtrePoids, filtreAvant, tri, point.id]);
+  useEffect(() => { setPageTrajets(0); }, [filtreVille, filtrePoids, filtreAvant, tri, choixPoint, cleePoints]);
   const trajetsPage = visibles.slice(pageTrajets * TRAJETS_PAR_PAGE, (pageTrajets + 1) * TRAJETS_PAR_PAGE);
 
-  async function encaisserMaintenant(demandeId: string) {
+  async function encaisserMaintenant(demandeId: string, point: PointRelais) {
     const { data } = await supabase.rpc('admin_pr_a_encaisser', { p_point_id: point.id });
     const item = ((data ?? []) as AEncaisser[]).find((i) => i.demande_id === demandeId);
-    if (item) setAEncaisser(item);
+    if (item) setAEncaisser({ ...item, point });
   }
 
   // Le client prefere la carte au moment d'encaisser : le dossier change de moyen, puis le lien s'affiche.
-  async function passerCarte(item: AEncaisser) {
+  async function passerCarte(item: AEncaisserP) {
     const { error: e } = await supabase.rpc('admin_pr_changer_moyen_guichet', { p_demande_id: item.demande_id, p_moyen: 'carte' });
     if (e) { setError(e.message); return; }
     const d = (dossiers ?? []).find((x) => x.demande_id === item.demande_id);
     setAEncaisser(null);
     setCarte({
       demande_id: item.demande_id, reference: item.reference, client_nom: d?.client_nom ?? item.expediteur_nom ?? 'le client',
-      client_telephone: d?.client_telephone ?? '', montant_eur: item.montant_eur, montant_local: item.montant_local, devise: item.devise,
+      client_telephone: d?.client_telephone ?? '', montant_eur: item.montant_eur, montant_local: item.montant_local, devise: item.devise, point: item.point,
     });
     charger();
   }
 
-  const enCours = (dossiers ?? []).filter((d) => !['livre', 'annule'].includes(d.statut_colis));
+  const enCours = dossiersDuPoint.filter((d) => !['livre', 'annule'].includes(d.statut_colis));
   // Ce qui attend une action du point : encaisser / envoyer le lien carte, saisir le code, lire un message. Les dossiers à traiter passent
   // en premier ; les pastilles de filtre au-dessus du tableau disent combien il y en a de chaque sorte.
   const estAEncaisser = (d: DossierGuichet) => !d.paiement_valide_at && d.statut_colis === 'en_attente';
@@ -210,36 +226,48 @@ export function GuichetSection({ point, nomsPays }: { point: PointRelais; nomsPa
   const nbEncaisser = enCours.filter(estAEncaisser).length;
   const nbCodes = enCours.filter(codeASaisir).length;
   const nbMessages = enCours.reduce((a, d) => a + (nonLus[d.demande_id] ?? 0), 0);
-  const filtreur = { tous: () => true, encaisser: estAEncaisser, code: codeASaisir, messages: messagesNonLus }[filtreTache];
-  const comptesEtapes = ETAPES_VIDES.map((_, k) => (dossiers ?? []).filter((d) => etapeDossier(d) === k).length);
+  const filtreur = { tous: () => true, livres: () => true, encaisser: estAEncaisser, code: codeASaisir, messages: messagesNonLus }[filtreTache];
+  const nbLivres = dossiersDuPoint.filter((d) => d.statut_colis === 'livre').length;
   // « Livré » n'est pas « en cours » : il ne s'affiche que si on choisit cette étape dans la frise.
-  const dossiersTries = (filtreEtape === 6 ? (dossiers ?? []).filter((d) => d.statut_colis === 'livre') : enCours).filter(filtreur).filter((d) => filtreEtape === null || etapeDossier(d) === filtreEtape)
+  const dossiersTries = (filtreTache === 'livres' ? dossiersDuPoint.filter((d) => d.statut_colis === 'livre') : enCours.filter(filtreur))
     .sort((a, b) => Number(actionRequise(b)) - Number(actionRequise(a)) || new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  // Bande de points : dossiers en cours et ceux qui attendent une action, par point (sur tous les dossiers, pas seulement le point choisi).
+  const compteursPoints = useMemo(() => {
+    const c: Record<string, CompteurPoint> = {};
+    for (const d of dossiers ?? []) {
+      if (['livre', 'annule'].includes(d.statut_colis)) continue;
+      const x = (c[d.point.id] ??= { total: 0, urgents: 0 });
+      x.total += 1;
+      if (actionRequise(d)) x.urgents += 1;
+    }
+    return c;
+  }, [dossiers, nonLus]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Filtres rapides, dans le cadre du tableau (le filtre « État » de l'en-tête de colonne est retiré : les pastilles « Étape » le remplacent).
   const filtresDossiers = dossiers && dossiers.length > 0 ? (
     <>
-      <button type="button" className={`pr-puce-filtre ${filtreTache === 'tous' && filtreEtape === null ? 'on' : ''}`} onClick={() => { setFiltreTache('tous'); setFiltreEtape(null); }}>Tous<span>{enCours.length}</span></button>
+      <button type="button" className={`pr-puce-filtre ${filtreTache === 'tous' ? 'on' : ''}`} onClick={() => setFiltreTache('tous')}>En cours<span>{enCours.length}</span></button>
       {([['encaisser', 'À encaisser', nbEncaisser, 'ambre'], ['code', 'Codes à saisir', nbCodes, 'ambre'], ['messages', 'Messages non lus', nbMessages, 'rouge']] as const).map(([cle, libelle, n, ton]) => (
         <button key={cle} type="button" className={`pr-puce-filtre ${filtreTache === cle ? 'on' : ''} ${n > 0 ? `pr-puce-filtre--${ton}` : ''}`} onClick={() => setFiltreTache(filtreTache === cle ? 'tous' : cle)}>{libelle}<span>{n}</span></button>
       ))}
-      <span className="pr-filtres-sep" aria-hidden="true" />
-      <FriseEtapes comptes={comptesEtapes} actif={filtreEtape} onChoix={setFiltreEtape} />
+      <button type="button" className={`pr-puce-filtre ${filtreTache === 'livres' ? 'on' : ''}`} onClick={() => setFiltreTache(filtreTache === 'livres' ? 'tous' : 'livres')}>Livrés<span>{nbLivres}</span></button>
     </>
   ) : undefined;
 
   // Un dossier par ligne : référence, client → destinataire, trajet, montant, état, puis les actions (messages + action principale).
-  const colonnesDossiers: Column<DossierGuichet>[] = [
+  const colonnesDossiers: Column<DossierP>[] = [
+    ...(plusieurs ? [{ key: 'point', label: 'Point', value: (d: DossierP) => d.point.nom, filter: 'options' as const, width: 120, render: (d: DossierP) => <strong className="pr-nowrap">{d.point.nom}</strong> }] : []),
     { key: 'ref', label: 'Dossier', value: (d) => d.reference, width: 108, render: (d) => <span className="pr-ref">#{d.reference}</span> },
     { key: 'cree', label: 'Créé le', value: (d) => d.created_at, filter: 'date', width: 122,
       render: (d) => <span className="pr-nowrap">{new Date(d.created_at).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span> },
     { key: 'client', label: 'Client → destinataire', width: 175, value: (d) => `${d.client_nom} ${d.destinataire_nom} ${d.destinataire_ville ?? ''}`,
       render: (d) => <span className="pr-nowrap"><strong>{premierMot(d.client_nom)}</strong><span className="pr-fleche"> → </span>{premierMot(d.destinataire_nom)}</span> },
-    { key: 'trajet', label: 'Trajet', width: 215, value: (d) => `${d.trajet ?? ''} ${d.porteur_nom ?? ''}`,
-      render: (d) => <span className="pr-nowrap">{d.trajet ?? '-'}{d.porteur_nom ? <span className="hint">, {premierMot(d.porteur_nom)}</span> : null}</span> },
+    { key: 'trajet', label: 'Trajet', width: 170, value: (d) => `${d.trajet ?? ''} ${d.porteur_nom ?? ''}`, // la recherche trouve encore le voyageur par son nom
+      render: (d) => <span className="pr-nowrap">{d.trajet ?? '-'}</span> },
     { key: 'montant', label: 'Montant', value: (d) => Number(d.montant_local), width: 118, render: (d) => <strong className="pr-nowrap">{montantLocal(d.montant_local, d.devise)}</strong> },
-    { key: 'statut', label: 'État', value: (d) => statutDossier(d).texte, width: 175, render: (d) => <Badge tone={statutDossier(d).tone}>{statutDossier(d).texte}</Badge> },
-    { key: 'actions', label: '', width: 270,
+    { key: 'statut', label: 'État', value: (d) => statutDossier(d).texte, filter: 'options', width: 140, render: (d) => <Badge tone={statutDossier(d).tone}>{statutDossier(d).texte}</Badge> },
+    { key: 'actions', label: '', width: 240,
       render: (d) => (
         <div className="pr-actions-ligne">
           <button type="button" className={`pr-btn-icone ${nonLus[d.demande_id] ? 'pr-btn-icone--actif' : ''}`} onClick={(e) => { e.stopPropagation(); setChat(d); }}
@@ -250,7 +278,7 @@ export function GuichetSection({ point, nomsPays }: { point: PointRelais; nomsPa
           {!d.paiement_valide_at && d.statut_colis === 'en_attente'
             ? (d.moyen_choisi === 'carte'
               ? <button className="btn btn-primary btn-sm pr-nowrap" onClick={(e) => { e.stopPropagation(); setMessage(null); setCarte(d); }}>Lien carte</button>
-              : <button className="btn btn-primary btn-sm pr-nowrap" onClick={(e) => { e.stopPropagation(); encaisserMaintenant(d.demande_id); }}>Encaisser</button>)
+              : <button className="btn btn-primary btn-sm pr-nowrap" onClick={(e) => { e.stopPropagation(); encaisserMaintenant(d.demande_id, d.point); }}>Encaisser</button>)
             : d.statut_colis === 'arrive'
               ? <button className="btn btn-primary btn-sm pr-nowrap" onClick={(e) => { e.stopPropagation(); setCode(d); }}>Saisir le code</button>
               : null}
@@ -265,12 +293,15 @@ export function GuichetSection({ point, nomsPays }: { point: PointRelais; nomsPa
     <div>
       <div className="pr-entete">
         <div>
-          <h3>Guichet</h3>
-          <p className="hint">Un client vous confie un colis : choisissez un voyageur qui part de <strong>{nomsPays[point.pays_code.trim()] ?? point.pays_code}</strong>. La demande part au nom de « Wonjo {point.ville} ».{!!texteTaux(point.devise) && <> Les prix des voyageurs sont en euros : <strong>{texteTaux(point.devise)}</strong>.</>}</p>
+          <h3>Guichet<InfoBulle>{plusieurs
+            ? <>Un client vous confie un colis : choisissez un voyageur. La demande part au nom du point du pays de départ du voyageur.</>
+            : <>Un client vous confie un colis : choisissez un voyageur qui part de <strong>{nomsPays[points[0].pays_code.trim()] ?? points[0].pays_code}</strong>. La demande part au nom de « Wonjo {points[0].ville} ».{!!texteTaux(points[0].devise) && <> Les prix des voyageurs sont en euros : <strong>{texteTaux(points[0].devise)}</strong>.</>}</>}</InfoBulle></h3>
         </div>
       </div>
       {message && <p className="success-text" style={{ marginBottom: 12 }}>{message}</p>}
       {error && <p className="page-error">{error}</p>}
+
+      <BandePoints points={points} compteurs={compteursPoints} choix={choixPoint} onChoix={setChoixPoint} />
 
       <div className="pr-barre">
       <div className="pr-filtres">
@@ -291,8 +322,8 @@ export function GuichetSection({ point, nomsPays }: { point: PointRelais; nomsPa
         {(filtreVille || filtrePoids || filtreAvant) && (
           <button type="button" className="pr-filtres-effacer" onClick={() => { setFiltreVille(''); setFiltrePoids(''); setFiltreAvant(''); }}>Effacer les filtres</button>
         )}
+        {trajets && <p className="pr-compteur pr-compteur--filtres"><strong>{visibles.length}</strong> trajet{visibles.length > 1 ? 's' : ''} disponible{visibles.length > 1 ? 's' : ''}{visibles.length !== trajets.length ? ` sur ${trajets.length}` : ''}</p>}
       </div>
-      {trajets && <p className="pr-compteur"><strong>{visibles.length}</strong> trajet{visibles.length > 1 ? 's' : ''} disponible{visibles.length > 1 ? 's' : ''}{visibles.length !== trajets.length ? ` sur ${trajets.length}` : ''}</p>}
       </div>
 
       {!trajets ? <p className="loading-state">Chargement des trajets…</p> : visibles.length === 0 ? (
@@ -310,7 +341,8 @@ export function GuichetSection({ point, nomsPays }: { point: PointRelais; nomsPa
                 <span><Drapeau iso={t.pays_arrivee_code} /> {t.ville_arrivee}</span>
               </div>
               <div className="pr-ligne"><span className="pr-libelle">Départ</span><span>{dateCourte(t.depart)}</span></div>
-              <div className="pr-ligne"><span className="pr-libelle">Place</span><span><strong>{Number(t.kilos_disponibles).toLocaleString('fr-FR')} kg</strong> · {Number(t.prix_par_kilo).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €/kg{equivalentLocal(t.prix_par_kilo, point.devise) && <small className="pr-equiv"> {equivalentLocal(t.prix_par_kilo, point.devise)}/kg</small>}</span></div>
+              {plusieurs && <div className="pr-ligne"><span className="pr-libelle">Point</span><span>{t.point.nom}</span></div>}
+              <div className="pr-ligne"><span className="pr-libelle">Place</span><span><strong>{Number(t.kilos_disponibles).toLocaleString('fr-FR')} kg</strong> · {Number(t.prix_par_kilo).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €/kg{equivalentLocal(t.prix_par_kilo, t.point.devise) && <small className="pr-equiv"> {equivalentLocal(t.prix_par_kilo, t.point.devise)}/kg</small>}</span></div>
               <div className="pr-voyageur">
                 <Avatar src={t.porteur_photo} nom={t.porteur_nom} size={32} />
                 <div>
@@ -330,7 +362,7 @@ export function GuichetSection({ point, nomsPays }: { point: PointRelais; nomsPa
       <Pagination page={pageTrajets} total={visibles.length} taille={TRAJETS_PAR_PAGE} onPage={setPageTrajets} unite="trajets" />
 
       <div className="pr-entete" style={{ marginTop: 28 }}>
-        <div><h3>Dossiers du guichet</h3><p className="hint">Les colis confiés par vos clients, du paiement à la livraison. Les dossiers qui demandent une action sont en haut.</p></div>
+        <div><h3>Dossiers du guichet<InfoBulle>Les colis confiés par vos clients, du paiement à la livraison. Les dossiers qui demandent une action sont en haut.</InfoBulle></h3></div>
       </div>
       {!dossiers ? <p className="loading-state">Chargement…</p> : (
         <div className="pr-dossiers-table"><DataTable rows={dossiersTries} columns={colonnesDossiers} rowKey={(d) => d.demande_id} integre pageSize={10} onRowClick={(d) => setFiche(d)} filtres={filtresDossiers}
@@ -339,18 +371,19 @@ export function GuichetSection({ point, nomsPays }: { point: PointRelais; nomsPa
       )}
 
       {fiche && (
-        <FicheDossierModal dossier={fiche} point={point} nonLus={nonLus[fiche.demande_id] ?? 0} onClose={() => setFiche(null)}
+        <FicheDossierModal dossier={fiche} point={fiche.point} nonLus={nonLus[fiche.demande_id] ?? 0} onClose={() => setFiche(null)}
           onMessages={() => { const d = fiche; setFiche(null); setChat(d); }}
-          onEncaisser={() => { const d = fiche; setFiche(null); setMessage(null); if (d.moyen_choisi === 'carte') setCarte(d); else encaisserMaintenant(d.demande_id); }}
+          onEncaisser={() => { const d = fiche; setFiche(null); setMessage(null); if (d.moyen_choisi === 'carte') setCarte(d); else encaisserMaintenant(d.demande_id, d.point); }}
           onCode={() => { const d = fiche; setFiche(null); setCode(d); }} />
       )}
       {detail && (
-        <TrajetDetailModal trajet={detail} devise={point.devise} onClose={() => setDetail(null)}
+        <TrajetDetailModal trajet={detail} devise={detail.point.devise} onClose={() => setDetail(null)}
           onConfier={() => { const t = detail; setDetail(null); setMessage(null); setAConfier(t); }} />
       )}
       {aConfier && (
-        <ConfierModal point={point} trajet={aConfier} nomsPays={nomsPays} onClose={() => setAConfier(null)}
+        <ConfierModal point={aConfier.point} trajet={aConfier} nomsPays={nomsPays} onClose={() => setAConfier(null)}
           onCree={(r, encaisser) => {
+            const pointDuTrajet = aConfier.point;
             setAConfier(null);
             setMessage(r.moyen === 'carte'
               ? `Demande #${r.reference} envoyée au voyageur au nom du point : ${montantEuros(r.montant_eur)} à payer par carte.`
@@ -358,8 +391,8 @@ export function GuichetSection({ point, nomsPays }: { point: PointRelais; nomsPa
             charger();
             if (encaisser && r.moyen === 'carte') {
               setCarte({ demande_id: r.demande_id, reference: r.reference, client_nom: r.client_nom, client_telephone: r.client_telephone,
-                         montant_eur: r.montant_eur, montant_local: r.montant_local, devise: r.devise });
-            } else if (encaisser) encaisserMaintenant(r.demande_id);
+                         montant_eur: r.montant_eur, montant_local: r.montant_local, devise: r.devise, point: pointDuTrajet });
+            } else if (encaisser) encaisserMaintenant(r.demande_id, pointDuTrajet);
           }} />
       )}
       {chat && (
@@ -377,15 +410,15 @@ export function GuichetSection({ point, nomsPays }: { point: PointRelais; nomsPa
           onLivre={() => { setCode(null); setMessage(`Colis #${code.reference} livré : le voyageur sera payé 24 h après, sans litige.`); charger(); }} />
       )}
       {aEncaisser && (
-        <ValidationModal point={point} item={aEncaisser} onClose={() => setAEncaisser(null)}
+        <ValidationModal point={aEncaisser.point} item={aEncaisser} onClose={() => setAEncaisser(null)}
           onValide={(texte) => { setAEncaisser(null); setMessage(texte); charger(); }}
           onCarte={() => passerCarte(aEncaisser)} />
       )}
       {carte && (
-        <LienCarteModal point={point} dossier={carte}
+        <LienCarteModal point={carte.point} dossier={carte}
           onClose={() => { setCarte(null); charger(); }}
           onPaye={(texte) => { setCarte(null); setMessage(texte); charger(); }}
-          onAutrement={() => { const id = carte.demande_id; setCarte(null); charger(); encaisserMaintenant(id); }} />
+          onAutrement={() => { const id = carte.demande_id; const pt = carte.point; setCarte(null); charger(); encaisserMaintenant(id, pt); }} />
       )}
     </div>
   );

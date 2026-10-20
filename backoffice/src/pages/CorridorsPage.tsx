@@ -14,6 +14,10 @@ interface PaysCorridor {
   actif: boolean;
 }
 
+interface PaysIntraAfrique extends PaysCorridor {
+  intra_afrique: boolean;
+}
+
 interface CorridorPrix {
   id: string;
   nom: string;
@@ -66,6 +70,9 @@ export function CorridorsSection() {
   const [pays, setPays] = useState<PaysCorridor[] | null>(null);
   const [paysOriginal, setPaysOriginal] = useState<PaysCorridor[] | null>(null);
   const [paysBusy, setPaysBusy] = useState(false);
+  const [intra, setIntra] = useState<PaysIntraAfrique[] | null>(null);
+  const [intraOriginal, setIntraOriginal] = useState<PaysIntraAfrique[] | null>(null);
+  const [intraBusy, setIntraBusy] = useState(false);
   const [prixCorridors, setPrixCorridors] = useState<CorridorPrix[] | null>(null);
   const [prixCorridorsOriginal, setPrixCorridorsOriginal] = useState<CorridorPrix[] | null>(null);
   const [prixBusy, setPrixBusy] = useState(false);
@@ -80,16 +87,20 @@ export function CorridorsSection() {
   const [paysOuvert, setPaysOuvert] = useState<string | null>(null);
 
   async function charger() {
-    const [r1, r2, r3, r4] = await Promise.all([
+    const [r1, r2, r3, r4, r5] = await Promise.all([
       supabase.rpc('admin_lister_pays_corridors'),
       supabase.rpc('admin_lister_corridors_prix'),
       supabase.rpc('admin_lister_enveloppe_prix'),
       supabase.rpc('admin_lister_villes_corridors'),
+      supabase.rpc('admin_lister_pays_intra_afrique'),
     ]);
     if (r1.error) { setError(r1.error.message); return; }
     if (r2.error) { setError(r2.error.message); return; }
     if (r3.error) { setError(r3.error.message); return; }
     if (r4.error) { setError(r4.error.message); return; }
+    if (r5.error) { setError(r5.error.message); return; }
+    setIntra((r5.data ?? []) as PaysIntraAfrique[]);
+    setIntraOriginal((r5.data ?? []) as PaysIntraAfrique[]);
     setPays((r1.data ?? []) as PaysCorridor[]);
     setPaysOriginal((r1.data ?? []) as PaysCorridor[]);
     setPrixCorridors((r2.data ?? []) as CorridorPrix[]);
@@ -124,6 +135,29 @@ export function CorridorsSection() {
 
   function annulerPays() {
     setPays(paysOriginal);
+  }
+
+  // Intra-Afrique : meme principe de brouillon que les pays. Un trajet entre deux pays d'Afrique n'existe que si les
+  // DEUX sont coches ; vers l'Europe, le pays autorise suffit.
+  function toggleIntra(p: PaysIntraAfrique) {
+    setIntra((liste) => liste!.map((x) => (x.code === p.code ? { ...x, intra_afrique: !x.intra_afrique } : x)));
+  }
+
+  const intraModifies = intra?.filter((p) => p.intra_afrique !== intraOriginal?.find((o) => o.code === p.code)?.intra_afrique) ?? [];
+
+  async function enregistrerIntra() {
+    if (!intra) return;
+    setIntraBusy(true);
+    for (const p of intraModifies) {
+      const { error: rpcError } = await supabase.rpc('admin_definir_pays_intra_afrique', { p_code: p.code, p_ouvert: p.intra_afrique });
+      if (rpcError) { setError(rpcError.message); setIntraBusy(false); return; }
+    }
+    setIntraOriginal(intra);
+    setIntraBusy(false);
+  }
+
+  function annulerIntra() {
+    setIntra(intraOriginal);
   }
 
   // Meme principe que pays/prix : modification locale (on peut ouvrir
@@ -244,12 +278,16 @@ export function CorridorsSection() {
   }
 
   if (error) return <p className="page-error">{error}</p>;
-  if (!pays || !prixCorridors || !prixEnveloppes || !villes) return <p className="loading-state">Chargement…</p>;
+  if (!pays || !intra || !prixCorridors || !prixEnveloppes || !villes) return <p className="loading-state">Chargement…</p>;
 
   const parRegion = ORDRE_REGION
     .map((region) => ({ region, liste: pays.filter((p) => p.region === region).sort((a, b) => a.nom.localeCompare(b.nom, 'fr')) }))
     .filter((g) => g.liste.length > 0);
   const nbActifs = pays.filter((p) => p.actif).length;
+  const intraParRegion = ORDRE_REGION
+    .map((region) => ({ region, liste: intra.filter((p) => p.region === region).sort((a, b) => a.nom.localeCompare(b.nom, 'fr')) }))
+    .filter((g) => g.liste.length > 0);
+  const nbIntra = intra.filter((p) => p.intra_afrique).length;
   // Corridors actifs d'abord, fermes en dernier (au lieu de l'ordre alphabetique).
   const prixCorridorsTries = [...prixCorridors].sort((a, b) => Number(b.actif) - Number(a.actif));
 
@@ -283,6 +321,47 @@ export function CorridorsSection() {
                 {g.liste.map((p) => (
                   <label key={p.code} className={`pays-pilule ${p.actif ? 'is-on' : ''}`}>
                     <input type="checkbox" checked={p.actif} disabled={paysBusy} onChange={() => toggle(p)} />
+                    <span className="pays-pilule-dot" />
+                    {p.nom}
+                  </label>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="chart-card">
+        <div className="chart-head">
+          <div className="chart-head-titre">
+            <h3>Pays ouverts à l'Afrique-Afrique</h3>
+            <span className="badge badge-muted">{nbIntra}/{intra.length}</span>
+          </div>
+          {intraModifies.length > 0 && (
+            <div className="action-row">
+              <button type="button" className="btn btn-sm" disabled={intraBusy} onClick={annulerIntra}>Annuler</button>
+              <button type="button" className="btn btn-sm btn-primary" disabled={intraBusy} onClick={enregistrerIntra}>
+                {intraBusy ? '…' : `Valider (${intraModifies.length})`}
+              </button>
+            </div>
+          )}
+        </div>
+        <p className="chart-sub">
+          Un trajet entre deux pays d'Afrique n'est possible que si les deux sont cochés. Les trajets entre l'Europe et un
+          pays ne dépendent que de « Pays autorisés ».
+        </p>
+        <div className="corridors-regions-compact">
+          {intraParRegion.map((g) => (
+            <div key={g.region} className="corridors-region-ligne">
+              <span className="corridors-region-nom">{LABELS_REGION[g.region] ?? g.region}</span>
+              <div className="corridors-pays-pilules">
+                {g.liste.map((p) => (
+                  <label
+                    key={p.code}
+                    className={`pays-pilule ${p.intra_afrique ? 'is-on' : ''}`}
+                    title={p.actif ? undefined : 'Pays non autorisé : ouvrez-le d\'abord dans "Pays autorisés"'}
+                  >
+                    <input type="checkbox" checked={p.intra_afrique} disabled={intraBusy || (!p.actif && !p.intra_afrique)} onChange={() => toggleIntra(p)} />
                     <span className="pays-pilule-dot" />
                     {p.nom}
                   </label>
@@ -484,14 +563,21 @@ function VilleBoutonEtPopover({
   onToggleVille: (v: VilleCorridor) => void;
   disabled: boolean;
 }) {
-  const [pos, setPos] = useState({ top: 0, left: 0 });
+  const [pos, setPos] = useState<{ top?: number; bottom?: number; left: number; maxListe: number }>({ top: 0, left: 0, maxListe: 260 });
   const btnRef = useRef<HTMLButtonElement>(null);
   const popRef = useRef<HTMLDivElement>(null);
 
   function toggleOuvert() {
     if (!ouvert && btnRef.current) {
       const r = btnRef.current.getBoundingClientRect();
-      setPos({ top: r.bottom + 6, left: r.left });
+      // Les pays du bas de la page : le panneau s'ouvre vers le haut s'il n'a pas la place en dessous (et il defile dans tous les cas).
+      const voulue = Math.min(260, liste.length * 34) + 30;
+      const dessous = window.innerHeight - r.bottom - 14;
+      const dessus = r.top - 14;
+      const versLeHaut = dessous < voulue && dessus > dessous;
+      const espace = versLeHaut ? dessus : dessous;
+      const maxListe = Math.max(120, Math.min(260, espace - 30));
+      setPos(versLeHaut ? { bottom: window.innerHeight - r.top + 6, left: r.left, maxListe } : { top: r.bottom + 6, left: r.left, maxListe });
     }
     onOuvrir();
   }
@@ -535,8 +621,8 @@ function VilleBoutonEtPopover({
         <span className="hint">{paysActif ? `${nbActivesPays}/${liste.length}` : 'fermé'}</span>
       </button>
       {ouvert && createPortal(
-        <div ref={popRef} className="corridors-villes-panneau" style={{ top: pos.top, left: pos.left }}>
-          <ul className="corridors-villes-liste">
+        <div ref={popRef} className="corridors-villes-panneau" style={{ top: pos.top, bottom: pos.bottom, left: pos.left }}>
+          <ul className="corridors-villes-liste" style={{ maxHeight: pos.maxListe }}>
             {liste.map((v) => (
               <li key={v.ville}>
                 <label>

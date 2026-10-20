@@ -10,7 +10,8 @@ import { peutEnvoyerInformation } from '../lib/permissions';
 import type { CompteRecherche } from '../lib/types';
 import { useRechercheComptes } from '../lib/useRechercheComptes';
 import { lienAutorise } from '../lib/liensAutorises';
-import { EmailsAppSection } from './EmailsAppSection';
+import { EmailsAppSection, chargerListeEmailsApp } from './EmailsAppSection';
+import { ecrireCache, lireCache } from '../lib/precharge';
 import logo from '../assets/wonjo-logo.png';
 import { IconChevronLeft, IconRestore, IconSend, IconSquarePencil, IconTrash } from '../components/Icons';
 import { useConfirmation } from '../components/Confirmation';
@@ -110,11 +111,13 @@ export function EmailsPage() {
   // Echec d'un chargement (modeles, campagnes, desinscrits...) : affiche plutot
   // qu'une liste vide trompeuse.
   const [erreurChargement, setErreurChargement] = useState<string | null>(null);
-  const [campagnes, setCampagnes] = useState<Campagne[] | null>(null);
+  const [campagnes, setCampagnes] = useState<Campagne[] | null>(() => lireCache<Campagne[]>('campagnes') ?? null);
   const [sousOnglet, setSousOnglet] = useState<SousOnglet>('envoyer');
   const [nbEmailsApp, setNbEmailsApp] = useState(0);
+  // La liste des e-mails de l'app se charge des l'ouverture de l'onglet (elle passe par une fonction edge, plus lente a froid).
+  useEffect(() => { chargerListeEmailsApp().then((r) => { if (r.liste) setNbEmailsApp(r.liste.emails.length); }); }, []);
   const [composerOuvert, setComposerOuvert] = useState(false);
-  const [modeles, setModeles] = useState<Modele[] | null>(null);
+  const [modeles, setModeles] = useState<Modele[] | null>(() => lireCache<Modele[]>('modeles') ?? null);
   const [modeleChoisi, setModeleChoisi] = useState('');
   const [nbDesinscrits, setNbDesinscrits] = useState<number | null>(null);
   const [desinscrits, setDesinscrits] = useState<Desinscrit[] | null>(null);
@@ -141,7 +144,7 @@ export function EmailsPage() {
   }, [sousOnglet]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function chargerModeles() {
-    supabase.rpc('admin_lister_modeles', { p_corbeille: false }).then(({ data, error: e }) => { if (e) { setErreurChargement(e.message); return; } setModeles((data ?? []) as Modele[]); });
+    supabase.rpc('admin_lister_modeles', { p_corbeille: false }).then(({ data, error: e }) => { if (e) { setErreurChargement(e.message); return; } const l = (data ?? []) as Modele[]; ecrireCache('modeles', l); setModeles(l); });
   }
   useEffect(chargerModeles, []);
 
@@ -159,7 +162,7 @@ export function EmailsPage() {
   );
 
   function chargerCampagnes() {
-    supabase.rpc('admin_lister_campagnes', { p_corbeille: false }).then(({ data, error: e }) => { if (e) { setErreurChargement(e.message); return; } setCampagnes((data ?? []) as Campagne[]); });
+    supabase.rpc('admin_lister_campagnes', { p_corbeille: false }).then(({ data, error: e }) => { if (e) { setErreurChargement(e.message); return; } const l = (data ?? []) as Campagne[]; ecrireCache('campagnes', l); setCampagnes(l); });
   }
   useEffect(chargerCampagnes, []);
   const { comptes, erreur: erreurComptes } = useRechercheComptes(rechercheMembre, 60, { actif: segment === 'selection' });

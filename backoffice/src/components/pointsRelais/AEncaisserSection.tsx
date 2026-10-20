@@ -2,7 +2,12 @@ import { ChampMontant } from '../ChampMontant';
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Modal } from '../Modal';
+import { InfoBulle } from '../InfoBulle';
 import { Select } from '../Select';
+import { DataTable, type Column } from '../DataTable';
+import { PanneauLateral } from '../PanneauLateral';
+import { useMultiPoints } from '../../lib/useMultiPoints';
+import { BandePoints, TOUS_LES_POINTS, type CompteurPoint } from './BandePoints';
 import { RecuActions } from './RecuActions';
 import type { Recu } from '../../lib/recu';
 import {
@@ -33,118 +38,124 @@ export interface AEncaisser {
   created_at: string;
 }
 
-export function AEncaisserSection({ point }: { point: PointRelais }) {
-  const [items, setItems] = useState<AEncaisser[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [aValider, setAValider] = useState<AEncaisser | null>(null);
+type LigneAEncaisser = AEncaisser & { point: PointRelais };
+
+// Tous les points accessibles dans UN tableau (colonne « Point » des qu'il y en a plusieurs), filtrable par la bande de points,
+// le plus urgent en haut. Un clic sur une ligne ouvre son detail dans le panneau lateral, avec l'action de validation.
+export function AEncaisserSection({ points }: { points: PointRelais[] }) {
+  const { items, error, recharger: charger } = useMultiPoints<AEncaisser>(points, 'a_encaisser', 60_000);
+  const [ouvert, setOuvert] = useState<string | null>(null);
+  const [aValider, setAValider] = useState<LigneAEncaisser | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [maintenant, setMaintenant] = useState(Date.now());
-
-  function charger() {
-    supabase.rpc('admin_pr_a_encaisser', { p_point_id: point.id }).then(({ data, error: e }) => {
-      if (e) { setError(e.message); setItems([]); return; }
-      setError(null);
-      setItems((data ?? []) as AEncaisser[]);
-    });
-  }
+  const [choix, setChoix] = useState(TOUS_LES_POINTS);
+  // Les comptes a rebours avancent chaque minute, au rythme du rafraichissement de la file.
   useEffect(() => {
-    setItems(null);
-    charger();
-    // La file bouge (nouveaux choix, echeances) : rafraichie chaque minute, comme les comptes a rebours.
-    const t = window.setInterval(() => { setMaintenant(Date.now()); charger(); }, 60_000);
+    const t = window.setInterval(() => setMaintenant(Date.now()), 60_000);
     return () => window.clearInterval(t);
-  }, [point.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
-  const total = useMemo(() => (items ?? []).filter((i) => !i.expire).reduce((s, i) => s + Number(i.montant_local), 0), [items]);
+  const urgence = (i: AEncaisser) => echeanceRelative(i.echeance, maintenant).urgence;
+  const compteurs = useMemo(() => {
+    const c: Record<string, CompteurPoint> = {};
+    for (const i of items ?? []) {
+      if (i.expire) continue;
+      const x = (c[i.point.id] ??= { total: 0, urgents: 0 });
+      x.total += 1;
+      if (urgence(i) === 'urgent') x.urgents += 1;
+    }
+    return c;
+  }, [items, maintenant]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const visibles = useMemo(() => (items ?? []).filter((i) => choix === TOUS_LES_POINTS || i.point.id === choix), [items, choix]);
+  const plusieurs = points.length > 1;
+  const ligneOuverte = visibles.find((i) => i.demande_id === ouvert) ?? null;
+
+  const colonnes: Column<LigneAEncaisser>[] = [
+    ...(plusieurs ? [{ key: 'point', label: 'Point', value: (i: LigneAEncaisser) => i.point.nom, filter: 'options' as const, render: (i: LigneAEncaisser) => <strong className="pr-nowrap">{i.point.nom}</strong> }] : []),
+    { key: 'ref', label: 'Référence', value: (i) => i.reference, render: (i) => <span className="pr-ref" title="Référence que l'expéditeur indique dans son transfert">#{i.reference}</span> },
+    { key: 'echeance', label: 'Échéance', value: (i) => i.echeance, render: (i) => {
+      const e = echeanceRelative(i.echeance, maintenant);
+      return <span className={`pr-urgence pr-urgence--${e.urgence}`}>{e.urgence === 'depasse' ? 'Dépassée' : e.texte}</span>;
+    } },
+    { key: 'montant', label: 'Montant', value: (i) => Number(i.montant_local), render: (i) => <span className="pr-nowrap"><strong>{montantLocal(i.montant_local, i.devise)}</strong><span className="hint"> · {montantEuros(i.montant_eur)}</span></span> },
+    { key: 'moyen', label: 'Moyen', value: (i) => (i.moyen_choisi === 'especes' ? 'Espèces' : 'Mobile money'), filter: 'options' },
+    { key: 'exp', label: 'Expéditeur', value: (i) => `${i.expediteur_nom ?? 'Membre'} ${i.expediteur_telephone ?? ''}`,
+      render: (i) => <span className="pr-nowrap">{i.expediteur_nom ?? 'Membre'}{i.expediteur_telephone && <span className="hint"> · {i.expediteur_telephone}</span>}</span> },
+    { key: 'trajet', label: 'Trajet', value: (i) => i.trajet, render: (i) => <span className="pr-nowrap">{i.trajet}</span> },
+    { key: 'actions', label: '', width: 130, render: (i) => (
+      <button className="pr-paie-btn pr-paie-btn--stripe" disabled={i.expire} title={i.expire ? 'Échéance dépassée : la demande va être annulée automatiquement' : undefined}
+              onClick={(e) => { e.stopPropagation(); setMessage(null); setAValider(i); }}>{i.expire ? 'Échue' : 'Valider'}</button>
+    ) },
+  ];
 
   return (
     <div>
       <div className="pr-entete">
         <div>
-          <h3>À encaisser</h3>
-          <p className="hint">
-            Demandes de l'app à payer au point <strong>{point.nom}</strong>. Validez un paiement seulement quand l'argent est bien reçu.
-          </p>
+          <h3>À encaisser<InfoBulle>Demandes de l'app à payer au point. Validez un paiement seulement quand l'argent est bien reçu.</InfoBulle></h3>
         </div>
-        {items && items.length > 0 && (
-          <div className="pr-total">
-            <span>{items.filter((i) => !i.expire).length} en attente</span>
-            <strong>{montantLocal(total, point.devise)}</strong>
-          </div>
-        )}
       </div>
 
       {message && <p className="success-text" style={{ marginBottom: 12 }}>{message}</p>}
       {error && <p className="page-error">{error}</p>}
 
-      {!items ? <p className="loading-state">Chargement…</p> : items.length === 0 ? (
-        <div className="empty-state">Rien à encaisser pour le moment. Les demandes payées « via un point relais » apparaîtront ici.</div>
-      ) : (
-        <div className="pr-grid">
-          {items.map((i) => {
+      {!items ? <p className="loading-state">Chargement…</p> : (
+        <>
+          <BandePoints points={points} compteurs={compteurs} choix={choix} onChoix={setChoix} />
+          <div className="pr-dense">
+            <DataTable rows={visibles} columns={colonnes} rowKey={(i) => i.demande_id} integre title="Paiements à encaisser" pageSize={10}
+                       initialSort={{ key: 'echeance', dir: 'asc' }} onRowClick={(i) => setOuvert(i.demande_id)}
+                       emptyText="Rien à encaisser pour le moment. Les demandes payées « via un point relais » apparaîtront ici." />
+          </div>
+        </>
+      )}
+
+      {ligneOuverte && (
+        <PanneauLateral
+          titre={<>#{ligneOuverte.reference}</>}
+          sousTitre={<>{ligneOuverte.point.nom} · {ligneOuverte.point.ville}</>}
+          onClose={() => setOuvert(null)}
+          pied={(
+            <>
+              <button className="btn" onClick={() => setOuvert(null)}>Fermer</button>
+              <button className="btn btn-primary" disabled={ligneOuverte.expire} onClick={() => { setMessage(null); setAValider(ligneOuverte); }}
+                      title={ligneOuverte.expire ? 'Échéance dépassée : la demande va être annulée automatiquement' : undefined}>
+                {ligneOuverte.expire ? 'Échéance dépassée' : 'Valider le paiement'}
+              </button>
+            </>
+          )}
+        >
+          {(() => {
+            const i = ligneOuverte;
             const e = echeanceRelative(i.echeance, maintenant);
             return (
-              <article key={i.demande_id} className={`pr-card pr-card--${e.urgence}`}>
-                <div className="pr-card-haut">
-                  <span className="pr-ref" title="Référence que l'expéditeur indique dans son transfert">#{i.reference}</span>
-                  <span className={`pr-urgence pr-urgence--${e.urgence}`}>
-                    {e.urgence === 'depasse' ? e.texte.charAt(0).toUpperCase() + e.texte.slice(1) : `Payer ${e.texte}`}
-                  </span>
-                </div>
-
-                <div className="pr-montant">
+              <>
+                <div className="panneau-montant">
                   <strong>{montantLocal(i.montant_local, i.devise)}</strong>
-                  <span>{montantEuros(i.montant_eur)}</span>
+                  <span>{montantEuros(i.montant_eur)} · <span className={`pr-urgence pr-urgence--${e.urgence}`}>{e.urgence === 'depasse' ? e.texte.charAt(0).toUpperCase() + e.texte.slice(1) : `Payer ${e.texte}`}</span></span>
                 </div>
-
-                <div className="pr-ligne">
-                  <span className="pr-libelle">Moyen choisi</span>
-                  <span>{i.moyen_choisi === 'especes' ? 'Espèces au guichet' : 'Mobile money'}</span>
-                </div>
-                <div className="pr-ligne">
-                  <span className="pr-libelle">Expéditeur</span>
-                  <span>
-                    {i.expediteur_nom ?? 'Membre'}
-                    {i.expediteur_telephone && (
-                      <> · <a className="pr-tel" href={`tel:${i.expediteur_telephone.replace(/[^\d+]/g, '')}`}>{i.expediteur_telephone}</a></>
-                    )}
-                  </span>
-                </div>
-                <div className="pr-ligne">
-                  <span className="pr-libelle">{i.flux === 'trajet' ? 'Trajet réservé' : 'Colis proposé'}</span>
-                  <span>{i.trajet}{i.depart ? ` · départ ${dateCourte(i.depart)}` : ''}</span>
-                </div>
-                {i.porteur_nom && (
-                  <div className="pr-ligne">
-                    <span className="pr-libelle">Voyageur</span>
-                    <span>{i.porteur_nom}</span>
-                  </div>
-                )}
-                <div className="pr-ligne">
-                  <span className="pr-libelle">Échéance</span>
-                  <span>{dateCourte(i.echeance)}</span>
-                </div>
-
-                <button
-                  className="btn btn-primary pr-action"
-                  disabled={i.expire}
-                  onClick={() => { setMessage(null); setAValider(i); }}
-                  title={i.expire ? 'Échéance dépassée : la demande va être annulée automatiquement' : undefined}
-                >
-                  {i.expire ? 'Échéance dépassée' : 'Valider le paiement'}
-                </button>
-              </article>
+                <dl className="panneau-liste">
+                  <dt>Moyen choisi</dt><dd>{i.moyen_choisi === 'especes' ? 'Espèces au guichet' : 'Mobile money'}</dd>
+                  <dt>Expéditeur</dt>
+                  <dd>{i.expediteur_nom ?? 'Membre'}{i.expediteur_telephone && <> · <a className="pr-tel" href={`tel:${i.expediteur_telephone.replace(/[^\d+]/g, '')}`}>{i.expediteur_telephone}</a></>}</dd>
+                  <dt>{i.flux === 'trajet' ? 'Trajet réservé' : 'Colis proposé'}</dt><dd>{i.trajet}{i.depart ? ` · départ ${dateCourte(i.depart)}` : ''}</dd>
+                  {i.porteur_nom && <><dt>Voyageur</dt><dd>{i.porteur_nom}</dd></>}
+                  <dt>Échéance</dt><dd>{dateCourte(i.echeance)}</dd>
+                  <dt>Point</dt><dd>{i.point.nom}</dd>
+                </dl>
+              </>
             );
-          })}
-        </div>
+          })()}
+        </PanneauLateral>
       )}
 
       {aValider && (
         <ValidationModal
-          point={point}
+          point={aValider.point}
           item={aValider}
           onClose={() => setAValider(null)}
-          onValide={(texte) => { setAValider(null); setMessage(texte); charger(); }}
+          onValide={(texte) => { setAValider(null); setOuvert(null); setMessage(texte); charger(); }}
         />
       )}
     </div>
@@ -298,7 +309,6 @@ export function ValidationModal({ point, item, onClose, onValide, onCarte }: {
               <div style={{ marginTop: 10 }}>
                 <Select ariaLabel="Opérateur utilisé par le client" value={autreOp} options={OPERATEURS.map((o) => ({ value: o.value, label: o.label }))}
                         onChange={(v) => { setAutreOp(v as Operateur); setVerifie(false); }} />
-                <p className="hint" style={{ marginTop: 6 }}>Si le client paie régulièrement par cet opérateur, ajoutez son compte dans « Compte du point » (onglet Réseau).</p>
               </div>
             )}
           </div>
