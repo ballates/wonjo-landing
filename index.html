@@ -396,7 +396,7 @@
   .wcx-silhouette { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
   .wcx-silhouette path { fill: rgba(255,255,255,0.18); stroke: rgba(255,255,255,0.4); stroke-width: 1; }
   .wcx-route { position: relative; z-index: 2; display: flex; align-items: center; gap: 7px; }
-  .wcx-city { flex: 1; min-width: 0; font-size: 17px; font-weight: 800; letter-spacing: -0.25px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wcx-city { flex: 1; min-width: 0; font-size: 15px; font-weight: 800; letter-spacing: -0.25px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .wcx-city.r { text-align: right; }
   .wcx-trace { display: flex; align-items: center; flex-shrink: 0; }
   .wcx-bout { position: relative; width: 19px; height: 19px; display: flex; align-items: center; justify-content: center; }
@@ -707,12 +707,21 @@
     .hero .subtitle { font-size: 1rem; }
     .hero-ctas { gap: 10px; flex-wrap: nowrap; }
     .hero-ctas .pill { flex: 0 1 auto; min-width: 0; white-space: nowrap; padding: 12px 16px; font-size: 0.9rem; }
-    .wcx-city { font-size: 16px; }
+    .wcx-city { font-size: 14.5px; }
   }
   @media (max-width: 420px) {
+    .wcx-city { font-size: 13px; letter-spacing: -0.3px; }
     .hero-ctas { flex-wrap: wrap; }
     .hero-ctas .pill { flex: 1 1 100%; justify-content: center; }
   }
+  @media (max-width: 380px) {
+    /* Petits ecrans : le trace de l'itineraire se resserre pour laisser la place aux noms de villes (Kinshasa, Marseille...). */
+    .wcx-route { gap: 4px; }
+    .wcx-trait { width: 8px; }
+    .wcx-bout { width: 14px; height: 14px; }
+    .wcx-cap { min-width: 40px; padding: 0 7px; }
+  }
+  @media (max-width: 340px) { .wcx-city { font-size: 12px; } }
   @media (max-width: 719px) {
     .trust-grid { gap: 14px; }
     .trust-grid .trust-item {
@@ -963,7 +972,7 @@
                 <span class="wcx-city r">Abidjan</span>
               </div>
               <div class="wcx-dates">
-                <div class="wcx-meta l"><span class="wcx-date-title">Départ</span><span class="wcx-date"><svg class="ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></svg>avant le 28 juin</span></div>
+                <div class="wcx-meta l"><span class="wcx-date-title">Départ</span><span class="wcx-date"><svg class="ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></svg>jusqu'au 28 nov.</span></div>
                 <span class="wcx-pill"><b>5</b> kg</span>
                 <div class="wcx-meta r"><span class="wcx-nature" aria-hidden="true"><svg class="ico" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></span></div>
               </div>
@@ -975,7 +984,7 @@
                   <div class="wcx-name">Alice M.</div>
                   <div class="wcx-rating"><span class="wcx-star"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg></span><span class="wcx-note">4</span><span class="wcx-count">· 8 colis expédiés</span></div>
                 </div>
-                <div class="wcx-price"><span class="wcx-price-cap">Prix max.</span><span class="wcx-price-amount">8,80€</span><span class="wcx-price-unit">/kg</span></div>
+                <div class="wcx-price"><span class="wcx-price-cap">Prix max.</span><span class="wcx-price-amount">8€</span><span class="wcx-price-unit">/kg</span></div>
               </div>
               <div class="wcx-divider"></div>
               <span class="wcx-btn terra"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg> Transporter ce colis</span>
@@ -987,14 +996,14 @@
             <div class="wcx-band">
               <svg class="wcx-silhouette" aria-hidden="true"><path/></svg>
               <div class="wcx-route">
-                <span class="wcx-city l">Paris</span>
+                <span class="wcx-city l">Dakar</span>
                 <span class="wcx-trace" aria-hidden="true"><span class="wcx-bout"><i class="wcx-dep"></i></span><span class="wcx-trait"></span><span class="wcx-cap"><svg class="ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"/><path d="m7.5 4.27 9 5.15"/></svg><span class="wcx-plus"><svg class="ico" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></span><svg class="ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span><span class="wcx-trait r"></span><span class="wcx-bout"><i class="wcx-halo"></i><i class="wcx-arr"></i></span></span>
-                <span class="wcx-city r">Dakar</span>
+                <span class="wcx-city r">Abidjan</span>
               </div>
               <div class="wcx-dates">
-                <div class="wcx-meta l"><span class="wcx-date"><svg class="ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></svg>27 juin</span></div>
+                <div class="wcx-meta l"><span class="wcx-date"><svg class="ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></svg>27 nov.</span></div>
                 <span class="wcx-pill"><b>10</b> kg</span>
-                <div class="wcx-meta r"><span class="wcx-date"><svg class="ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></svg>29 juin</span></div>
+                <div class="wcx-meta r"><span class="wcx-date"><svg class="ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></svg>29 nov.</span></div>
               </div>
             </div>
             <div class="wcx-body">
@@ -1004,9 +1013,9 @@
                   <div class="wcx-name">Diane K.</div>
                   <div class="wcx-rating"><span class="wcx-star"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg></span><span class="wcx-note">4</span><span class="wcx-count">· 4 trajets effectués</span></div>
                 </div>
-                <div class="wcx-price"><span class="wcx-price-amount">8,80€</span><span class="wcx-price-unit">/kg</span></div>
+                <div class="wcx-price"><span class="wcx-price-amount">4,40€</span><span class="wcx-price-unit">/kg</span></div>
               </div>
-              <div class="wcx-docrow"><svg class="ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><span class="wcx-doc-label">Enveloppe</span><span class="wcx-flex"></span><span class="wcx-doc-price">7,70€</span><span class="wcx-doc-unit">/env</span></div>
+              <div class="wcx-docrow"><svg class="ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><span class="wcx-doc-label">Enveloppe</span><span class="wcx-flex"></span><span class="wcx-doc-price">13,20€</span><span class="wcx-doc-unit">/env</span></div>
               <div class="wcx-divider"></div>
               <span class="wcx-btn teal"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg> Expédier un colis</span>
             </div>
@@ -1017,13 +1026,13 @@
             <div class="wcx-band">
               <svg class="wcx-silhouette" aria-hidden="true"><path/></svg>
               <div class="wcx-route">
-                <span class="wcx-city l">Bruxelles</span>
+                <span class="wcx-city l">N'Djaména</span>
                 <span class="wcx-trace" aria-hidden="true"><span class="wcx-bout"><i class="wcx-dep"></i></span><span class="wcx-trait"></span><span class="wcx-cap"><svg class="ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span><span class="wcx-trait r"></span><span class="wcx-bout"><i class="wcx-halo"></i><i class="wcx-arr"></i></span></span>
                 <span class="wcx-city r">Douala</span>
               </div>
               <div class="wcx-dates">
-                <div class="wcx-meta l"><span class="wcx-date-title">Départ</span><span class="wcx-date"><svg class="ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></svg>avant le 5 juil.</span></div>
-                <span class="wcx-pill">1 env.</span>
+                <div class="wcx-meta l"><span class="wcx-date-title">Départ</span><span class="wcx-date"><svg class="ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></svg>jusqu'au 5 déc.</span></div>
+                <span class="wcx-pill">1 Pli</span>
                 <div class="wcx-meta r"><span class="wcx-nature" aria-hidden="true"><svg class="ico" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></span></div>
               </div>
             </div>
@@ -1034,7 +1043,7 @@
                   <div class="wcx-name">Samuel E.</div>
                   <div class="wcx-rating"><span class="wcx-star"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg></span><span class="wcx-note">4,8</span><span class="wcx-count">· 12 colis expédiés</span></div>
                 </div>
-                <div class="wcx-price"><span class="wcx-price-cap">Prix max.</span><span class="wcx-price-amount">11€</span><span class="wcx-price-unit">/env</span></div>
+                <div class="wcx-price"><span class="wcx-price-cap">Prix max.</span><span class="wcx-price-amount">18€</span><span class="wcx-price-unit">/env</span></div>
               </div>
               <div class="wcx-divider"></div>
               <span class="wcx-btn terra"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg> Acheminer cette enveloppe</span>
@@ -1046,14 +1055,14 @@
             <div class="wcx-band">
               <svg class="wcx-silhouette" aria-hidden="true"><path/></svg>
               <div class="wcx-route">
-                <span class="wcx-city l">Marseille</span>
+                <span class="wcx-city l">Kinshasa</span>
                 <span class="wcx-trace" aria-hidden="true"><span class="wcx-bout"><i class="wcx-dep"></i></span><span class="wcx-trait"></span><span class="wcx-cap"><svg class="ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"/><path d="m7.5 4.27 9 5.15"/></svg></span><span class="wcx-trait r"></span><span class="wcx-bout"><i class="wcx-halo"></i><i class="wcx-arr"></i></span></span>
-                <span class="wcx-city r">Rabat</span>
+                <span class="wcx-city r">Bruxelles</span>
               </div>
               <div class="wcx-dates">
-                <div class="wcx-meta l"><span class="wcx-date"><svg class="ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></svg>2 juil.</span></div>
+                <div class="wcx-meta l"><span class="wcx-date"><svg class="ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></svg>2 déc.</span></div>
                 <span class="wcx-pill"><b>15</b> kg</span>
-                <div class="wcx-meta r"><span class="wcx-date"><svg class="ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></svg>3 juil.</span></div>
+                <div class="wcx-meta r"><span class="wcx-date"><svg class="ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></svg>3 déc.</span></div>
               </div>
             </div>
             <div class="wcx-body">
@@ -1063,7 +1072,7 @@
                   <div class="wcx-name">Sandra B.</div>
                   <div class="wcx-rating"><span class="wcx-star"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg></span><span class="wcx-note">4,9</span><span class="wcx-count">· 21 trajets effectués</span></div>
                 </div>
-                <div class="wcx-price"><span class="wcx-price-amount">6,60€</span><span class="wcx-price-unit">/kg</span></div>
+                <div class="wcx-price"><span class="wcx-price-amount">9,90€</span><span class="wcx-price-unit">/kg</span></div>
               </div>
               <div class="wcx-divider"></div>
               <span class="wcx-btn teal"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg> Expédier un colis</span>
@@ -1080,7 +1089,7 @@
                 <span class="wcx-city r">Bruxelles</span>
               </div>
               <div class="wcx-dates">
-                <div class="wcx-meta l"><span class="wcx-date-title">Départ</span><span class="wcx-date"><svg class="ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></svg>avant le 30 juin</span></div>
+                <div class="wcx-meta l"><span class="wcx-date-title">Départ</span><span class="wcx-date"><svg class="ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></svg>jusqu'au 30 nov.</span></div>
                 <span class="wcx-pill"><b>2</b> kg</span>
                 <div class="wcx-meta r"><span class="wcx-nature" aria-hidden="true"><svg class="ico" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></span></div>
               </div>
@@ -1092,7 +1101,7 @@
                   <div class="wcx-name">Léa D.</div>
                   <div class="wcx-rating"><span class="wcx-star"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg></span><span class="wcx-note">5</span><span class="wcx-count">· 3 colis expédiés</span></div>
                 </div>
-                <div class="wcx-price"><span class="wcx-price-cap">Prix max.</span><span class="wcx-price-amount">5,50€</span><span class="wcx-price-unit">/kg</span></div>
+                <div class="wcx-price"><span class="wcx-price-cap">Prix max.</span><span class="wcx-price-amount">5€</span><span class="wcx-price-unit">/kg</span></div>
               </div>
               <div class="wcx-divider"></div>
               <span class="wcx-btn terra"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg> Transporter ce colis</span>
@@ -1104,14 +1113,14 @@
             <div class="wcx-band">
               <svg class="wcx-silhouette" aria-hidden="true"><path/></svg>
               <div class="wcx-route">
-                <span class="wcx-city l">Genève</span>
+                <span class="wcx-city l">Marseille</span>
                 <span class="wcx-trace" aria-hidden="true"><span class="wcx-bout"><i class="wcx-dep"></i></span><span class="wcx-trait"></span><span class="wcx-cap"><svg class="ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"/><path d="m7.5 4.27 9 5.15"/></svg><span class="wcx-plus"><svg class="ico" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></span><svg class="ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span><span class="wcx-trait r"></span><span class="wcx-bout"><i class="wcx-halo"></i><i class="wcx-arr"></i></span></span>
-                <span class="wcx-city r">Kinshasa</span>
+                <span class="wcx-city r">Paris</span>
               </div>
               <div class="wcx-dates">
-                <div class="wcx-meta l"><span class="wcx-date"><svg class="ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></svg>8 juil.</span></div>
+                <div class="wcx-meta l"><span class="wcx-date"><svg class="ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></svg>8 déc.</span></div>
                 <span class="wcx-pill"><b>12</b> kg</span>
-                <div class="wcx-meta r"><span class="wcx-date"><svg class="ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></svg>10 juil.</span></div>
+                <div class="wcx-meta r"><span class="wcx-date"><svg class="ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></svg>10 déc.</span></div>
               </div>
             </div>
             <div class="wcx-body">
@@ -1121,9 +1130,9 @@
                   <div class="wcx-name">Patrick M.</div>
                   <div class="wcx-rating"><span class="wcx-star"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg></span><span class="wcx-note">4,7</span><span class="wcx-count">· 9 trajets effectués</span></div>
                 </div>
-                <div class="wcx-price"><span class="wcx-price-amount">9,90€</span><span class="wcx-price-unit">/kg</span></div>
+                <div class="wcx-price"><span class="wcx-price-amount">6,60€</span><span class="wcx-price-unit">/kg</span></div>
               </div>
-              <div class="wcx-docrow"><svg class="ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><span class="wcx-doc-label">Enveloppe</span><span class="wcx-flex"></span><span class="wcx-doc-price">9,90€</span><span class="wcx-doc-unit">/env</span></div>
+              <div class="wcx-docrow"><svg class="ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><span class="wcx-doc-label">Enveloppe</span><span class="wcx-flex"></span><span class="wcx-doc-price">5,50€</span><span class="wcx-doc-unit">/env</span></div>
               <div class="wcx-divider"></div>
               <span class="wcx-btn teal"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg> Expédier un colis</span>
             </div>
@@ -1136,7 +1145,7 @@
         <div class="carousel-dots" id="corridorDots" role="tablist" aria-label="Pagination des itinéraires"></div>
       </div>
 
-      <p class="corridors-note reveal">Quelques exemples parmi nos trajets. Wonjo couvre déjà toute l'Europe (France, Belgique, Suisse, Royaume-Uni, Allemagne, Italie, Espagne, Portugal, Pays-Bas) vers l'Afrique de l'Ouest, l'Afrique Centrale et l'Afrique du Nord, ainsi que les envois entre pays européens.</p>
+      <p class="corridors-note reveal">Quelques exemples parmi nos trajets. Wonjo couvre déjà toute l'Europe (France, Belgique, Suisse, Royaume-Uni, Allemagne, Italie, Espagne, Portugal, Pays-Bas) vers l'Afrique de l'Ouest, l'Afrique Centrale et l'Afrique du Nord, et dans l'autre sens, ainsi que les envois entre pays européens, entre villes françaises et entre pays africains.</p>
     </div>
   </section>
 
