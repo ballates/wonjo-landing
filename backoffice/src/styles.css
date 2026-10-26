@@ -1906,6 +1906,12 @@ tr.is-modifie td { background: var(--accent-soft); }
 @media (max-width: 720px) {
   .info-rows--une-ligne .info-row-label { min-width: 0; }
 }
+/* Paiements a traiter : le libelle du cas tient sur une seule ligne, les valeurs restent alignees. */
+.info-rows--paiements .info-row { align-items: center; }
+.info-rows--paiements .info-row-label { flex: 0 0 auto; min-width: 380px; white-space: nowrap; }
+@media (max-width: 900px) {
+  .info-rows--paiements .info-row-label { min-width: 0; white-space: normal; }
+}
 
 /* ============ Tableau de bord > Services ============ */
 .svc { transition: opacity 0.2s ease; }

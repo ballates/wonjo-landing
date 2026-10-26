@@ -41,7 +41,7 @@ export function PaiementsATraiter({ onOuvrir }: { onOuvrir: (demandeId: string) 
   return (
     <div className="info-card" style={{ marginBottom: 16 }}>
       <p className="section-title">Paiements à traiter ({items.length})</p>
-      <div className="info-rows">
+      <div className="info-rows info-rows--paiements">
         {items.map((p, i) => {
           const lien = lienStripe(p.payment_intent, null);
           const extra = precision(p);
