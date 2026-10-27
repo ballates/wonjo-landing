@@ -2874,3 +2874,21 @@ div.pr-reseau-rang--ligne:hover { background: var(--hover); }
 .fp-semaine span { padding: 2px 0; font-size: 10.5px; }
 .fp-jour { height: 28px; font-size: 12px; }
 .fp-aide { margin-top: 4px; font-size: 11px; }
+
+/* ============ Rapprochement Stripe / caisses / marge (460) ============ */
+.rapprochement { padding: 16px 18px; margin: 0 0 16px; border: 1px solid var(--border); border-left-width: 4px; border-radius: 14px; background: var(--surface-2); }
+.rapprochement--ok { border-left-color: var(--green); }
+.rapprochement--ecart { border-left-color: var(--danger); }
+.rapprochement-tete { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.rapprochement-tete h3 { margin: 0 0 2px; font-size: 15px; }
+.rapprochement-tete .chart-sub { margin: 0; }
+.rapprochement-badge { padding: 4px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 800; }
+.rapprochement-badge--ok { background: var(--badge-green-bg); color: var(--badge-green-fg); }
+.rapprochement-badge--ecart { background: var(--badge-danger-bg); color: var(--badge-danger-fg); }
+.rapprochement .info-row { align-items: center; }
+.rapprochement-label { flex: 0 0 auto; min-width: 320px; white-space: nowrap; text-transform: none; letter-spacing: 0; font-size: 13px; font-weight: 600; }
+.rapprochement-valeur { font-variant-numeric: tabular-nums; }
+.rapprochement-fort { font-weight: 800; }
+.rapprochement-reste { margin-top: 12px; padding: 10px 14px; border-radius: 10px; background: var(--badge-danger-bg); color: var(--text); font-size: 13px; line-height: 1.55; }
+.rapprochement-reste p { margin: 6px 0 0; }
+@media (max-width: 900px) { .rapprochement-label { min-width: 0; white-space: normal; } }

@@ -20,6 +20,7 @@ import { CommunauteTab } from './dashboard/CommunauteTab';
 import { MarcheTab } from './dashboard/MarcheTab';
 import { ServicesTab } from './dashboard/ServicesTab';
 import { ListeAFaire } from './AFairePage';
+import { RapprochementFinance } from '../components/RapprochementFinance';
 import { nbActions, useAFaire } from '../lib/aFaire';
 import type {
   CompteActif, StatsRevenusJour, StatsColisJour,
@@ -538,6 +539,8 @@ function FinanceTab() {
         <Kpi index={3} label="Transactions payées" value={payees} hint={`sur ${totalTransactions} demandes`} />
         <Kpi index={4} label="Remboursements" value={val('rembourse', 'montant')} format={euros} hint={`${val('rembourse', 'nb')} transaction(s)`} />
       </div>
+
+      <RapprochementFinance />
 
       {marge && (
         <div className="chart-card">
