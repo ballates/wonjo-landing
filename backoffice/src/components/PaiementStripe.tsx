@@ -19,6 +19,7 @@ export const LIBELLES_CAS_PAIEMENT: Record<string, string> = {
   contestation_perdue: 'Contestation bancaire perdue à trancher',
   versement_point_en_retard: 'Point relais : voyageur à payer à la main, en retard',
   remboursement_point_en_retard: 'Point relais : expéditeur à rembourser à la main, en retard',
+  remboursement_hors_application: 'Remboursement fait dans Stripe, hors application',
 };
 
 const ISSUES: Record<string, string> = {

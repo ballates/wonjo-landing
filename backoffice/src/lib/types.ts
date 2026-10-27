@@ -19,6 +19,9 @@ export interface RepartitionTransaction {
   nb: number;
   montant: number;
   commission: number;
+  /** Tout ce que les expéditeurs ont payé (part du voyageur + commission + frais de protection). Remboursé = montant_paye - frais_retenus. */
+  montant_paye: number;
+  frais_retenus: number;
 }
 
 export interface RepartitionTypeEnvoi {

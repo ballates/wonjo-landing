@@ -89,6 +89,22 @@ export function Layout() {
   ];
   const accesAdmin = peutGererAdmins(roles) || !!profil?.peut_inviter;
 
+  // Les pages du menu se téléchargent en arrière-plan, une à une, dès que le navigateur est au repos : le premier clic sur un onglet
+  // n'attend plus le réseau (le survol ne suffit pas : au toucher, ou à un clic rapide, le paquet n'était pas encore là).
+  const cheminsVisibles = liens.filter((l) => l.visible).map((l) => l.to).join('|');
+  useEffect(() => {
+    if ((navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData) return;
+    const chemins = cheminsVisibles ? cheminsVisibles.split('|') : [];
+    const minuteurs: number[] = [];
+    const lancer = () => chemins.forEach((c, i) => minuteurs.push(window.setTimeout(() => precharger(c), i * 500)));
+    const aRepos = typeof window.requestIdleCallback === 'function';
+    const repos = aRepos ? window.requestIdleCallback(lancer, { timeout: 4000 }) : window.setTimeout(lancer, 1500);
+    return () => {
+      if (aRepos) window.cancelIdleCallback(repos); else window.clearTimeout(repos);
+      minuteurs.forEach((m) => window.clearTimeout(m));
+    };
+  }, [cheminsVisibles]);
+
   return (
     <div className={`layout ${estMobile ? 'is-mobile' : ''}`}>
       {estMobile && (

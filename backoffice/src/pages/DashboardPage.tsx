@@ -1,5 +1,5 @@
 import { decimales } from '../lib/nombre';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Select } from '../components/Select';
 import { FiltrePeriode } from '../components/FiltrePeriode';
 import { libellePlage, plageDuRaccourci, type Plage } from '../lib/periode';
@@ -396,7 +396,19 @@ function FinanceTab() {
   const [tauxTaxeSaisi, setTauxTaxeSaisi] = useState('');
   const [busyTaxe, setBusyTaxe] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [reglagesOuverts, setReglagesOuverts] = useState(false);
+  const reglagesRef = useRef<HTMLDivElement>(null);
   const { ouvrir, modal } = useFicheCompte();
+
+  // Panneau des réglages : se ferme en cliquant ailleurs ou avec Échap.
+  useEffect(() => {
+    if (!reglagesOuverts) return;
+    const dehors = (e: MouseEvent) => { if (!reglagesRef.current?.contains(e.target as Node)) setReglagesOuverts(false); };
+    const echap = (e: KeyboardEvent) => { if (e.key === 'Escape') setReglagesOuverts(false); };
+    document.addEventListener('mousedown', dehors);
+    window.addEventListener('keydown', echap);
+    return () => { document.removeEventListener('mousedown', dehors); window.removeEventListener('keydown', echap); };
+  }, [reglagesOuverts]);
 
   function chargerTaxe() {
     supabase.rpc('admin_taux_taxe').then(({ data, error: e }) => {
@@ -489,10 +501,23 @@ function FinanceTab() {
   }
 
   if (error) return <p className="page-error">{error}</p>;
-  if (!repartition) return <p className="loading-state">Chargement…</p>;
+  // Les chiffres du haut attendent les trois lectures principales (plus de « 0,00 € » qui clignote avant l'arrivée des vrais chiffres). La carte de rapprochement,
+  // la plus lente (elle lit Stripe), démarre tout de suite : même clé que plus bas, React garde la même carte au lieu de la recréer.
+  if (!repartition || !marge || !marge30) {
+    return (
+      <section className="viz-root">
+        <p className="loading-state">Chargement…</p>
+        <RapprochementFinance key="rapprochement" />
+      </section>
+    );
+  }
 
   const ligne = (statut: string) => repartition.find((r) => r.statut_paiement === statut);
-  const val = (statut: string, champ: 'nb' | 'montant' | 'commission') => Number(ligne(statut)?.[champ] ?? 0);
+  const val = (statut: string, champ: 'nb' | 'montant' | 'commission' | 'montant_paye' | 'frais_retenus') => Number(ligne(statut)?.[champ] ?? 0);
+  // Frais de protection (valeur déclarée, protection renforcée) d'une étape : ce que les expéditeurs ont payé, moins la part du voyageur et la commission.
+  const protectionEtape = (statut: string) => val(statut, 'montant_paye') - val(statut, 'montant') - val(statut, 'commission');
+  // Un remboursement rend au client tout ce qu'il a payé, moins les frais retenus : pas seulement la part du voyageur.
+  const rembourse = val('rembourse', 'montant_paye') - val('rembourse', 'frais_retenus');
   const commissionEncaissee = val('libere', 'commission');
   const commissionAVenir = val('escrow', 'commission');
   const commission30j = revenus.reduce((s, r) => s + Number(r.commission), 0);
@@ -515,16 +540,54 @@ function FinanceTab() {
   return (
     <section className="viz-root">
       <div className="chart-head finance-mode">
-        <p className="hint" style={{ margin: 0 }}>
-          {net
-            ? 'Marge nette : commission et frais de valeur déclarée, moins les frais Stripe.'
-            : 'Commission brute : avant les frais Stripe.'}
-        </p>
         <FiltrePeriode valeur={plage} onChange={setPlage} />
         <div className="action-row" role="group" aria-label="Base de calcul des chiffres">
           <button type="button" className={`chip-filter ${net ? 'on' : ''}`} aria-pressed={net} onClick={() => choisirMode('nette')}>Marge nette</button>
           <button type="button" className={`chip-filter ${!net ? 'on' : ''}`} aria-pressed={!net} onClick={() => choisirMode('brute')}>Commission brute</button>
         </div>
+        {roles.includes('super_admin') && (
+          <div className="reglages-fin" ref={reglagesRef}>
+            <button type="button" className={`chip-filter ${reglagesOuverts ? 'on' : ''}`} aria-expanded={reglagesOuverts} onClick={() => setReglagesOuverts((o) => !o)}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ marginRight: 6, verticalAlign: '-2px' }}>
+                <circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
+              </svg>
+              Réglages
+            </button>
+            {reglagesOuverts && (
+              <div className="reglages-pop" role="dialog" aria-label="Réglages des frais Stripe estimés et de la taxe">
+                <div className="reglages-section">
+                  <p className="reglages-titre">Frais Stripe estimés</p>
+                  <div className="reglages-ligne">
+                    <label>
+                      <span>Part fixe</span>
+                      <div className="suffix-input"><input type="text" inputMode="decimal" value={fraisFixeSaisi} onChange={(e) => setFraisFixeSaisi(e.target.value)} /><span>€</span></div>
+                    </label>
+                    <label>
+                      <span>Pourcentage débité</span>
+                      <div className="suffix-input"><input type="text" inputMode="decimal" value={fraisPctSaisi} onChange={(e) => setFraisPctSaisi(e.target.value)} /><span>%</span></div>
+                    </label>
+                    <button className="btn btn-primary btn-sm" disabled={busyFrais} onClick={enregistrerFraisStripe}>Enregistrer</button>
+                  </div>
+                  <label className="check-inline reglages-case">
+                    <input type="checkbox" checked={fraisConfirmes} onChange={(e) => setFraisConfirmes(e.target.checked)} />
+                    Ce sont les frais de mon contrat
+                  </label>
+                  {erreurFrais && <p className="page-error" style={{ margin: '6px 0 0' }}>{erreurFrais}</p>}
+                </div>
+                <div className="reglages-section">
+                  <p className="reglages-titre">Taxe sur la commission</p>
+                  <div className="reglages-ligne">
+                    <label>
+                      <span>Taux de taxe</span>
+                      <div className="suffix-input"><input type="text" inputMode="decimal" value={tauxTaxeSaisi} onChange={(e) => setTauxTaxeSaisi(e.target.value)} aria-label="Taux de taxe" /><span>%</span></div>
+                    </label>
+                    <button className="btn btn-primary btn-sm" disabled={busyTaxe} onClick={enregistrerTaxe}>Enregistrer</button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="cards">
@@ -537,70 +600,93 @@ function FinanceTab() {
         <Kpi index={2} label={net ? 'Marge nette de la période' : 'Commission de la période'}
           value={net ? (marge30?.marge_nette_acquise ?? 0) : commission30j} format={euros} hint={`Transports terminés : ${periode.toLowerCase()}`} />
         <Kpi index={3} label="Transactions payées" value={payees} hint={`sur ${totalTransactions} demandes`} />
-        <Kpi index={4} label="Remboursements" value={val('rembourse', 'montant')} format={euros} hint={`${val('rembourse', 'nb')} transaction(s)`} />
+        <Kpi index={4} label="Remboursements" value={rembourse} format={(n) => (n > 0 ? `\u2212${euros(n)}` : euros(n))} hint={`${val('rembourse', 'nb')} transaction(s)`} />
+        {marge && <Kpi index={5} label="Marge par transport" value={marge.nb_livrees > 0 ? marge.marge_nette_acquise / marge.nb_livrees : 0} format={euros} hint="Moyenne, transports terminés" />}
       </div>
 
-      <RapprochementFinance />
+      <RapprochementFinance key="rapprochement" />
 
+      <div className="grid-2">
       {marge && (
-        <div className="chart-card">
+        <div className="chart-card marge-carte">
           <h3>Marge nette : ce que Wonjo garde vraiment</h3>
-          <p className="chart-sub">Stripe garde ses frais, même sur un remboursement : un petit envoi peut ne rien rapporter.</p>
-          <div className="cards">
-            <Kpi index={0} label="Marge nette acquise" value={marge.marge_nette_acquise} format={euros} hint="Transports terminés, tout l'historique" />
-            <Kpi index={1} label="Marge nette de la période" value={marge30?.marge_nette_acquise ?? 0} format={euros} hint={`${marge30?.nb_livrees ?? 0} transport(s) terminé(s) : ${periode.toLowerCase()}`} />
-            <Kpi index={2} label="Marge nette à venir" value={marge.marge_nette_a_venir} format={euros} hint="Payé, en séquestre" />
-            <Kpi index={3} label="Marge par transport" value={marge.nb_livrees > 0 ? marge.marge_nette_acquise / marge.nb_livrees : 0} format={euros} hint="Moyenne, transports terminés" />
-          </div>
-          <div className="dt-wrap" style={{ marginTop: 14 }}>
-            <table>
+          <div className="marge-table-cadre">
+            <table className="marge-table">
               <thead><tr><th>Poste</th><th>Acquis</th><th>À venir</th></tr></thead>
               <tbody>
-                <tr><td>Commission</td><td>{euros(marge.commission_acquise)}</td><td>{euros(marge.commission_a_venir)}</td></tr>
-                <tr><td>Frais liés à la valeur déclarée (dont protection renforcée ci-dessous)</td><td>{euros(marge.protection_acquise)}</td><td>{euros(marge.protection_a_venir)}</td></tr>
-                <tr><td>Frais de paiement Stripe</td><td>− {euros(marge.stripe_acquis)}</td><td>− {euros(marge.stripe_a_venir)}</td></tr>
-                <tr><td>Frais Stripe perdus sur les remboursements</td><td>− {euros(marge.stripe_perdu)}</td><td className="hint">-</td></tr>
-                <tr><td><strong>Marge nette</strong></td><td><strong>{euros(marge.marge_nette_acquise)}</strong></td><td><strong>{euros(marge.marge_nette_a_venir)}</strong></td></tr>
                 <tr>
-                  <td className="hint">dont protection renforcée encaissée : à garder en réserve pour indemniser les casses</td>
-                  <td className="hint">{euros(marge.renforcee_acquise)}</td><td className="hint">{euros(marge.renforcee_a_venir)}</td>
+                  <td><span className="marge-pastille marge-pastille--plus" aria-hidden="true">+</span>Commission</td>
+                  <td>{euros(marge.commission_acquise)}</td><td>{euros(marge.commission_a_venir)}</td>
+                </tr>
+                <tr>
+                  <td>
+                    <span className="marge-pastille marge-pastille--plus" aria-hidden="true">+</span>Frais liés à la valeur déclarée
+                    {(marge.renforcee_acquise > 0 || marge.renforcee_a_venir > 0) && (
+                      <small>dont protection renforcée {euros(marge.renforcee_acquise)} · {euros(marge.renforcee_a_venir)} à venir (à garder en réserve pour les casses)</small>
+                    )}
+                  </td>
+                  <td>{euros(marge.protection_acquise)}</td><td>{euros(marge.protection_a_venir)}</td>
+                </tr>
+                <tr>
+                  <td>
+                    <span className="marge-pastille marge-pastille--moins" aria-hidden="true">−</span>Frais de paiement Stripe
+                    <span className="rapp-tip rapp-tip--bas marge-puce" tabIndex={0}
+                      data-tip={`${marge.nb_reel} frais réels, ${marge.nb_estime} ${marge.frais_confirmes ? 'au taux du contrat' : 'estimés'} (${decimales(marge.estimation_fixe, 2)} € + ${decimales(marge.estimation_pct * 100, 2)} %). Hors virements aux voyageurs et hors taxe.`}>
+                      {marge.nb_reel} réels · {marge.nb_estime} {marge.frais_confirmes ? 'au contrat' : 'estimés'}
+                    </span>
+                  </td>
+                  <td>{euros(marge.stripe_acquis)}</td><td>{euros(marge.stripe_a_venir)}</td>
+                </tr>
+                <tr>
+                  <td><span className="marge-pastille marge-pastille--moins" aria-hidden="true">−</span>Frais Stripe perdus sur les remboursements</td>
+                  <td>{euros(marge.stripe_perdu)}</td><td className="hint">-</td>
                 </tr>
               </tbody>
+              <tfoot>
+                <tr><td>Marge nette</td><td>{euros(marge.marge_nette_acquise)}</td><td>{euros(marge.marge_nette_a_venir)}</td></tr>
+              </tfoot>
             </table>
           </div>
-          <p className="hint" style={{ marginTop: 10 }}>
-            Frais Stripe : {marge.nb_reel} réel(s), {marge.nb_estime} {marge.frais_confirmes ? 'au taux du contrat' : 'estimé(s)'} ({decimales(marge.estimation_fixe, 2)} € + {decimales(marge.estimation_pct * 100, 2)} %). Hors virements aux voyageurs et hors taxe.
-          </p>
-          {roles.includes('super_admin') && (
-            <div className="info-card" style={{ marginTop: 14 }}>
-              <p className="section-title">Frais Stripe appliqués quand le montant réel n'est pas connu</p>
-              <p className="hint" style={{ marginTop: 0 }}>Estimation prudente par défaut (0,25 € + 3,2 %) : saisissez ici les frais de votre contrat.</p>
-              <div className="inline-form inline-form--frais">
-                <label className="champ-frais">
-                  <span>Part fixe</span>
-                  <div className="suffix-input">
-                    <input type="text" inputMode="decimal" value={fraisFixeSaisi} onChange={(e) => setFraisFixeSaisi(e.target.value)} />
-                    <span>€</span>
-                  </div>
-                </label>
-                <label className="champ-frais">
-                  <span>Pourcentage du montant débité</span>
-                  <div className="suffix-input">
-                    <input type="text" inputMode="decimal" value={fraisPctSaisi} onChange={(e) => setFraisPctSaisi(e.target.value)} />
-                    <span>%</span>
-                  </div>
-                </label>
-                <label className="check-inline">
-                  <input type="checkbox" checked={fraisConfirmes} onChange={(e) => setFraisConfirmes(e.target.checked)} />
-                  Ce sont les frais de mon contrat
-                </label>
-                <button className="btn btn-primary" disabled={busyFrais} onClick={enregistrerFraisStripe}>Enregistrer</button>
-              </div>
-              {erreurFrais && <p className="page-error" style={{ marginTop: 8 }}>{erreurFrais}</p>}
-            </div>
-          )}
+          <div className="marge-taxe rapp-tip rapp-tip--bas" tabIndex={0} data-tip="Taxe calculée sur la commission seule. Taux à 0 % tant que la société n'est pas créée.">
+            <span>Commission brute <b>{euros(commissionBrute)}</b></span>
+            <span aria-hidden="true">→</span>
+            <span>Taxe {decimales(tauxTaxe * 100, 1)} % <b>{euros(montantTaxe)}</b></span>
+            <span aria-hidden="true">→</span>
+            <span>Net de taxe <b>{euros(commissionNette)}</b></span>
+          </div>
         </div>
       )}
+
+        <div className="chart-card">
+          <h3>{net ? 'D\'où vient la marge nette' : 'D\'où vient la commission'}</h3>
+          <p className="chart-sub">{net ? 'Marge nette' : 'Commission'} par type d'envoi : colis ou enveloppe.</p>
+          {totalCommissionType > 0 ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie
+                  data={typesPositifs}
+                  dataKey="valeur"
+                  nameKey="type_envoi"
+                  cx="38%"
+                  outerRadius={90}
+                  isAnimationActive={false}
+                  label={({ percent }) => `${Math.round((percent ?? 0) * 100)} %`}
+                  labelLine={false}
+                >
+                  {typesPositifs.map((r) => (
+                    <Cell key={r.type_envoi} fill={COULEURS_TYPE_ENVOI[r.type_envoi] ?? 'var(--muted)'} />
+                  ))}
+                </Pie>
+                <Legend layout="vertical" verticalAlign="middle" align="right" formatter={(v: string) => LABELS_TYPE_ENVOI[v] ?? v} />
+                <Tooltip content={<VizTooltip />} formatter={(v, n) => [euros(Number(v)), LABELS_TYPE_ENVOI[String(n)] ?? String(n)]} />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : <p className="hint">{net ? 'Pas encore de marge nette à répartir.' : 'Pas encore de commission acquise à répartir.'}</p>}
+          <p className="insight">
+            {typesPositifs.map((r) => `${LABELS_TYPE_ENVOI[r.type_envoi] ?? r.type_envoi} : ${euros(Number(net ? r.marge_nette : r.commission))} (${totalCommissionType ? Math.round((r.valeur / totalCommissionType) * 100) : 0} %)`).join(' · ')}
+          </p>
+        </div>
+      </div>
 
       <div className="chart-card">
         <h3>Annulations après acceptation</h3>
@@ -636,60 +722,9 @@ function FinanceTab() {
         {modal}
       </div>
 
-      <div className="grid-2">
-        <div className="chart-card">
-          <h3>{net ? 'D\'où vient la marge nette' : 'D\'où vient la commission'}</h3>
-          <p className="chart-sub">{net ? 'Marge nette' : 'Commission'} par type d'envoi : colis ou enveloppe.</p>
-          {totalCommissionType > 0 ? (
-            <ResponsiveContainer width="100%" height={220}>
-              <PieChart>
-                <Pie
-                  data={typesPositifs}
-                  dataKey="valeur"
-                  nameKey="type_envoi"
-                  cx="38%"
-                  outerRadius={90}
-                  isAnimationActive={false}
-                  label={({ percent }) => `${Math.round((percent ?? 0) * 100)} %`}
-                  labelLine={false}
-                >
-                  {typesPositifs.map((r) => (
-                    <Cell key={r.type_envoi} fill={COULEURS_TYPE_ENVOI[r.type_envoi] ?? 'var(--muted)'} />
-                  ))}
-                </Pie>
-                <Legend layout="vertical" verticalAlign="middle" align="right" formatter={(v: string) => LABELS_TYPE_ENVOI[v] ?? v} />
-                <Tooltip content={<VizTooltip />} formatter={(v, n) => [euros(Number(v)), LABELS_TYPE_ENVOI[String(n)] ?? String(n)]} />
-              </PieChart>
-            </ResponsiveContainer>
-          ) : <p className="hint">{net ? 'Pas encore de marge nette à répartir.' : 'Pas encore de commission acquise à répartir.'}</p>}
-          <p className="insight">
-            {typesPositifs.map((r) => `${LABELS_TYPE_ENVOI[r.type_envoi] ?? r.type_envoi} : ${euros(Number(net ? r.marge_nette : r.commission))} (${totalCommissionType ? Math.round((r.valeur / totalCommissionType) * 100) : 0} %)`).join(' · ')}
-          </p>
-        </div>
-
-        <div className="chart-card">
-          <h3>Commission brute, taxe, net</h3>
-          <p className="chart-sub">Taux à 0 % tant que la société n'est pas créée.</p>
-          <div className="stat-list stat-list--nowrap">
-            <div><strong>{euros(commissionBrute)}</strong><span>Brute</span></div>
-            <div><strong>{euros(montantTaxe)}</strong><span>Taxe {decimales(tauxTaxe * 100, 1)} %</span></div>
-            <div><strong>{euros(commissionNette)}</strong><span>Net de taxe</span></div>
-          </div>
-          {roles.includes('super_admin') && (
-            <div className="inline-form" style={{ marginTop: 14 }}>
-              <div className="suffix-input">
-                <input type="text" inputMode="decimal" value={tauxTaxeSaisi} onChange={(e) => setTauxTaxeSaisi(e.target.value)} aria-label="Taux de taxe" />
-                <span>%</span>
-              </div>
-              <button className="btn btn-primary" disabled={busyTaxe} onClick={enregistrerTaxe}>Enregistrer</button>
-            </div>
-          )}
-        </div>
-      </div>
-
       <div className="chart-card">
         <h3>Où en est l'argent des transports</h3>
-        <p className="chart-sub">Le <b>montant du transport</b> va au voyageur, la <b>commission</b> à Wonjo.</p>
+        <p className="chart-sub">Le <b>montant du transport</b> va au voyageur ; la <b>commission</b> et les <b>frais de protection</b> sont à Wonjo.</p>
         {totalMontant > 0 && (
           <div className="money-bar" role="img" aria-label="Répartition des montants par étape de paiement">
             {ETAPES_PAIEMENT.map((e) => {
@@ -701,7 +736,7 @@ function FinanceTab() {
         <div className="dt-wrap" style={{ marginTop: 14 }}>
           <table>
             <thead>
-              <tr><th>Étape</th><th>Ce que ça veut dire</th><th>Transactions</th><th>Montant du transport</th><th>Commission brute</th><th>Marge nette</th></tr>
+              <tr><th>Étape</th><th>Ce que ça veut dire</th><th>Transactions</th><th>Montant du transport</th><th>Commission brute</th><th>Frais de protection</th><th>Marge nette</th></tr>
             </thead>
             <tbody>
               {ETAPES_PAIEMENT.map((e) => (
@@ -714,6 +749,9 @@ function FinanceTab() {
                     {e.statut === 'rembourse' ? <span className="hint">-</span>
                       : e.commissionAcquise ? <strong>{euros(val(e.statut, 'commission'))}</strong>
                         : <span className="hint">{euros(val(e.statut, 'commission'))} si payé</span>}
+                  </td>
+                  <td>
+                    {e.statut === 'rembourse' || e.statut === 'en_attente' ? <span className="hint">-</span> : euros(protectionEtape(e.statut))}
                   </td>
                   <td>
                     {e.statut === 'en_attente' ? <span className="hint">-</span> : <strong>{euros(margeEtape(e.statut))}</strong>}
