@@ -114,16 +114,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // choisi de mot de passe. A verifier avant l'aal, qu'elle n'atteindra
     // jamais tant qu'elle n'a pas de facteur MFA de toute facon, pour lui
     // presenter le bon ecran plutot que l'enrolement MFA en premier (242).
-    const { data: enAttente } = await supabase.rpc('admin_invitation_en_attente');
+    // Compte de l'app sans acces admin : refuse ici, avant tout ecran MFA -
+    // sinon n'importe quel membre pouvait activer une 2FA sur son compte
+    // depuis le back-office avant d'etre refuse (284). Les deux lectures partent ensemble : un aller-retour de moins a la connexion.
+    const [{ data: enAttente }, { data: eligible, error: eligibleError }] = await Promise.all([
+      supabase.rpc('admin_invitation_en_attente'),
+      supabase.rpc('admin_compte_eligible'),
+    ]);
     if (enAttente) {
       setStatus('need_password_set');
       return;
     }
-
-    // Compte de l'app sans acces admin : refuse ici, avant tout ecran MFA -
-    // sinon n'importe quel membre pouvait activer une 2FA sur son compte
-    // depuis le back-office avant d'etre refuse (284).
-    const { data: eligible, error: eligibleError } = await supabase.rpc('admin_compte_eligible');
     if (eligibleError) {
       if (silencieux && await reprendreSiJetonPerime(eligibleError, tentative)) return;
       await refuserSansDroits(eligibleError);
@@ -178,16 +179,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Au retour sur l'onglet, la bibliotheque de connexion emet plusieurs evenements d'affilee : les verifications se font une par
   // une (au plus une en cours, une seule reprise en attente) au lieu de courir en parallele et de s'ecraser.
-  const evaluationEnCours = useRef(false);
+  const evaluationEnCours = useRef<Promise<void> | null>(null);
   const evaluationEnAttente = useRef(false);
-  async function evaluerEnSerie() {
-    if (evaluationEnCours.current) { evaluationEnAttente.current = true; return; }
-    evaluationEnCours.current = true;
-    try {
-      do { evaluationEnAttente.current = false; await evaluate(); } while (evaluationEnAttente.current);
-    } finally {
-      evaluationEnCours.current = false;
-    }
+  function evaluerEnSerie(): Promise<void> {
+    if (evaluationEnCours.current) { evaluationEnAttente.current = true; return evaluationEnCours.current; }
+    evaluationEnCours.current = (async () => {
+      try {
+        do { evaluationEnAttente.current = false; await evaluate(); } while (evaluationEnAttente.current);
+      } finally {
+        evaluationEnCours.current = null;
+      }
+    })();
+    return evaluationEnCours.current;
   }
 
   useEffect(() => {
@@ -248,7 +251,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setError(signInError.message);
       return;
     }
-    await evaluate();
+    // La connexion emet SIGNED_IN, qui lance deja une verification : l'attendre au lieu d'en lancer une seconde en parallele
+    // (chaque appel partait en double, cf. journaux du 27 oct. 2026).
+    await (evaluationEnCours.current ?? evaluerEnSerie());
   }
 
   async function refreshProfil() {
