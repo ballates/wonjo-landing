@@ -14,6 +14,7 @@ import {
   COULEUR_OPERATEUR, LABEL_OPERATEUR, OPERATEURS, dateCourte, echeanceRelative, libelleDevise, montantEuros, montantLocal,
   moyenDepuisOperateur, type MoyenRecu, type Operateur, type PointRelais,
 } from '../../lib/pointsRelais';
+import { LogoOperateur } from './LogoOperateur';
 
 // File « A encaisser » d'un point relais (parcours A) : les demandes de l'app que l'expediteur a choisi de
 // payer au point, les plus urgentes d'abord. Le point focal valide un paiement une fois l'argent recu
@@ -185,11 +186,12 @@ export function ValidationModal({ point, item, onClose, onValide, onCarte }: {
 }) {
   // Moyens possibles : les comptes mobile money du point, puis les especes s'il les accepte.
   const moyens = useMemo(() => {
-    const liste: { cle: string; moyen: MoyenRecu; label: string; couleur: string; detail: string }[] = point.comptes_mobile_money.map((c, idx) => ({
+    const liste: { cle: string; moyen: MoyenRecu; label: string; couleur: string; detail: string; operateur?: string }[] = point.comptes_mobile_money.map((c, idx) => ({
       cle: `mm-${idx}`,
       moyen: moyenDepuisOperateur(c.operateur as Operateur),
       label: LABEL_OPERATEUR[c.operateur as Operateur] ?? c.operateur,
       couleur: COULEUR_OPERATEUR[c.operateur as Operateur] ?? '#8A879E',
+      operateur: c.operateur,
       detail: `${c.numero} · ${c.titulaire}`,
     }));
     if (point.accepte_especes) liste.push({ cle: 'especes', moyen: 'especes', label: 'Espèces', couleur: '#1D9E75', detail: 'Reçues au guichet' });
@@ -212,7 +214,7 @@ export function ValidationModal({ point, item, onClose, onValide, onCarte }: {
   const [recuError, setRecuError] = useState<string | null>(null);
 
   const moyen = choix === 'autre'
-    ? { cle: 'autre', moyen: moyenDepuisOperateur(autreOp), label: LABEL_OPERATEUR[autreOp], couleur: COULEUR_OPERATEUR[autreOp], detail: 'compte du point' }
+    ? { cle: 'autre', moyen: moyenDepuisOperateur(autreOp), label: LABEL_OPERATEUR[autreOp], couleur: COULEUR_OPERATEUR[autreOp], detail: 'compte du point', operateur: autreOp }
     : moyens.find((m) => m.cle === choix);
   const especes = moyen?.moyen === 'especes';
   const montantNum = Number(montant.replace(/\s/g, '').replace(',', '.'));
@@ -300,7 +302,7 @@ export function ValidationModal({ point, item, onClose, onValide, onCarte }: {
                   className={`moyen-pill ${choix === m.cle ? 'on' : ''}`}
                   onClick={() => { setChoix(m.cle); setVerifie(false); }}
                 >
-                  <span className="moyen-pastille" style={{ background: m.couleur }} aria-hidden="true" />
+                  <LogoOperateur operateur={m.operateur} couleur={m.couleur} />
                   <span className="moyen-texte"><strong>{m.label}</strong><small>{m.detail}</small></span>
                 </button>
               ))}

@@ -24,12 +24,13 @@ import { RemboursementsSection } from '../components/pointsRelais/Remboursements
 import { CaisseSection } from '../components/pointsRelais/CaisseSection';
 import { RecusSection } from '../components/pointsRelais/RecusSection';
 import { SiegeVoyageursSection } from '../components/pointsRelais/SiegeVoyageursSection';
+import { LogoOperateur } from '../components/pointsRelais/LogoOperateur';
 import { InterrupteurPointsRelais, useInterrupteursPointsRelais } from '../components/pointsRelais/InterrupteurPointsRelais';
 import { decomposerNumero, numeroComplet } from '../lib/telephone';
 import { peutGererAdmins, peutGererReseau } from '../lib/permissions';
 import type { AdminRow } from '../lib/adminTypes';
 import {
-  LABEL_OPERATEUR, LABEL_PERMISSION, OPERATEURS, PERMISSIONS, montantLocal,
+  COULEUR_OPERATEUR, LABEL_OPERATEUR, LABEL_PERMISSION, OPERATEURS, PERMISSIONS, montantLocal,
   type CompteMobileMoney, type MonPoint, type Operateur, type Permission, type PointRelais,
 } from '../lib/pointsRelais';
 
@@ -265,7 +266,11 @@ export function PointsRelaisPage() {
     // Deux colonnes : le point peut encaisser par mobile money (un ou plusieurs operateurs) ET/OU en especes, ce sont deux choses distinctes.
     { key: 'mobile', label: 'Mobile money', value: (p) => p.comptes_mobile_money.map((c) => LABEL_OPERATEUR[c.operateur]).join(' '),
       render: (p) => p.comptes_mobile_money.length === 0 ? <span className="hint">Aucun</span> : (
-        <span className="pr-nowrap">{[...new Set(p.comptes_mobile_money.map((c) => LABEL_OPERATEUR[c.operateur]))].join(', ')}</span>
+        <span className="pr-nowrap pr-operateurs">
+          {[...new Set(p.comptes_mobile_money.map((c) => c.operateur))].map((o) => (
+            <span key={o} className="pr-operateur"><LogoOperateur operateur={o} couleur={COULEUR_OPERATEUR[o]} />{LABEL_OPERATEUR[o]}</span>
+          ))}
+        </span>
       ) },
     { key: 'especes', label: 'Espèces', value: (p) => (p.accepte_especes ? 'Acceptées' : 'Refusées'), filter: 'options',
       render: (p) => <Badge tone={p.accepte_especes ? 'green' : 'muted'}>{p.accepte_especes ? 'Acceptées' : 'Refusées'}</Badge> },
@@ -298,7 +303,11 @@ export function PointsRelaisPage() {
             ? 'Guichets Wonjo en Afrique : paiements à encaisser, comptes mobile money, plafonds et agents.'
             : agent ? 'Votre point relais : paiements à encaisser et ce que vous pouvez y faire.' : 'Guichets Wonjo en Afrique (consultation).'}</InfoBulle></h1>
         </div>
-        {reseau && actif === 'reseau' && <button className="btn btn-primary" onClick={() => setEdition('nouveau')}>Nouveau point relais</button>}
+        {reseau && actif === 'reseau' && (
+          <button type="button" className="btn-plus rapp-tip rapp-tip--droite" data-tip="Nouveau point relais" aria-label="Nouveau point relais" onClick={() => setEdition('nouveau')}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+          </button>
+        )}
       </div>
 
       {interrupteurs && !interrupteurs.points_relais_actif.actif && (
@@ -374,8 +383,11 @@ export function PointsRelaisPage() {
                 <h3>{m.nom} <Badge tone={m.actif ? 'green' : 'muted'}>{m.actif ? 'Actif' : 'Inactif'}</Badge></h3>
                 {p && <p className="hint">{p.adresse || 'Adresse à renseigner'} · {p.ville} · {p.telephone || 'Téléphone à renseigner'}{p.horaires ? ` · ${p.horaires}` : ''}</p>}
                 {p && p.comptes_mobile_money.length > 0 && (
-                  <p className="hint" style={{ marginTop: 6 }}>
-                    Comptes : {p.comptes_mobile_money.map((c) => `${LABEL_OPERATEUR[c.operateur]} ${c.numero}`).join(' · ')}
+                  <p className="hint pr-operateurs" style={{ marginTop: 6 }}>
+                    Comptes :
+                    {p.comptes_mobile_money.map((c, i) => (
+                      <span key={i} className="pr-operateur"><LogoOperateur operateur={c.operateur} couleur={COULEUR_OPERATEUR[c.operateur]} />{LABEL_OPERATEUR[c.operateur]} {c.numero}</span>
+                    ))}
                   </p>
                 )}
                 <p className="hint" style={{ marginTop: 8 }}>
@@ -572,7 +584,7 @@ function PointModal({ point, onClose, onSaved }: { point: PointRelais | null; on
                       ariaLabel="Opérateur"
                       value={c.operateur}
                       onChange={(v) => setComptes((l) => l.map((x, j) => (j === i ? { ...x, operateur: v as Operateur } : x)))}
-                      options={OPERATEURS.map((o) => ({ value: o.value, label: o.label, icon: <span className="moyen-pastille" style={{ background: o.couleur }} aria-hidden="true" /> }))}
+                      options={OPERATEURS.map((o) => ({ value: o.value, label: o.label, icon: <LogoOperateur operateur={o.value} couleur={o.couleur} /> }))}
                     />
                     <input type="text" className="compte-mm-titulaire" value={c.titulaire} placeholder="Titulaire" aria-label="Titulaire"
                            onChange={(e) => setComptes((l) => l.map((x, j) => (j === i ? { ...x, titulaire: e.target.value } : x)))} />

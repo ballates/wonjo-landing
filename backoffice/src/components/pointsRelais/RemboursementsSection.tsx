@@ -11,6 +11,7 @@ import {
   COULEUR_OPERATEUR, LABEL_OPERATEUR, dateCourte, montantEuros, montantLocal, moyenDepuisOperateur,
   type MoyenRecu, type Operateur, type PointRelais,
 } from '../../lib/pointsRelais';
+import { LogoOperateur } from './LogoOperateur';
 
 // A rembourser (migrations 406-408) : dossiers payes a CE point puis annules (refus du voyageur, annulation, depart
 // sans acceptation, litige). Le point rend exactement ce qu'il a encaisse. Expediteur de l'app : son code de
@@ -155,11 +156,12 @@ function RembourserModal({ point, item, onClose, onFait }: {
   point: PointRelais; item: ARembourser; onClose: () => void; onFait: (message: string) => void;
 }) {
   const moyens = useMemo(() => {
-    const liste: { cle: string; moyen: MoyenRecu; label: string; couleur: string; detail: string }[] = point.comptes_mobile_money.map((c, idx) => ({
+    const liste: { cle: string; moyen: MoyenRecu; label: string; couleur: string; detail: string; operateur?: string }[] = point.comptes_mobile_money.map((c, idx) => ({
       cle: `mm-${idx}`,
       moyen: moyenDepuisOperateur(c.operateur as Operateur),
       label: LABEL_OPERATEUR[c.operateur as Operateur] ?? c.operateur,
       couleur: COULEUR_OPERATEUR[c.operateur as Operateur] ?? '#8A879E',
+      operateur: c.operateur,
       detail: `Depuis ${c.numero}`,
     }));
     if (point.accepte_especes) liste.push({ cle: 'especes', moyen: 'especes', label: 'Espèces', couleur: '#1D9E75', detail: 'Remises au guichet' });
@@ -227,7 +229,7 @@ function RembourserModal({ point, item, onClose, onFait }: {
               {moyens.map((m) => (
                 <button key={m.cle} type="button" role="radio" aria-checked={choix === m.cle}
                         className={`moyen-pill ${choix === m.cle ? 'on' : ''}`} onClick={() => { setChoix(m.cle); setVerifie(false); }}>
-                  <span className="moyen-pastille" style={{ background: m.couleur }} aria-hidden="true" />
+                  <LogoOperateur operateur={m.operateur} couleur={m.couleur} />
                   <span className="moyen-texte"><strong>{m.label}</strong><small>{m.detail}</small></span>
                 </button>
               ))}

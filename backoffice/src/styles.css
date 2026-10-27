@@ -2999,3 +2999,24 @@ div.pr-reseau-rang--ligne:hover { background: var(--hover); }
 .reglages-ligne .suffix-input input { height: 28px; font-size: 12.5px; }
 .reglages-ligne .btn { margin-left: auto; height: 28px; padding: 0 10px; font-size: 12px; }
 .reglages-case { margin-top: 5px; font-size: 12px; }
+
+/* Logos des operateurs mobile money (Wave, Orange Money, MTN MoMo, Moov Money) a la place de la pastille de couleur */
+.logo-op { display: inline-flex; align-items: center; justify-content: center; flex: none; vertical-align: middle; border-radius: 5px; overflow: hidden; box-sizing: border-box; }
+.logo-op img { display: block; height: 100%; width: auto; }
+.logo-op--large { padding: 2px 5px; border-radius: 5px; }
+.logo-op--large img { height: 100%; }
+.pr-operateurs { display: inline-flex; align-items: center; gap: 4px 12px; flex-wrap: wrap; }
+.pr-operateur { display: inline-flex; align-items: center; gap: 6px; }
+
+/* Paiement mobile money : le nom affiche par l'operateur doit etre celui du titulaire */
+.vs-nom { flex-direction: row; align-items: flex-start; }
+.vs-nom > span { display: grid; gap: 3px; }
+.vs-nom-valeur { display: block; font-size: 16px; letter-spacing: 0.02em; color: var(--ink); text-transform: uppercase; }
+.vs-nom small { font-size: 11.5px; font-weight: 400; color: var(--muted); }
+
+/* Bouton rond « + » (ajout) : meme style que le bouton principal, avec une bulle d'information au survol */
+.btn-plus { display: inline-grid; place-items: center; flex: none; width: 46px; height: 46px; margin-right: 32px; padding: 0; border: 0; border-radius: 50%; background: var(--brand-gradient); color: #fff; cursor: pointer; box-shadow: var(--cta-shadow); transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.2s ease; }
+.btn-plus:hover { transform: translateY(-1px) scale(1.05); filter: brightness(1.08); box-shadow: var(--cta-shadow-hover); }
+.btn-plus:active { transform: scale(0.96); }
+.btn-plus:focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .btn-plus { transition: none; } }

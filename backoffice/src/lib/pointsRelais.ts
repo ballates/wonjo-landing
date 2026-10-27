@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from './supabase';
 
-export type Operateur = 'orange_money' | 'wave' | 'mtn_momo' | 'moov_money' | 'free_money' | 'autre';
+export type Operateur = 'orange_money' | 'wave' | 'mtn_momo' | 'moov_money' | 'autre';
 export interface CompteMobileMoney { operateur: Operateur; numero: string; titulaire: string }
 
 export interface PointRelais {
@@ -43,7 +43,6 @@ export const OPERATEURS: { value: Operateur; label: string; couleur: string }[] 
   { value: 'wave', label: 'Wave', couleur: '#1DC8FF' },
   { value: 'mtn_momo', label: 'MTN MoMo', couleur: '#FFCB05' },
   { value: 'moov_money', label: 'Moov Money', couleur: '#0066B3' },
-  { value: 'free_money', label: 'Free Money', couleur: '#CD1E25' },
   { value: 'autre', label: 'Autre', couleur: '#8A879E' },
 ];
 export const LABEL_OPERATEUR = Object.fromEntries(OPERATEURS.map((o) => [o.value, o.label])) as Record<Operateur, string>;

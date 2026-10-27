@@ -9,6 +9,7 @@ import { BasculeUnite, type Unite } from '../BasculeUnite';
 import {
   COULEUR_OPERATEUR, LABEL_OPERATEUR, dateCourte, equivalentEuros, libelleDevise, montantEuros, montantLocal, tauxDe, useTauxEuros, type Operateur, type PointRelais,
 } from '../../lib/pointsRelais';
+import { LogoOperateur } from './LogoOperateur';
 
 // Caisse d'un point relais (migrations 409-410, docs/POINTS_RELAIS.md § 8.4 et § 11) : soldes par poche (especes,
 // chaque compte mobile money), operations a valider, historique, rapprochements. Separation des taches : celui qui
@@ -147,7 +148,7 @@ export function CaisseSection({ point, finance, reseauSeul = false, onChoisirPoi
             return (
               <article key={s.moyen} className="ca-poche">
                 <div className="ca-poche-haut">
-                  <span className="pr-poche"><span className="moyen-pastille" style={{ background: COULEUR_MOYEN(s.moyen) }} />{LIBELLE_MOYEN[s.moyen] ?? s.moyen}</span>
+                  <span className="pr-poche"><LogoOperateur operateur={s.moyen} couleur={COULEUR_MOYEN(s.moyen)} />{LIBELLE_MOYEN[s.moyen] ?? s.moyen}</span>
                   {ecart ? <Badge tone="danger">Écart {montantLocal(s.dernier_ecart, devise)}</Badge>
                     : s.rapproche_at ? <Badge tone="green">Compté</Badge> : <Badge tone="muted">Jamais compté</Badge>}
                 </div>
@@ -318,7 +319,7 @@ function DeclarerModal({ point, type, soldes, devise, onClose, onFait }: {
             <div className="moyens" role="radiogroup" aria-label="Poche">
               {poches.map((m) => (
                 <button key={m} type="button" role="radio" aria-checked={moyen === m} className={`moyen-pill ${moyen === m ? 'on' : ''}`} onClick={() => setMoyen(m)}>
-                  <span className="moyen-pastille" style={{ background: COULEUR_MOYEN(m) }} aria-hidden="true" />
+                  <LogoOperateur operateur={m} couleur={COULEUR_MOYEN(m)} />
                   <span className="moyen-texte"><strong>{LIBELLE_MOYEN[m] ?? m}</strong><small>Solde {montantLocal(soldes.find((s) => s.moyen === m)?.solde, devise)}</small></span>
                 </button>
               ))}
@@ -540,7 +541,7 @@ function ClotureModal({ point, soldes, devise, onClose, onFait }: {
             return (
               <label key={x.moyen} className={`cl-ligne ${fait ? 'fait' : ''} ${ecart ? 'ecart' : ''}`}>
                 <span className="cl-nom">
-                  <span className="moyen-pastille" style={{ background: COULEUR_MOYEN(x.moyen) }} />
+                  <LogoOperateur operateur={x.moyen} couleur={COULEUR_MOYEN(x.moyen)} />
                   <strong>{LIBELLE_MOYEN[x.moyen] ?? x.moyen}</strong>
                   {ecart && <Badge tone="danger">À vérifier</Badge>}
                 </span>

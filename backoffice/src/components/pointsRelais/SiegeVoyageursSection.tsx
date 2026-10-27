@@ -7,6 +7,7 @@ import { DataTable, type Column } from '../DataTable';
 import { Copiable } from './Copiable';
 import { InterrupteurPointsRelais } from './InterrupteurPointsRelais';
 import { COULEUR_OPERATEUR, LABEL_OPERATEUR, dateCourte, dateJour, libelleDevise, montantEuros, montantLocal, type Operateur } from '../../lib/pointsRelais';
+import { LogoOperateur } from './LogoOperateur';
 
 // Voyageurs à payer par la FINANCE CENTRALE (migrations 425 et 427, docs/POINTS_RELAIS.md § 7) : un voyageur sans compte Stripe a configuré
 // son mobile money (nom du titulaire = pièce d'identité, code par e-mail) ; 24 h après la livraison la finance lui envoie l'argent, puis
@@ -147,9 +148,12 @@ function PaiementModal({ item, onClose, onPaye }: { item: AAPayer; onClose: () =
   const [moyen, setMoyen] = useState(() => (item.mm_operateur && MOYENS_SIEGE.some((m) => m.cle === item.mm_operateur) ? item.mm_operateur : item.compte_stripe ? 'virement_bancaire' : 'wave'));
   const [reference, setReference] = useState('');
   const [verifie, setVerifie] = useState(false);
+  const [nomVerifie, setNomVerifie] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const referenceOk = reference.trim().length >= 4;
+  // Le nom du titulaire (pièce d'identité) doit être celui que l'application de l'opérateur affiche avant l'envoi : c'est la protection contre une faute de frappe dans le numéro.
+  const nomRequis = !!item.titulaire && !!item.mm_numero && moyen !== 'virement_bancaire';
   const unite = libelleDevise(item.devise);
   const retenu = !!item.retenu_jusqu_a && moyen !== 'virement_bancaire';
 
@@ -179,13 +183,24 @@ function PaiementModal({ item, onClose, onPaye }: { item: AAPayer; onClose: () =
             <div className="insight-banner">
               <div>
                 <strong>Envoyez sur {operateurDe(item.mm_operateur, item.mm_operateur_autre)} <Copiable valeur={item.mm_numero} /></strong>
-                <span>{item.titulaire ? `Compte au nom de ${item.titulaire} (pièce d'identité vérifiée). ` : ''}Numéro confirmé par code dans l'app du voyageur. Envoyez exactement ce montant, puis saisissez la référence du transfert.</span>
+                <span>Numéro confirmé par code dans l'app du voyageur. Envoyez exactement ce montant, puis saisissez la référence du transfert.</span>
               </div>
             </div>
           ) : (
             <p className="hint" style={{ color: 'var(--badge-amber-fg)' }}>
               Ce voyageur n'a pas de mobile money enregistré{item.compte_stripe ? ' (il a un compte Stripe : le virement bancaire est possible)' : ' : contactez-le avant de payer'}.
             </p>
+          )}
+
+          {nomRequis && (
+            <label className={`vs-confirme vs-nom ${nomVerifie ? 'on' : ''}`}>
+              <input type="checkbox" checked={nomVerifie} onChange={(e) => setNomVerifie(e.target.checked)} />
+              <span>
+                Avant d'envoyer, l'application {operateurDe(item.mm_operateur, item.mm_operateur_autre)} affiche le nom du destinataire. Je confirme qu'il correspond à
+                <strong className="vs-nom-valeur">{item.titulaire}</strong>
+                <small>Nom de la pièce d'identité vérifiée. S'il est différent, n'envoyez rien : le numéro est peut-être faux.</small>
+              </span>
+            </label>
           )}
 
           {retenu && item.retenu_jusqu_a && (
@@ -197,8 +212,8 @@ function PaiementModal({ item, onClose, onPaye }: { item: AAPayer; onClose: () =
             <div className="moyens" role="radiogroup" aria-label="Moyen de paiement">
               {MOYENS_SIEGE.map((m) => (
                 <button key={m.cle} type="button" role="radio" aria-checked={moyen === m.cle} className={`moyen-pill ${moyen === m.cle ? 'on' : ''}`}
-                        onClick={() => { setMoyen(m.cle); setVerifie(false); }}>
-                  <span className="moyen-pastille" style={{ background: m.couleur }} aria-hidden="true" />
+                        onClick={() => { setMoyen(m.cle); setVerifie(false); setNomVerifie(false); }}>
+                  <LogoOperateur operateur={m.cle} couleur={m.couleur} />
                   <span className="moyen-texte"><strong>{m.label}</strong></span>
                 </button>
               ))}
@@ -221,7 +236,7 @@ function PaiementModal({ item, onClose, onPaye }: { item: AAPayer; onClose: () =
         {error && <p className="page-error" style={{ marginTop: 12 }}>{error}</p>}
         <div className="action-row" style={{ justifyContent: 'flex-end', marginTop: 16 }}>
           <button className="btn" onClick={onClose} disabled={busy}>Annuler</button>
-          <button className="btn btn-primary" onClick={valider} disabled={busy || !verifie || !referenceOk || retenu}>
+          <button className="btn btn-primary" onClick={valider} disabled={busy || !verifie || !referenceOk || retenu || (nomRequis && !nomVerifie)}>
             {busy ? 'Enregistrement…' : `Enregistrer le paiement de ${montantLocal(item.montant_local, item.devise)}`}
           </button>
         </div>
