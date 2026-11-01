@@ -52,6 +52,11 @@
   .legal-hero .eyebrow { display: inline-block; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.85; margin-bottom: 14px; }
   .legal-hero h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.12; }
   .legal-hero .meta { margin-top: 14px; font-size: 0.95rem; opacity: 0.9; }
+  /* Bascule CGU / CGV : deux textes distincts, presentes ensemble (comme les deux onglets de l'app). */
+  .legal-onglets { display: inline-flex; gap: 6px; margin-top: 22px; padding: 4px; border-radius: 999px; background: rgba(255,255,255,0.16); }
+  .legal-onglets a { padding: 8px 18px; border-radius: 999px; font-size: 0.92rem; font-weight: 700; color: #fff; text-decoration: none; white-space: nowrap; }
+  .legal-onglets a:hover { background: rgba(255,255,255,0.14); }
+  .legal-onglets a[aria-current="page"] { background: #fff; color: var(--teal); }
 
   .logo { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -0.02em; text-decoration: none; }
   .logo img { width: auto; display: block; }
@@ -93,6 +98,10 @@
     <span class="eyebrow">Informations légales</span>
     <h1>Conditions générales d'utilisation</h1>
     <p class="meta">Wonjo v1.8.0 · Mis à jour le 21 octobre 2026</p>
+    <nav class="legal-onglets" aria-label="Conditions générales">
+      <a href="/cgu.html" aria-current="page">Utilisation</a>
+      <a href="/cgv.html">Vente</a>
+    </nav>
   </section>
   <main class="legal">
     <div class="legal-card">
@@ -407,6 +416,7 @@
         <ul>
           <li><a href="/mentions-legales.html">Mentions légales</a></li>
           <li><a href="/cgu.html">CGU</a></li>
+          <li><a href="/cgv.html">CGV</a></li>
           <li><a href="/confidentialite.html">Confidentialité</a></li>
         </ul>
       </div>

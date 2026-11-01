@@ -305,6 +305,17 @@ export function ficheSignal(type: string): Fiche {
 
 const court = (v: unknown) => `${String(v ?? '').slice(0, 8)}…`;
 
+let nomsPays: Intl.DisplayNames | null = null;
+function nomPays(code: string | null | undefined): string {
+  if (!code) return 'inconnu';
+  try {
+    nomsPays ??= new Intl.DisplayNames(['fr'], { type: 'region' });
+    return nomsPays.of(code) ?? code;
+  } catch {
+    return code;
+  }
+}
+
 // Une ligne de detail lisible, sans recopier plus que necessaire.
 export function resumeSignal(s: SignalSecurite): string {
   const d = s.details ?? {};
@@ -381,6 +392,17 @@ export function resumeSignal(s: SignalSecurite): string {
       return `${d.appels} appels d'inscription ou de réinitialisation depuis ${d.ip}`;
     case 'collecte_arretee':
       return `Dernier passage : ${String(d.dernier_passage ?? '').slice(0, 16).replace('T', ' ')}`;
+    case 'origine_admin_inhabituelle': {
+      // valeur : le pays nouveau ; habituels : ceux deja vus pour ce compte (359).
+      const habituels = ((d.habituels as string[] | null | undefined) ?? []).map(nomPays);
+      return `Nouveau pays : ${nomPays(d.valeur as string)}${habituels.length ? ` (habituellement : ${habituels.join(', ')})` : ''}`;
+    }
+    case 'appareil_admin_inconnu': {
+      // valeur : l'appareil nouveau ; pays : d'ou venait la connexion (473, absent des signaux plus anciens).
+      const habituels = (d.habituels as string[] | null | undefined) ?? [];
+      return `Nouvel appareil : ${d.valeur ?? 'inconnu'}${d.pays ? `, depuis ${nomPays(d.pays as string)}` : ''}`
+        + `${habituels.length ? ` (habituellement : ${habituels.join(', ')})` : ''}`;
+    }
     case 'codes_qr_epuises':
       return `${d.phase === 'restitution' ? 'Restitution' : 'Remise'}, série n°${d.series_epuisees}`;
     default:

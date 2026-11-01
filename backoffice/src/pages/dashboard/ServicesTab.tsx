@@ -249,7 +249,7 @@ export function ServicesTab() {
           <Sources sources={c.resend.par_source} />
         </Carte>
 
-        <Carte titre="Vérifications d'identité" plan="Didit · 500 gratuites par mois, seules les vérifications menées au bout comptent"
+        <Carte titre="Vérifications d'identité" plan="Didit · 500 par mois, seules les vérifications terminées comptent"
           mois={c.mois} valeur={c.didit.mois} precedent={c.didit.mois_precedent} quota={c.didit.quota_mois} unite="vérifications">
           <div className="svc-stats">
             {c.mois_courant && (

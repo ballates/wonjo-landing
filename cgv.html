@@ -7,7 +7,7 @@
 <link rel="apple-touch-icon" href="/assets/img/wonjo-logo.png">
 <title>Conditions générales de vente - Wonjo</title>
 <meta name="description" content="Conditions générales de vente de Wonjo : prix, paiement, remboursement.">
-<meta name="robots" content="noindex, nofollow">
+<meta name="robots" content="index, follow">
 <link rel="canonical" href="https://wonjo.app/cgv.html">
 <link rel="stylesheet" href="/assets/css/fonts.css">
 <link rel="stylesheet" href="/assets/css/base.css">
@@ -52,6 +52,11 @@
   .legal-hero .eyebrow { display: inline-block; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.85; margin-bottom: 14px; }
   .legal-hero h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.12; }
   .legal-hero .meta { margin-top: 14px; font-size: 0.95rem; opacity: 0.9; }
+  /* Bascule CGU / CGV : deux textes distincts, presentes ensemble (comme les deux onglets de l'app). */
+  .legal-onglets { display: inline-flex; gap: 6px; margin-top: 22px; padding: 4px; border-radius: 999px; background: rgba(255,255,255,0.16); }
+  .legal-onglets a { padding: 8px 18px; border-radius: 999px; font-size: 0.92rem; font-weight: 700; color: #fff; text-decoration: none; white-space: nowrap; }
+  .legal-onglets a:hover { background: rgba(255,255,255,0.14); }
+  .legal-onglets a[aria-current="page"] { background: #fff; color: var(--teal); }
 
   .logo { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -0.02em; text-decoration: none; }
   .logo img { width: auto; display: block; }
@@ -92,12 +97,149 @@
   <section class="legal-hero">
     <span class="eyebrow">Informations légales</span>
     <h1>Conditions générales de vente</h1>
-    <p class="meta">Bientôt disponibles</p>
+    <p class="meta">Wonjo v1.0.0 · Mis à jour le 20 octobre 2026</p>
+    <nav class="legal-onglets" aria-label="Conditions générales">
+      <a href="/cgu.html">Utilisation</a>
+      <a href="/cgv.html" aria-current="page">Vente</a>
+    </nav>
   </section>
   <main class="legal">
     <div class="legal-card">
 <h1>Conditions Générales de Vente Wonjo</h1>
-<p>Les conditions générales de vente seront publiées prochainement.</p>
+<h3>Wonjo v1.0.0 - 20 octobre 2026</h3>
+<hr>
+<h2>Article 1 - Objet et champ d&#x27;application</h2>
+<p>Les présentes Conditions Générales de Vente (ci-après « CGV ») définissent les conditions financières des services fournis par Wonjo aux utilisateurs de la plateforme : le prix des services, ce qui est payé, par qui, quand, comment, et ce qui est remboursé.</p>
+<p>Elles complètent les Conditions Générales d&#x27;Utilisation (ci-après « CGU »), qui décrivent le fonctionnement de la plateforme, le déroulement du transport, les constats et la procédure de litige. En cas de contradiction entre les CGV et les CGU sur une question financière, les CGV prévalent ; sur toute autre question, les CGU prévalent.</p>
+<p>Les termes « Expéditeur », « Voyageur », « demande », « trajet » et « séquestre » ont le sens que leur donnent les CGU. On appelle « Point relais » un lieu partenaire de Wonjo, tenu par un agent de Wonjo, où un Expéditeur peut payer sa demande et déposer son colis (article 5).</p>
+<p><strong>Acceptation.</strong> L&#x27;Expéditeur accepte les CGV en payant : l&#x27;application le rappelle, avec un lien vers le texte, juste avant le paiement. Les CGV applicables à une demande sont celles en vigueur au moment de son paiement ; la version acceptée est enregistrée avec la demande.</p>
+<hr>
+<h2>Article 2 - Identité du vendeur</h2>
+<p>Les services sont fournis par :</p>
+<ul>
+<li>Lampasai SAS, société par actions simplifiée, au capital de [montant] €</li>
+<li>Siège social : [adresse]</li>
+<li>Immatriculée au RCS de [ville] sous le numéro [SIREN]</li>
+<li>Numéro de TVA intracommunautaire : [numéro, ou mention « TVA non applicable, art. 293 B du CGI »]</li>
+<li>Contact : contact@wonjo.app</li>
+<li>Directeur de la publication : [nom]</li>
+</ul>
+<hr>
+<h2>Article 3 - Le service vendu par Wonjo</h2>
+<p>Wonjo vend un service de <strong>mise en relation</strong> entre un Expéditeur et un Voyageur, avec la gestion sécurisée du paiement (séquestre des fonds jusqu&#x27;à la livraison), les outils de suivi, de constat et de résolution des litiges décrits dans les CGU.</p>
+<p><strong>Wonjo ne vend pas de transport.</strong> Le transport est une prestation conclue directement entre l&#x27;Expéditeur et le Voyageur, à un prix fixé par le Voyageur. Wonjo n&#x27;est ni transporteur, ni commissionnaire de transport, ni assureur.</p>
+<p><strong>Wonjo n&#x27;assure pas le contenu des envois.</strong> Aucune somme versée à Wonjo ne couvre la valeur d&#x27;un objet, sa casse, sa détérioration ou son vol (article 7).</p>
+<p>Dans sa version actuelle, la plateforme est réservée aux particuliers majeurs (CGU, article 2).</p>
+<hr>
+<h2>Article 4 - Composition du prix</h2>
+<p>Le montant payé par l&#x27;Expéditeur pour une demande se compose de trois éléments, tous affichés séparément dans l&#x27;application avant qu&#x27;il confirme sa demande :</p>
+<ul>
+<li>le prix du transport, fixé par le Voyageur ;</li>
+<li>la commission de Wonjo ;</li>
+<li>les frais liés à la valeur déclarée, lorsque la valeur déclarée dépasse 50 €.</li>
+</ul>
+<p>Le Voyageur reçoit le <strong>prix du transport en entier</strong>, sans aucune déduction de la part de Wonjo. Le service est gratuit pour le Voyageur.</p>
+<p><strong>Monnaie.</strong> L&#x27;euro est la monnaie de référence de la plateforme : les prix sont enregistrés et facturés en euros. Dans les pays de la zone franc CFA, l&#x27;application affiche en plus l&#x27;équivalent en francs CFA, calculé au taux fixe de 655,957 francs CFA pour 1 euro. Pour une autre monnaie, l&#x27;équivalent affiché est indicatif et se fonde sur un taux enregistré par Wonjo ; seul le montant en euros fait foi, sauf pour un paiement fait en espèces ou en mobile money dans un Point relais, qui se règle dans la monnaie du pays du Point relais, au montant exact affiché dans l&#x27;application (article 5).</p>
+<p>[Mention TVA à compléter : prix TTC / TVA non applicable selon le régime de la société.]</p>
+<p><strong>Prix du transport.</strong> Le prix du transport est toujours fixé par celui qui rend le service, le Voyageur :</p>
+<ul>
+<li>pour un <strong>colis</strong>, un prix au kilogramme multiplié par le poids déclaré, compris entre 0,5 kg et 23 kg ;</li>
+<li>pour des <strong>enveloppes</strong> (documents), un prix par enveloppe selon son format ; une enveloppe peut contenir plusieurs documents, et l&#x27;unité facturée est l&#x27;enveloppe, jamais le document.</li>
+</ul>
+<p>Le Voyageur choisit son prix dans une fourchette propre à chaque corridor (ou zone, pour les enveloppes), affichée dans l&#x27;application au moment où il publie son trajet ou fait sa proposition. Lorsque l&#x27;Expéditeur passe par un trajet publié, le prix est celui du trajet. Lorsqu&#x27;il publie lui-même une demande de colis, chaque Voyageur intéressé propose son prix et l&#x27;Expéditeur choisit librement la proposition qu&#x27;il retient. Le prix d&#x27;une demande est calculé à sa création et ne change plus ensuite.</p>
+<p><strong>Commission Wonjo.</strong> La commission rémunère le service de mise en relation et de gestion du paiement. Elle est payée par l&#x27;Expéditeur, en plus du prix du transport, et comprend :</p>
+<ul>
+<li>une part proportionnelle de <strong>10 % du prix du transport</strong> ; Wonjo peut accorder un taux réduit (offre promotionnelle, Expéditeur ou trajet particulier), jamais un taux supérieur ;</li>
+<li>le cas échéant, une <strong>commission fixe par envoi</strong>, selon la zone du trajet, due une seule fois par demande quel que soit le nombre d&#x27;enveloppes ou le poids, et qui ne peut pas dépasser 1,50 € pour un trajet entre l&#x27;Europe et un autre continent, ni 1,00 € pour un trajet à l&#x27;intérieur de l&#x27;Europe. Un taux réduit réduit la commission fixe dans la même proportion. [À la date de ce projet, la commission fixe n&#x27;est pas appliquée : préciser ce qui est en vigueur au jour de la publication.]</li>
+</ul>
+<p><strong>Frais liés à la valeur déclarée.</strong> L&#x27;Expéditeur déclare obligatoirement la valeur de son envoi, plafonnée à <strong>250 €</strong> (CGU, article 5). Au-delà de 50 €, des frais s&#x27;ajoutent, calculés par tranches continues (aucun saut de prix d&#x27;une tranche à l&#x27;autre) :</p>
+<ul>
+<li>jusqu&#x27;à 50 € de valeur déclarée : 0 % ;</li>
+<li>de 50 € à 150 € : 5 % de la part de la valeur dans cette tranche ;</li>
+<li>de 150 € à 250 € : 7 % pour un colis, 5 % pour des enveloppes.</li>
+</ul>
+<p>Par exemple, pour un colis déclaré 100 €, les frais sont de 2,50 € ; pour 150 €, de 5,00 € ; pour 250 €, de 12,00 € (10,00 € pour des enveloppes). Ces frais <strong>ne sont pas une assurance</strong> et ne sont pas reversés au Voyageur : ils ne donnent droit à aucune indemnisation de la valeur déclarée (article 7).</p>
+<p><strong>Taux en vigueur.</strong> Le taux de commission, la commission fixe et les frais applicables sont ceux en vigueur à la création de la demande, affichés avant la confirmation ; ils ne changent plus ensuite, même si Wonjo modifie ses tarifs.</p>
+<p><strong>Exemple de calcul.</strong> Colis de 2 kg vers l&#x27;Afrique de l&#x27;Ouest, prix du Voyageur 5,60 € par kilogramme, valeur déclarée 40 €, commission de 10 % et commission fixe de 1 € :</p>
+<ul>
+<li>prix du transport (2 x 5,60 €), reçu par le Voyageur : 11,20 € ;</li>
+<li>commission Wonjo (10 % de 11,20 € + 1,00 €) : 2,12 € ;</li>
+<li>frais liés à la valeur déclarée (40 €, sous le seuil) : 0,00 € ;</li>
+<li><strong>total payé par l&#x27;Expéditeur : 13,32 €</strong>.</li>
+</ul>
+<hr>
+<h2>Article 5 - Paiement</h2>
+<p><strong>Deux façons de payer.</strong> L&#x27;application propose, selon le trajet et le pays de l&#x27;Expéditeur, le paiement par <strong>carte bancaire</strong> ou le paiement <strong>dans un Point relais</strong>. Les moyens proposés sont ceux affichés dans l&#x27;application au moment du paiement. Le paiement précède toujours l&#x27;acceptation de la demande par le Voyageur.</p>
+<h3>Paiement par carte.</h3>
+<ul>
+<li>Pour une demande sur un trajet publié : à la création de la demande, une **empreinte bancaire** (autorisation) du montant total est posée sur la carte de l&#x27;Expéditeur ; rien n&#x27;est débité. Si le Voyageur accepte dans un délai de 5 jours, le montant est débité et placé sous séquestre. S&#x27;il refuse, ou si le délai expire, l&#x27;empreinte est libérée sans aucun débit ni frais.</li>
+<li>Pour une proposition retenue sur une demande de colis publiée par l&#x27;Expéditeur : le montant est débité au moment où l&#x27;Expéditeur accepte la proposition ; l&#x27;acceptation n&#x27;est définitive qu&#x27;une fois le paiement confirmé.</li>
+</ul>
+<p>Les paiements par carte sont traités par [Stripe Payments Europe, Limited], prestataire de services de paiement agréé. Wonjo ne reçoit ni ne conserve les données bancaires des utilisateurs. Les fonds restent sous séquestre chez le prestataire jusqu&#x27;à leur déblocage ou leur remboursement. Wonjo ne les détient jamais en son nom propre.</p>
+<p><strong>Paiement dans un Point relais.</strong> Lorsque l&#x27;application propose ce mode, l&#x27;Expéditeur réserve sa demande, puis règle le <strong>montant exact</strong> affiché, en francs CFA, au Point relais :</p>
+<ul>
+<li>en <strong>espèces</strong>, sur place ;</li>
+<li>ou en <strong>mobile money</strong>, sur le compte indiqué par l&#x27;application, avec la référence de la demande.</li>
+</ul>
+<p>L&#x27;application indique le Point relais (adresse, horaires, téléphone), le montant et la <strong>date limite de paiement</strong>. Cette date est la plus proche de deux échéances : 48 heures après la réservation, ou 3 heures avant le départ du Voyageur. Passé ce délai sans paiement validé, la demande est annulée automatiquement, sans frais. Un paiement d&#x27;un autre montant n&#x27;est pas validé : le Point relais règle l&#x27;écart avec l&#x27;Expéditeur.</p>
+<p>La demande n&#x27;est transmise au Voyageur comme <strong>réglée</strong> qu&#x27;une fois le paiement validé par l&#x27;agent du Point relais. L&#x27;agent remet à l&#x27;Expéditeur un <strong>reçu numéroté</strong> pour tout paiement en espèces. Un paiement fait en dehors du Point relais, à un agent ou à un tiers, ou sans reçu, n&#x27;engage pas Wonjo. L&#x27;Expéditeur peut aussi confier son colis au Point relais, qui le remet au Voyageur à sa place et en son nom.</p>
+<p>Un Point relais peut aussi accueillir une personne qui n&#x27;a pas l&#x27;application : l&#x27;agent crée alors la demande au nom de Wonjo, au profit de cette personne, qui est l&#x27;Expéditeur au sens des présentes CGV. Wonjo fixe pour chaque Point relais des plafonds de montant par demande et par jour : un paiement qui les dépasse n&#x27;est pas accepté par le Point relais.</p>
+<p>[À valider par l&#x27;avocat : qualification de l&#x27;encaissement par les Points relais (services de paiement, transmission de fonds, réglementation de la zone UEMOA), et mention de l&#x27;organisme qui détient les fonds encaissés.]</p>
+<p><strong>Versement au Voyageur.</strong> Le prix du transport est versé au Voyageur <strong>24 heures après le passage de la demande au statut « Livré »</strong>, sauf contestation dans cet intervalle (CGU, articles 6 et 7). Le Voyageur est payé :</p>
+<ul>
+<li>sur son <strong>compte de paiement</strong> auprès du prestataire de paiement, s&#x27;il en a ouvert un, en euros ;</li>
+<li>sinon sur son <strong>mobile money</strong>, qu&#x27;il a enregistré dans l&#x27;application, dans la monnaie du pays de ce mobile money, c&#x27;est-à-dire du pays de son numéro de téléphone vérifié (par exemple le franc CFA pour un numéro du Sénégal, le dirham pour un numéro du Maroc), quel que soit le pays d&#x27;arrivée du transport. Le montant est converti depuis le prix en euros, au taux fixe de 655,957 francs CFA pour 1 euro ou, pour une autre monnaie, au taux enregistré par Wonjo ; à défaut de taux, le versement est fait en euros. Le compte de mobile money doit être **à son nom**, celui de sa pièce d&#x27;identité vérifiée. Wonjo peut exiger une confirmation lorsqu&#x27;il le modifie.</li>
+</ul>
+<p>Le prestataire de paiement et l&#x27;opérateur de mobile money peuvent appliquer leurs propres frais ou conditions ; ces frais ne sont pas fixés par Wonjo. Wonjo n&#x27;est tenue de verser un Voyageur que sur un moyen de paiement valide et enregistré à son nom : tant qu&#x27;il n&#x27;en a pas, le versement est reporté.</p>
+<p>Wonjo peut différer ou suspendre un versement le temps de vérifications de sécurité ou en cas de soupçon de fraude, d&#x27;erreur ou de contestation du paiement (article 9).</p>
+<p>Pendant un litige, les fonds sont gelés et ne sont versés à personne jusqu&#x27;à sa résolution (CGU, article 8).</p>
+<hr>
+<h2>Article 6 - Annulation et remboursement</h2>
+<p>Un remboursement porte toujours sur les <strong>sommes effectivement payées</strong>, jamais sur la valeur déclarée de l&#x27;envoi. Il est adressé par le moyen utilisé pour payer.</p>
+<h3>Selon la situation :</h3>
+<ul>
+<li><strong>Refus du Voyageur, ou délai de 5 jours expiré (paiement par carte)</strong> : aucun débit, l&#x27;empreinte est libérée.</li>
+<li><strong>Délai de paiement dépassé (paiement dans un Point relais)</strong> : la demande est annulée, rien n&#x27;est dû.</li>
+<li><strong>Annulation par l&#x27;Expéditeur après acceptation et paiement, avant la remise du colis</strong> : montant payé, **moins les frais de traitement du paiement non rendus par le prestataire, dans la limite de 5 €**, indiqués dans l&#x27;application avant la confirmation de l&#x27;annulation.</li>
+<li><strong>Annulation par le Voyageur après acceptation, avant la remise du colis</strong> : remboursement intégral.</li>
+<li><strong>Annulation à l&#x27;issue d&#x27;un litige</strong> (accord des parties ou décision de Wonjo) : remboursement intégral, après restitution du colis lorsque le litige a été ouvert pendant le transport (CGU, article 8).</li>
+<li><strong>Colis perdu ou jamais livré alors que le Voyageur l&#x27;avait pris en charge</strong> : remboursement intégral du prix du transport, de la commission et des frais liés à la valeur déclarée, à l&#x27;issue de la procédure de litige ; le Voyageur n&#x27;est pas rémunéré.</li>
+<li><strong>Trajet retiré, annulé ou parti avant que la demande soit remise</strong> : remboursement intégral.</li>
+</ul>
+<p>Une fois le colis remis au Voyageur, la demande ne peut plus être annulée : seule la procédure de litige reste ouverte (CGU, article 6).</p>
+<p><strong>Remboursement d&#x27;un paiement fait dans un Point relais.</strong> Il est rendu à l&#x27;Expéditeur par le Point relais où il a payé, en espèces ou en mobile money, sur présentation d&#x27;un <strong>code de remboursement</strong> communiqué par l&#x27;application, et contre un reçu. Il est rendu dans la monnaie payée, au montant payé.</p>
+<p><strong>Délai.</strong> Pour un paiement par carte, le délai d&#x27;apparition du remboursement sur le compte de l&#x27;Expéditeur dépend de sa banque [généralement 5 à 10 jours ouvrés].</p>
+<hr>
+<h2>Article 7 - Ce qui n&#x27;est jamais indemnisé</h2>
+<p>Wonjo n&#x27;est pas un assureur. Ni Wonjo ni les frais liés à la valeur déclarée ne couvrent : la valeur déclarée de l&#x27;envoi, la valeur de son contenu, sa casse, sa détérioration, son vol, ni les conséquences d&#x27;un retard. Le caractère « fragile » indiqué par l&#x27;Expéditeur est une information donnée au Voyageur ; il ne change ni les frais ni les droits de l&#x27;Expéditeur. Un retard ne donne droit à aucun remboursement dès lors que le colis est livré (CGU, article 6).</p>
+<p>Ces limites ne privent pas l&#x27;Expéditeur des recours qu&#x27;il peut exercer directement contre le Voyageur, en dehors de la plateforme.</p>
+<hr>
+<h2>Article 8 - Droit de rétractation</h2>
+<p>[À valider par l&#x27;avocat : qualification du service, exception applicable, et forme de l&#x27;accord exprès. L&#x27;application n&#x27;ajoute pas de case à cocher : le rappel « En payant, vous acceptez les CGV » se place juste avant le paiement. Vérifier qu&#x27;il suffit pour recueillir la demande expresse d&#x27;exécution immédiate et la renonciation à la rétractation ; sinon, prévoir une mention dédiée.]</p>
+<p>L&#x27;Expéditeur qui a la qualité de consommateur dispose en principe d&#x27;un délai de 14 jours pour se rétracter d&#x27;un contrat de service conclu à distance (articles L221-18 et suivants du Code de la consommation).</p>
+<p>Le service de mise en relation de Wonjo est <strong>pleinement exécuté</strong> dès que le Voyageur accepte la demande et que le paiement est placé sous séquestre. En confirmant et en payant sa demande, l&#x27;Expéditeur demande expressément l&#x27;exécution immédiate du service et reconnaît qu&#x27;il perd son droit de rétractation une fois le service pleinement exécuté (article L221-28, 1° du Code de la consommation).</p>
+<p>Cette perte ne prive pas l&#x27;Expéditeur de la faculté d&#x27;annuler sa demande avant la remise du colis, dans les conditions de l&#x27;article 6.</p>
+<hr>
+<h2>Article 9 - Contestation d&#x27;un paiement et lutte contre la fraude</h2>
+<p>Un utilisateur qui conteste auprès de sa banque un paiement légitime (par exemple en prétendant ne pas avoir reçu un colis qui a été livré) s&#x27;expose à ce que Wonjo transmette au prestataire de paiement les preuves dont elle dispose (constats, code de livraison, historique) et lui réclame les frais de contestation facturés par le prestataire. Si la contestation aboutit alors que le prix a déjà été versé au Voyageur, ce versement peut être repris.</p>
+<p>Pour se protéger et protéger ses utilisateurs, Wonjo peut refuser, différer ou suspendre un paiement, un versement ou un remboursement, et demander des justificatifs, en cas de soupçon de fraude, d&#x27;usurpation, de blanchiment, d&#x27;erreur ou de non-respect des CGU ou des CGV. Elle en informe l&#x27;utilisateur concerné, sauf obligation légale contraire. Une contestation ou une demande abusive peut entraîner la suspension du compte (CGU, article 2).</p>
+<p>[À valider : obligations de lutte contre le blanchiment et le financement du terrorisme applicables à Wonjo et aux Points relais.]</p>
+<hr>
+<h2>Article 10 - Obligations fiscales et sociales des Voyageurs</h2>
+<p>Les sommes perçues par un Voyageur via la plateforme peuvent constituer des revenus imposables. Il lui appartient de les déclarer lorsque la loi l&#x27;exige.</p>
+<p>Conformément à l&#x27;article 242 bis du Code général des impôts, Wonjo adresse à chaque Voyageur, en janvier de chaque année, un récapitulatif des sommes perçues par son intermédiaire l&#x27;année précédente, et peut être tenue de transmettre ces informations à l&#x27;administration fiscale (article 1649 ter A du Code général des impôts, directive « DAC7 »). [À valider : seuils et obligations déclaratives applicables à Wonjo, y compris pour les Voyageurs payés en mobile money.]</p>
+<hr>
+<h2>Article 11 - Justificatifs</h2>
+<p>L&#x27;Expéditeur retrouve dans l&#x27;application, pour chaque demande, le détail du prix (prix du transport, commission, frais) et l&#x27;historique des étapes. Un paiement par carte donne lieu au justificatif du prestataire de paiement ; un paiement en espèces dans un Point relais donne lieu à un reçu numéroté, émis au nom de Wonjo. [À valider : facturation de la commission, mentions obligatoires et conservation des reçus.]</p>
+<hr>
+<h2>Article 12 - Modification des tarifs et des CGV</h2>
+<p>Wonjo peut modifier ses tarifs (taux de commission, commission fixe, frais liés à la valeur déclarée, fourchettes de prix des corridors) à tout moment. Un nouveau tarif ne s&#x27;applique qu&#x27;aux demandes créées après son entrée en vigueur : le montant d&#x27;une demande déjà créée ne change jamais.</p>
+<p>Toute modification des présentes CGV est notifiée aux utilisateurs dans les conditions prévues pour les CGU (CGU, article 11). Elle ne s&#x27;applique qu&#x27;aux demandes payées après son entrée en vigueur.</p>
+<hr>
+<h2>Article 13 - Réclamations, médiation et droit applicable</h2>
+<p>Toute réclamation relative à un paiement ou à un remboursement est adressée à contact@wonjo.app, ou depuis la section Aide et support de l&#x27;application. Wonjo y répond dans un délai de 30 jours.</p>
+<p>À défaut d&#x27;accord, l&#x27;utilisateur consommateur peut recourir gratuitement au médiateur de la consommation suivant : [nom, adresse et site du médiateur, à désigner : l&#x27;adhésion à un médiateur est obligatoire avant toute vente à des consommateurs].</p>
+<p>Les présentes CGV sont régies par le droit français. Les règles de juridiction sont celles de l&#x27;article 12 des CGU.</p>
     </div>
   </main>
 
@@ -133,6 +275,7 @@
         <ul>
           <li><a href="/mentions-legales.html">Mentions légales</a></li>
           <li><a href="/cgu.html">CGU</a></li>
+          <li><a href="/cgv.html">CGV</a></li>
           <li><a href="/confidentialite.html">Confidentialité</a></li>
         </ul>
       </div>
