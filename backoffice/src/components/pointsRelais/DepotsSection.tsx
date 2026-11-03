@@ -44,6 +44,9 @@ const LIBELLE_ETAPE: Record<Etape, string> = {
   pret: 'Prêt à remettre',
 };
 
+// Premier mot du nom affiche (« Ben Mbairo ALLATESSEM » -> « Ben »).
+const prenom = (nom: string | null) => (nom ?? '').trim().split(/\s+/)[0] ?? '';
+
 function tel(numero: string | null) {
   if (!numero) return null;
   return <a className="pr-tel" href={`tel:${numero.replace(/[^\d+]/g, '')}`}>{numero}</a>;
@@ -108,13 +111,19 @@ export function DepotsSection({ points }: { points: PointRelais[] }) {
     { key: 'ref', label: 'Référence', value: (d) => d.reference, render: (d) => <span className="pr-ref">#{d.reference}</span> },
     { key: 'etat', label: 'État', value: (d) => LIBELLE_ETAPE[etape(d)], filter: 'options',
       render: (d) => { const e = etape(d); return <span className={`pr-urgence pr-urgence--${e === 'pret' ? 'urgent' : e === 'a_deposer' ? 'ok' : 'proche'}`}>{LIBELLE_ETAPE[e]}</span>; } },
-    { key: 'colis', label: 'Colis', value: (d) => `${d.type_envoi === 'document' ? 'Document' : `${d.poids_kg ?? 0} kg`} ${d.description ?? ''}`,
-      render: (d) => <span className="pr-nowrap"><strong>{d.type_envoi === 'document' ? 'Document' : `${Number(d.poids_kg ?? 0).toLocaleString('fr-FR')} kg`}</strong>{d.description && <span className="hint"> · {d.description.length > 28 ? `${d.description.slice(0, 28)}…` : d.description}</span>}</span> },
+    // Colis : le poids seul ; la description reste dans le panneau de detail. Telephones dans leurs propres colonnes,
+    // cliquables ; le voyageur par son prenom (le nom complet est dans le panneau).
+    { key: 'colis', label: 'Colis', value: (d) => (d.type_envoi === 'document' ? 'Document' : `${d.poids_kg ?? 0} kg`),
+      render: (d) => <strong className="pr-nowrap">{d.type_envoi === 'document' ? 'Document' : `${Number(d.poids_kg ?? 0).toLocaleString('fr-FR')} kg`}</strong> },
     { key: 'trajet', label: 'Trajet', value: (d) => d.trajet, render: (d) => <span className="pr-nowrap">{d.trajet}</span> },
-    { key: 'exp', label: 'Expéditeur', value: (d) => `${d.expediteur_nom ?? ''} ${d.expediteur_telephone ?? ''}`,
-      render: (d) => <span className="pr-nowrap">{d.expediteur_nom ?? 'Membre'}{d.expediteur_telephone && <span className="hint"> · {d.expediteur_telephone}</span>}</span> },
-    { key: 'voy', label: 'Voyageur', value: (d) => `${d.porteur_nom ?? ''} ${d.porteur_telephone ?? ''}`,
-      render: (d) => <span className="pr-nowrap">{d.porteur_nom ?? '-'}{d.porteur_telephone && <span className="hint"> · {d.porteur_telephone}</span>}</span> },
+    { key: 'exp', label: 'Expéditeur', value: (d) => d.expediteur_nom ?? '',
+      render: (d) => <span className="pr-nowrap">{d.expediteur_nom ?? 'Membre'}</span> },
+    { key: 'exp_tel', label: 'Tél. expéditeur', value: (d) => d.expediteur_telephone ?? '',
+      render: (d) => <span className="pr-nowrap">{tel(d.expediteur_telephone) ?? '-'}</span> },
+    { key: 'voy', label: 'Voyageur', value: (d) => prenom(d.porteur_nom),
+      render: (d) => <span className="pr-nowrap" title={d.porteur_nom ?? undefined}>{prenom(d.porteur_nom) || '-'}</span> },
+    { key: 'voy_tel', label: 'Tél. voyageur', value: (d) => d.porteur_telephone ?? '',
+      render: (d) => <span className="pr-nowrap">{tel(d.porteur_telephone) ?? '-'}</span> },
     { key: 'actions', label: '', width: 170, render: action },
   ];
 

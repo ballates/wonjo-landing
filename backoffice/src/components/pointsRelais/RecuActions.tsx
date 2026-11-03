@@ -39,6 +39,7 @@ export function RecuActions({ recu, compact = false, onEnvoye }: { recu: Recu; c
   const [envois, setEnvois] = useState(recu.envois);
   const [impression, setImpression] = useState(false);
   const [email, setEmail] = useState<{ ouvert: boolean; valeur: string; busy: boolean; error: string | null; fait: string | null }>({ ouvert: false, valeur: '', busy: false, error: null, fait: null });
+  const emailValide = /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(email.valeur.trim());
   const annule = recu.statut === 'annule';
 
   function imprimer() {
@@ -84,16 +85,27 @@ export function RecuActions({ recu, compact = false, onEnvoye }: { recu: Recu; c
           <h2 className="modal-title">Envoyer le reçu {recu.numero}</h2>
           <div className="modal-body">
             <p className="hint">Le reçu est envoyé à l'adresse saisie, avec le contenu édité (montant, point, date). {ENVOIS_MAX - envois} envoi{ENVOIS_MAX - envois > 1 ? 's' : ''} restant{ENVOIS_MAX - envois > 1 ? 's' : ''} pour ce reçu.</p>
-            <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontWeight: 700, fontSize: 13 }}>Adresse e-mail du client
-              <input type="email" value={email.valeur} autoFocus placeholder="client@exemple.com" maxLength={254} autoComplete="off"
-                     onChange={(e) => setEmail((s) => ({ ...s, valeur: e.target.value, error: null, fait: null }))} />
-            </label>
+            <label className="champ-email-label" htmlFor="recu-email">Adresse e-mail du client</label>
+            <div className={`champ-email${emailValide ? ' champ-email--valide' : ''}`}>
+              <svg className="champ-email-icone" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+              </svg>
+              <input id="recu-email" type="email" inputMode="email" value={email.valeur} autoFocus placeholder="client@exemple.com"
+                     maxLength={254} autoComplete="off" spellCheck={false}
+                     onChange={(e) => setEmail((s) => ({ ...s, valeur: e.target.value, error: null, fait: null }))}
+                     onKeyDown={(e) => { if (e.key === 'Enter' && emailValide && !email.busy && !email.fait) envoyer(); }} />
+              {emailValide && (
+                <svg className="champ-email-ok" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-label="Adresse valide">
+                  <path d="M20 6 9 17l-5-5" />
+                </svg>
+              )}
+            </div>
             {email.error && <p className="page-error" style={{ marginTop: 12 }}>{email.error}</p>}
             {email.fait && <p className="success-text" style={{ marginTop: 12 }}>{email.fait}</p>}
             <div className="action-row" style={{ justifyContent: 'flex-end', marginTop: 16 }}>
               <button className="btn" onClick={() => setEmail((e) => ({ ...e, ouvert: false }))} disabled={email.busy}>{email.fait ? 'Fermer' : 'Annuler'}</button>
               {!email.fait && (
-                <button className="btn btn-primary" onClick={envoyer} disabled={email.busy || !/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(email.valeur.trim()) || envois >= ENVOIS_MAX}>
+                <button className="btn btn-primary" onClick={envoyer} disabled={email.busy || !emailValide || envois >= ENVOIS_MAX}>
                   {email.busy ? 'Envoi…' : 'Envoyer'}
                 </button>
               )}
