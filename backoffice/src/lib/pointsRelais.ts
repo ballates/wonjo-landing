@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from './supabase';
 
-export type Operateur = 'orange_money' | 'wave' | 'mtn_momo' | 'moov_money' | 'autre';
+export type Operateur = 'orange_money' | 'wave' | 'mtn_momo' | 'moov_money' | 'airtel_money' | 'autre';
 export interface CompteMobileMoney { operateur: Operateur; numero: string; titulaire: string }
 
 export interface PointRelais {
@@ -43,6 +43,7 @@ export const OPERATEURS: { value: Operateur; label: string; couleur: string }[] 
   { value: 'wave', label: 'Wave', couleur: '#1DC8FF' },
   { value: 'mtn_momo', label: 'MTN MoMo', couleur: '#FFCB05' },
   { value: 'moov_money', label: 'Moov Money', couleur: '#0066B3' },
+  { value: 'airtel_money', label: 'Airtel Money', couleur: '#E40000' },
   { value: 'autre', label: 'Autre', couleur: '#8A879E' },
 ];
 export const LABEL_OPERATEUR = Object.fromEntries(OPERATEURS.map((o) => [o.value, o.label])) as Record<Operateur, string>;
@@ -133,11 +134,6 @@ export function equivalentEuros(local: number | null | undefined, devise: string
   return `≈ ${(Math.round(Number(local) / t * 100) / 100).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
 }
 /** « 35,20 € (≈ 23 089 FCFA) » */
-export function montantEurosEtLocal(eur: number | null | undefined, devise: string): string {
-  const eq = equivalentLocal(eur, devise);
-  return eq ? `${montantEuros(eur)} (${eq})` : montantEuros(eur);
-}
-
 export type Urgence = 'depasse' | 'urgent' | 'proche' | 'ok';
 
 /** Temps restant avant une echeance, lisible (« dans 5 h 20 », « dépassée depuis 12 min »), et son urgence. */

@@ -27,7 +27,7 @@ interface Paye {
 }
 
 const MOYENS_SIEGE: { cle: string; label: string; couleur: string }[] = [
-  ...(['orange_money', 'wave', 'mtn_momo', 'moov_money'] as Operateur[]).map((o) => ({ cle: o, label: LABEL_OPERATEUR[o], couleur: COULEUR_OPERATEUR[o] })),
+  ...(['orange_money', 'wave', 'mtn_momo', 'moov_money', 'airtel_money'] as Operateur[]).map((o) => ({ cle: o, label: LABEL_OPERATEUR[o], couleur: COULEUR_OPERATEUR[o] })),
   { cle: 'autre_mobile', label: 'Autre mobile money', couleur: '#8A879E' },
   { cle: 'virement_bancaire', label: 'Virement bancaire', couleur: '#635BFF' },
 ];

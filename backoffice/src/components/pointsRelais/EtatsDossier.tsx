@@ -67,28 +67,3 @@ export function ParcoursDossier({ dossier }: { dossier: DossierEtape }) {
     </div>
   );
 }
-
-/** Filtre par étape : de simples pastilles avec leur compteur, posées dans la ligne de filtres du tableau (ce n'est pas la machine à états, qui est dans la fiche). */
-export function FriseEtapes({ comptes, actif, onChoix }: { comptes: number[]; actif: number | null; onChoix: (i: number | null) => void }) {
-  return (
-    <>
-      <span className="pr-filtre-etapes-titre">Étape</span>
-      {ETAPES.map((e, k) => (
-        <button key={e.cle} type="button" className={`pr-puce-filtre ${actif === k ? 'on' : ''}`} onClick={() => onChoix(actif === k ? null : k)}>
-          {e.titre}<span>{comptes[k]}</span>
-        </button>
-      ))}
-    </>
-  );
-}
-
-/** Mini-parcours d'une ligne du tableau : 7 points, verts jusqu'à l'étape franchie, l'étape en cours cerclée, le reste grisé. */
-export function MiniParcours({ dossier }: { dossier: DossierEtape }) {
-  const i = etapeDossier(dossier);
-  if (i === -1) return null;
-  return (
-    <span className="pr-mini" role="img" aria-label={`Étape ${i + 1} sur ${ETAPES.length} : ${ETAPES[i].titre}`}>
-      {ETAPES.map((e, k) => <span key={e.cle} className={k < i ? 'fait' : k === i ? 'courant' : ''} title={e.titre} />)}
-    </span>
-  );
-}
