@@ -8,7 +8,7 @@ import { dateHeure } from '../lib/labels';
 interface MessageConversation {
   id: string;
   sender_nom: string;
-  role: 'expediteur' | 'porteur' | 'systeme';
+  role: 'expediteur' | 'voyageur' | 'systeme';
   contenu: string;
   is_system: boolean;
   created_at: string;

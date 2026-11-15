@@ -24,8 +24,8 @@ interface AVerser {
   trajet: string | null;
   livre_at: string | null;
   pret_at: string;
-  porteur_nom: string | null;
-  porteur_telephone: string | null;
+  voyageur_nom: string | null;
+  voyageur_telephone: string | null;
   montant_local: number;
   devise: string;
   montant_eur: number;
@@ -62,8 +62,8 @@ export function VoyageursSection({ points }: { points: PointRelais[] }) {
   const colonnes: Column<LigneAVerser>[] = [
     ...(plusieurs ? [{ key: 'point', label: 'Point', value: (i: LigneAVerser) => i.point.nom, filter: 'options' as const, render: (i: LigneAVerser) => <strong className="pr-nowrap">{i.point.nom}</strong> }] : []),
     { key: 'ref', label: 'Référence', value: (i) => i.reference, render: (i) => <span className="pr-ref">#{i.reference}</span> },
-    { key: 'voyageur', label: 'Voyageur', value: (i) => i.porteur_nom ?? '', render: (i) => <strong className="pr-nowrap">{i.porteur_nom ?? 'Voyageur'}</strong> },
-    { key: 'tel', label: 'Téléphone', value: (i) => i.porteur_telephone ?? '', render: (i) => (i.porteur_telephone ? <span className="pr-nowrap">{i.porteur_telephone}</span> : <span className="hint">-</span>) },
+    { key: 'voyageur', label: 'Voyageur', value: (i) => i.voyageur_nom ?? '', render: (i) => <strong className="pr-nowrap">{i.voyageur_nom ?? 'Voyageur'}</strong> },
+    { key: 'tel', label: 'Téléphone', value: (i) => i.voyageur_telephone ?? '', render: (i) => (i.voyageur_telephone ? <span className="pr-nowrap">{i.voyageur_telephone}</span> : <span className="hint">-</span>) },
     { key: 'trajet', label: 'Trajet', value: (i) => i.trajet ?? '', render: (i) => <span className="pr-nowrap">{i.trajet}</span> },
     { key: 'montant', label: 'À verser', value: (i) => Number(i.montant_local), render: (i) => <strong className="pr-nowrap">{montantLocal(i.montant_local, i.devise)}</strong> },
     { key: 'euros', label: 'En euros', value: (i) => Number(i.montant_eur), render: (i) => <span className="pr-nowrap">{montantEuros(i.montant_eur)}</span> },
@@ -101,7 +101,7 @@ export function VoyageursSection({ points }: { points: PointRelais[] }) {
       {ligneOuverte && (
         <PanneauLateral
           titre={<>#{ligneOuverte.reference}</>}
-          sousTitre={<>{ligneOuverte.point.nom} · {ligneOuverte.porteur_nom ?? 'Voyageur'}</>}
+          sousTitre={<>{ligneOuverte.point.nom} · {ligneOuverte.voyageur_nom ?? 'Voyageur'}</>}
           onClose={() => setOuvert(null)}
           pied={(
             <>
@@ -123,7 +123,7 @@ export function VoyageursSection({ points }: { points: PointRelais[] }) {
                 </div>
                 <dl className="panneau-liste">
                   <dt>Voyageur</dt>
-                  <dd>{i.porteur_nom ?? 'Voyageur'}{i.porteur_telephone && <> · <a className="pr-tel" href={`tel:${i.porteur_telephone.replace(/[^\d+]/g, '')}`}>{i.porteur_telephone}</a></>}</dd>
+                  <dd>{i.voyageur_nom ?? 'Voyageur'}{i.voyageur_telephone && <> · <a className="pr-tel" href={`tel:${i.voyageur_telephone.replace(/[^\d+]/g, '')}`}>{i.voyageur_telephone}</a></>}</dd>
                   <dt>Trajet</dt><dd>{i.trajet}</dd>
                   {i.mm_numero && <><dt>À envoyer sur</dt><dd><strong>{LABEL_MOYEN_VERSEMENT[i.mm_operateur ?? ''] ?? 'Mobile money'} {i.mm_numero}</strong></dd></>}
                   {i.livre_at && <><dt>Livré</dt><dd>{dateCourte(i.livre_at)}</dd></>}
@@ -207,7 +207,7 @@ function PayerModal({ point, item, onClose, onPaye }: {
         : 'Code bloqué après 5 essais : le voyageur doit contacter le support Wonjo.');
       return;
     }
-    onPaye(`${item.porteur_nom ?? 'Le voyageur'} payé : ${montantLocal(item.montant_local, item.devise)}. Il a reçu une confirmation dans l'app.`);
+    onPaye(`${item.voyageur_nom ?? 'Le voyageur'} payé : ${montantLocal(item.montant_local, item.devise)}. Il a reçu une confirmation dans l'app.`);
   }
 
   return (
@@ -215,7 +215,7 @@ function PayerModal({ point, item, onClose, onPaye }: {
       <h2 className="modal-title">Payer le voyageur #{item.reference}</h2>
       <div className="modal-body">
         <div className="pr-a-recevoir">
-          <span>À verser à {item.porteur_nom ?? 'le voyageur'}</span>
+          <span>À verser à {item.voyageur_nom ?? 'le voyageur'}</span>
           <strong>{montantLocal(item.montant_local, item.devise)}</strong>
           <small>{montantEuros(item.montant_eur)} · {item.trajet}</small>
         </div>

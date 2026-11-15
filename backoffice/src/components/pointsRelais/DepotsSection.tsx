@@ -22,8 +22,8 @@ interface Depot {
   depart: string | null;
   expediteur_nom: string | null;
   expediteur_telephone: string | null;
-  porteur_nom: string | null;
-  porteur_telephone: string | null;
+  voyageur_nom: string | null;
+  voyageur_telephone: string | null;
   description: string | null;
   poids_kg: number | null;
   type_envoi: string | null;
@@ -120,10 +120,10 @@ export function DepotsSection({ points }: { points: PointRelais[] }) {
       render: (d) => <span className="pr-nowrap">{d.expediteur_nom ?? 'Membre'}</span> },
     { key: 'exp_tel', label: 'Tél. expéditeur', value: (d) => d.expediteur_telephone ?? '',
       render: (d) => <span className="pr-nowrap">{tel(d.expediteur_telephone) ?? '-'}</span> },
-    { key: 'voy', label: 'Voyageur', value: (d) => prenom(d.porteur_nom),
-      render: (d) => <span className="pr-nowrap" title={d.porteur_nom ?? undefined}>{prenom(d.porteur_nom) || '-'}</span> },
-    { key: 'voy_tel', label: 'Tél. voyageur', value: (d) => d.porteur_telephone ?? '',
-      render: (d) => <span className="pr-nowrap">{tel(d.porteur_telephone) ?? '-'}</span> },
+    { key: 'voy', label: 'Voyageur', value: (d) => prenom(d.voyageur_nom),
+      render: (d) => <span className="pr-nowrap" title={d.voyageur_nom ?? undefined}>{prenom(d.voyageur_nom) || '-'}</span> },
+    { key: 'voy_tel', label: 'Tél. voyageur', value: (d) => d.voyageur_telephone ?? '',
+      render: (d) => <span className="pr-nowrap">{tel(d.voyageur_telephone) ?? '-'}</span> },
     { key: 'actions', label: '', width: 170, render: action },
   ];
 
@@ -172,7 +172,7 @@ export function DepotsSection({ points }: { points: PointRelais[] }) {
                 <dl className="panneau-liste">
                   <dt>Trajet</dt><dd>{d.trajet}{d.depart ? ` · départ ${dateCourte(d.depart)}` : ''}</dd>
                   <dt>Expéditeur</dt><dd>{d.expediteur_nom ?? 'Membre'}{d.expediteur_telephone && <> · {tel(d.expediteur_telephone)}</>}</dd>
-                  <dt>Voyageur</dt><dd>{d.porteur_nom ?? '-'}{d.porteur_telephone && <> · {tel(d.porteur_telephone)}</>}</dd>
+                  <dt>Voyageur</dt><dd>{d.voyageur_nom ?? '-'}{d.voyageur_telephone && <> · {tel(d.voyageur_telephone)}</>}</dd>
                   {d.depot_at && <><dt>Déposé</dt><dd>{dateCourte(d.depot_at)}{d.depot_note ? ` · ${d.depot_note}` : ''}</dd></>}
                   <dt>Point</dt><dd>{d.point.nom}</dd>
                 </dl>
@@ -295,7 +295,7 @@ function RemiseModal({ item, pointId, onClose, onRemis }: { item: Depot; pointId
     const t = window.setInterval(() => setMaintenant(Date.now()), 1000);
     return () => window.clearInterval(t);
   }, []);
-  // Le voyageur scanne depuis son app : des que la demande sort de la file du point (remis_porteur), c'est fait.
+  // Le voyageur scanne depuis son app : des que la demande sort de la file du point (remis_voyageur), c'est fait.
   useEffect(() => {
     const t = window.setInterval(async () => {
       const { data, error: e } = await supabase.rpc('admin_pr_depots', { p_point_id: pointId });
@@ -313,7 +313,7 @@ function RemiseModal({ item, pointId, onClose, onRemis }: { item: Depot; pointId
     <Modal onClose={onClose}>
       <h2 className="modal-title">Remise au voyageur #{item.reference}</h2>
       <div className="modal-body">
-        <p className="hint">Montrez ce QR code à <strong>{item.porteur_nom ?? 'le voyageur'}</strong> : il le scanne depuis son application, photographie le colis et confirme. Vérifiez d'abord son identité.</p>
+        <p className="hint">Montrez ce QR code à <strong>{item.voyageur_nom ?? 'le voyageur'}</strong> : il le scanne depuis son application, photographie le colis et confirme. Vérifiez d'abord son identité.</p>
         <div className={`pr-qr ${expireDeja ? 'pr-qr--expire' : ''}`}>
           {svg ? <div className="pr-qr-image" dangerouslySetInnerHTML={{ __html: svg }} /> : <p className="loading-state">{busy ? 'Génération…' : ''}</p>}
           {code && (

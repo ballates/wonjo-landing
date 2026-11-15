@@ -35,7 +35,7 @@ export interface AEncaisser {
   expediteur_id: string;
   expediteur_nom: string | null;
   expediteur_telephone: string | null;
-  porteur_nom: string | null;
+  voyageur_nom: string | null;
   created_at: string;
 }
 
@@ -141,7 +141,7 @@ export function AEncaisserSection({ points }: { points: PointRelais[] }) {
                   <dt>Expéditeur</dt>
                   <dd>{i.expediteur_nom ?? 'Membre'}{i.expediteur_telephone && <> · <a className="pr-tel" href={`tel:${i.expediteur_telephone.replace(/[^\d+]/g, '')}`}>{i.expediteur_telephone}</a></>}</dd>
                   <dt>{i.flux === 'trajet' ? 'Trajet réservé' : 'Colis proposé'}</dt><dd>{i.trajet}{i.depart ? ` · départ ${dateCourte(i.depart)}` : ''}</dd>
-                  {i.porteur_nom && <><dt>Voyageur</dt><dd>{i.porteur_nom}</dd></>}
+                  {i.voyageur_nom && <><dt>Voyageur</dt><dd>{i.voyageur_nom}</dd></>}
                   <dt>Échéance</dt><dd>{dateCourte(i.echeance)}</dd>
                   <dt>Point</dt><dd>{i.point.nom}</dd>
                 </dl>

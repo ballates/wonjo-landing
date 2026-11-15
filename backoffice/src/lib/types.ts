@@ -78,7 +78,7 @@ export interface Signalement {
 export interface Litige {
   id: string;
   expediteur_id: string;
-  porteur_id: string;
+  voyageur_id: string;
   description_colis: string | null;
   montant_total: number;
   statut_paiement: string;
@@ -88,7 +88,7 @@ export interface Litige {
   resolutions_en_attente: number;
   // [335] Arbitrage demande par une partie, et litige ouvert par Wonjo.
   arbitrage_demande_at: string | null;
-  arbitrage_demande_role: 'expediteur' | 'porteur' | null;
+  arbitrage_demande_role: 'expediteur' | 'voyageur' | null;
   ouvert_par_wonjo: boolean;
 }
 
@@ -103,12 +103,12 @@ export interface TransactionBloquee {
   description_colis: string | null;
   montant_total: number;
   expediteur_id: string;
-  porteur_id: string;
+  voyageur_id: string;
   photo_voyageur: boolean;
   photo_expediteur: boolean;
   // [337] Blocage signale par une partie.
   signale_at: string | null;
-  signale_role: 'expediteur' | 'porteur' | null;
+  signale_role: 'expediteur' | 'voyageur' | null;
 }
 
 // [345] Marge de Wonjo sur une transaction payee (reservee a la finance).
@@ -137,10 +137,10 @@ export interface TransactionListe {
   expediteur_nom: string | null;
   expediteur_prenom: string | null;
   expediteur_photo: string | null;
-  porteur_id: string;
-  porteur_nom: string | null;
-  porteur_prenom: string | null;
-  porteur_photo: string | null;
+  voyageur_id: string;
+  voyageur_nom: string | null;
+  voyageur_prenom: string | null;
+  voyageur_photo: string | null;
   created_at: string;
   accepte_at: string | null;
   livre_at: string | null;
@@ -164,7 +164,7 @@ export interface EvenementTimeline {
   type: string;
   payload: Record<string, unknown> | null;
   created_at: string;
-  role: 'expediteur' | 'porteur' | null;
+  role: 'expediteur' | 'voyageur' | null;
 }
 
 export interface AvisApercu {
@@ -175,10 +175,10 @@ export interface AvisApercu {
   demande_id: string;
   auteur_id: string;
   auteur_nom: string;
-  role_auteur: 'expediteur' | 'porteur';
+  role_auteur: 'expediteur' | 'voyageur';
   destinataire_id: string;
   destinataire_nom: string;
-  role_destinataire: 'expediteur' | 'porteur';
+  role_destinataire: 'expediteur' | 'voyageur';
   lieu_remise_reception: string | null;
   lieu_remise_livraison: string | null;
   statut_colis: string;
@@ -201,11 +201,11 @@ export interface AvisListe {
   auteur_id: string;
   auteur_nom: string;
   auteur_prenom: string | null;
-  role_auteur: 'expediteur' | 'porteur';
+  role_auteur: 'expediteur' | 'voyageur';
   destinataire_id: string;
   destinataire_nom: string;
   destinataire_prenom: string | null;
-  role_destinataire: 'expediteur' | 'porteur';
+  role_destinataire: 'expediteur' | 'voyageur';
   // [300] avis masque par la moderation (ne compte plus dans la note).
   masque_at: string | null;
   masque_motif: string | null;
@@ -249,13 +249,13 @@ export interface FicheTransaction {
   expediteur_telephone: string | null;
   expediteur_telephone_verifie: boolean | null;
   expediteur_id_verifie: boolean | null;
-  porteur_id: string;
-  porteur_nom: string | null;
-  porteur_prenom: string | null;
-  porteur_photo: string | null;
-  porteur_telephone: string | null;
-  porteur_telephone_verifie: boolean | null;
-  porteur_id_verifie: boolean | null;
+  voyageur_id: string;
+  voyageur_nom: string | null;
+  voyageur_prenom: string | null;
+  voyageur_photo: string | null;
+  voyageur_telephone: string | null;
+  voyageur_telephone_verifie: boolean | null;
+  voyageur_id_verifie: boolean | null;
   timeline: EvenementTimeline[];
 }
 
@@ -381,5 +381,5 @@ export interface PaiementATraiter {
   statut_colis: string | null;
   statut_paiement: string | null;
   expediteur_prenom: string | null;
-  porteur_prenom: string | null;
+  voyageur_prenom: string | null;
 }

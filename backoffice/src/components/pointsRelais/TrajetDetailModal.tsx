@@ -51,13 +51,13 @@ export function TrajetDetailModal({ trajet: t, devise, onClose, onConfier }: { t
         <div className="pr-detail-bloc">
           <h3>Voyageur</h3>
           <div className="pr-voyageur">
-            <Avatar src={t.porteur_photo} nom={t.porteur_nom} size={44} />
+            <Avatar src={t.voyageur_photo} nom={t.voyageur_nom} size={44} />
             <div>
-              <strong>{t.porteur_nom ?? 'Voyageur'}</strong>
+              <strong>{t.voyageur_nom ?? 'Voyageur'}</strong>
               <span className="hint">
-                {t.porteur_verifie ? 'Identité vérifiée' : 'Non vérifié'}
-                {t.porteur_livraisons ? ` · ${t.porteur_livraisons} livraison${t.porteur_livraisons > 1 ? 's' : ''}` : ' · nouveau sur Wonjo'}
-                {t.porteur_note ? ` · ${Number(t.porteur_note).toFixed(1)}/5` : ''}
+                {t.voyageur_verifie ? 'Identité vérifiée' : 'Non vérifié'}
+                {t.voyageur_livraisons ? ` · ${t.voyageur_livraisons} livraison${t.voyageur_livraisons > 1 ? 's' : ''}` : ' · nouveau sur Wonjo'}
+                {t.voyageur_note ? ` · ${Number(t.voyageur_note).toFixed(1)}/5` : ''}
               </span>
             </div>
 </div>

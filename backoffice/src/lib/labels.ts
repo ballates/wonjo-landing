@@ -22,7 +22,7 @@ export function clePaiementAffichee(statutPaiement: string, statutColis: string)
 
 export const LABELS_STATUT_COLIS: Record<string, string> = {
   en_attente: 'En attente', accepte: 'Accepté', en_transit: 'En transit',
-  arrive: 'Arrivé à destination', remis_porteur: 'Repris par le voyageur', livre: 'Livré',
+  arrive: 'Arrivé à destination', remis_voyageur: 'Repris par le voyageur', livre: 'Livré',
   annule: 'Annulé', litige: 'En litige', restitution_en_cours: 'Restitution en cours',
 };
 
@@ -159,7 +159,7 @@ export const LABELS_BADGES: Record<string, string> = {
   verified_id: 'Identité vérifiée',
   first_delivery: 'Première livraison',
   ambassadeur_expediteur: 'Ambassadeur',
-  ambassadeur_porteur: 'Ambassadeur',
+  ambassadeur_voyageur: 'Ambassadeur',
   legende: 'Légende',
 };
 
@@ -227,10 +227,10 @@ export const LABELS_TYPE_DOCUMENT: Record<string, string> = {
 
 export const LABELS_CONSTAT: Record<string, string> = {
   remise_expediteur: 'Remise par l\'expéditeur',
-  remise_porteur: 'Réception par le voyageur',
-  livraison_porteur: 'Livraison par le voyageur',
+  remise_voyageur: 'Réception par le voyageur',
+  livraison_voyageur: 'Livraison par le voyageur',
   restitution_expediteur: 'Restitution par l\'expéditeur',
-  restitution_porteur: 'Restitution par le voyageur',
+  restitution_voyageur: 'Restitution par le voyageur',
 };
 
 // Premier mot d'un prenom (compose ou non) : utilise dans les colonnes de
@@ -257,27 +257,29 @@ export function casserNom(nom: string | null | undefined): string {
 }
 
 // Version de LABELS_CONSTAT/des jalons d'etape avec le prenom reel des deux
-// parties a la place de "l'expediteur"/"le porteur".
-export function libellesEvenement(prenomExpediteur: string, prenomPorteur: string): Record<string, string> {
+// parties a la place de "l'expediteur"/"le voyageur".
+export function libellesEvenement(prenomExpediteur: string, prenomVoyageur: string): Record<string, string> {
   return {
     creee: 'Demande créée',
-    acceptee: `Acceptée par ${prenomPorteur}`,
+    acceptee: `Acceptée par ${prenomVoyageur}`,
     code_genere: 'Code de livraison généré',
     arrivee: 'Arrivée déclarée',
     livree: 'Livrée',
     contestee: 'Contestée (litige ouvert)',
     declaration_expediteur: `Déclaration de ${prenomExpediteur}`,
-    acceptation_porteur: `Acceptation de ${prenomPorteur}`,
+    acceptation_voyageur: `Acceptation de ${prenomVoyageur}`,
+    // Nom d'avant la migration 484, gardé par le journal de confiance (immuable).
+    acceptation_porteur: `Acceptation de ${prenomVoyageur}`,
     presomption_acceptation: 'Acceptation présumée (délai écoulé)',
     contestation: 'Litige ouvert',
     proposition_resolution: 'Proposition de résolution',
     acceptation_resolution: 'Résolution acceptée',
     refus_resolution: 'Résolution refusée',
     remise_expediteur: `Remise par ${prenomExpediteur}`,
-    remise_porteur: `Réception par ${prenomPorteur}`,
-    livraison_porteur: `Livraison par ${prenomPorteur}`,
+    remise_voyageur: `Réception par ${prenomVoyageur}`,
+    livraison_voyageur: `Livraison par ${prenomVoyageur}`,
     restitution_expediteur: `Restitution par ${prenomExpediteur}`,
-    restitution_porteur: `Restitution par ${prenomPorteur}`,
+    restitution_voyageur: `Restitution par ${prenomVoyageur}`,
   };
 }
 

@@ -43,7 +43,7 @@ export interface DossierEtape { statut_colis: string; paiement_valide_at: string
 export function etapeDossier(d: DossierEtape): number {
   if (d.statut_colis === 'annule') return -1;
   if (!d.paiement_valide_at && d.statut_colis === 'en_attente') return 0;
-  return { en_attente: 1, accepte: 2, remis_porteur: 3, en_transit: 4, arrive: 5, livre: 6 }[d.statut_colis] ?? 1;
+  return { en_attente: 1, accepte: 2, remis_voyageur: 3, en_transit: 4, arrive: 5, livre: 6 }[d.statut_colis] ?? 1;
 }
 
 /** Parcours d'un dossier : la machine à états, étape en cours en couleur, étapes passées cochées, et ce qui vient ensuite. */

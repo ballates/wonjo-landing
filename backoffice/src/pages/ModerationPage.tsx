@@ -392,8 +392,8 @@ function SignalementDecisionModal({ signalement, decision, onClose, onDone }: {
 // l'expediteur (annulation) ou pour le voyageur (transport repute effectue).
 // Les conditions sont reverifiees par la base ; ici elles servent a expliquer.
 type Decision = 'expediteur' | 'voyageur';
-const COLIS_REMIS = ['remis_porteur', 'en_transit', 'arrive', 'livre'];
-const COLIS_CHEZ_VOYAGEUR = ['remis_porteur', 'en_transit'];
+const COLIS_REMIS = ['remis_voyageur', 'en_transit', 'arrive', 'livre'];
+const COLIS_CHEZ_VOYAGEUR = ['remis_voyageur', 'en_transit'];
 
 function LitigeResolutionModal({ litige, onClose, onDone }: { litige: Litige; onClose: () => void; onDone: () => void }) {
   const [decision, setDecision] = useState<Decision | null>(null);
@@ -594,7 +594,7 @@ function LitigesTab() {
       key: 'actions', label: 'Parties', render: (l) => !peutModerer(roles) ? <span className="hint">-</span> : (
         <div className="action-row">
           <button className="btn btn-soft btn-sm" onClick={() => ouvrir(l.expediteur_id)}>Expéditeur</button>
-          <button className="btn btn-soft btn-sm" onClick={() => ouvrir(l.porteur_id)}>Voyageur</button>
+          <button className="btn btn-soft btn-sm" onClick={() => ouvrir(l.voyageur_id)}>Voyageur</button>
         </div>
       ),
     },
@@ -789,7 +789,7 @@ function DossiersBloques({ onChange }: { onChange: () => void }) {
       key: 'parties', label: 'Parties', render: (d) => !peutModerer(roles) ? <span className="hint">-</span> : (
         <div className="action-row">
           <button className="btn btn-soft btn-sm" onClick={() => ouvrir(d.expediteur_id)}>Expéditeur</button>
-          <button className="btn btn-soft btn-sm" onClick={() => ouvrir(d.porteur_id)}>Voyageur</button>
+          <button className="btn btn-soft btn-sm" onClick={() => ouvrir(d.voyageur_id)}>Voyageur</button>
         </div>
       ),
     },

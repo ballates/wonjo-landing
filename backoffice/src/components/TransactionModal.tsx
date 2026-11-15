@@ -24,9 +24,9 @@ interface EvenementAffiche { cle: string; label: string; date: string; role: str
 function construireTimeline(f: FicheTransaction, photos: PhotoConstat[], libelles: Record<string, string>): EvenementAffiche[] {
   const jalons: EvenementAffiche[] = [
     { cle: 'creee', label: libelles.creee, date: f.created_at, role: 'expediteur' },
-    f.accepte_at && { cle: 'acceptee', label: libelles.acceptee, date: f.accepte_at, role: 'porteur' },
+    f.accepte_at && { cle: 'acceptee', label: libelles.acceptee, date: f.accepte_at, role: 'voyageur' },
     f.code_genere_at && { cle: 'code_genere', label: libelles.code_genere, date: f.code_genere_at, role: null },
-    f.arrive_at && { cle: 'arrivee', label: libelles.arrivee, date: f.arrive_at, role: 'porteur' },
+    f.arrive_at && { cle: 'arrivee', label: libelles.arrivee, date: f.arrive_at, role: 'voyageur' },
     f.conteste_at && { cle: 'contestee', label: libelles.contestee, date: f.conteste_at, role: null },
     f.livre_at && { cle: 'livree', label: libelles.livree, date: f.livre_at, role: null },
   ].filter(Boolean) as EvenementAffiche[];
@@ -44,7 +44,7 @@ function construireTimeline(f: FicheTransaction, photos: PhotoConstat[], libelle
     cle: `photo-${p.id}`,
     label: libelles[p.type] ?? p.type.replace(/_/g, ' '),
     date: p.created_at,
-    role: p.confirmed_by === f.expediteur_id ? 'expediteur' : p.confirmed_by === f.porteur_id ? 'porteur' : null,
+    role: p.confirmed_by === f.expediteur_id ? 'expediteur' : p.confirmed_by === f.voyageur_id ? 'voyageur' : null,
     photo: p,
   }));
 
@@ -90,17 +90,17 @@ export function TransactionModal({ demandeId, onClose }: { demandeId: string; on
   // a un decoupage du nom complet sur le premier espace, qui coupait ces
   // prenoms en deux.
   const prenomExpediteur = f.expediteur_prenom || 'l\'expéditeur';
-  const prenomPorteur = f.porteur_prenom || 'le voyageur';
-  const libelles = libellesEvenement(prenomExpediteur, prenomPorteur);
+  const prenomVoyageur = f.voyageur_prenom || 'le voyageur';
+  const libelles = libellesEvenement(prenomExpediteur, prenomVoyageur);
   const exp = <span className="nom-chip nom-chip--exp">{premierMot(prenomExpediteur)}</span>;
   const enveloppes = f.type_envoi === 'document';
   const plusieurs = (f.nb_enveloppes ?? 0) > 1;
   const objet = enveloppes
     ? (plusieurs ? { indefini: 'des enveloppes', defini: 'les enveloppes' } : { indefini: 'une enveloppe', defini: 'l\'enveloppe' })
     : { indefini: 'un colis', defini: 'le colis' };
-  const por = <span className="nom-chip nom-chip--por">{premierMot(prenomPorteur)}</span>;
+  const por = <span className="nom-chip nom-chip--por">{premierMot(prenomVoyageur)}</span>;
   const timeline = construireTimeline(f, photos ?? [], libelles);
-  const roleLabel = (role: string | null) => (role === 'expediteur' ? (f.expediteur_nom ?? 'Expéditeur') : role === 'porteur' ? (f.porteur_nom ?? 'Voyageur') : null);
+  const roleLabel = (role: string | null) => (role === 'expediteur' ? (f.expediteur_nom ?? 'Expéditeur') : role === 'voyageur' || role === 'porteur' ? (f.voyageur_nom ?? 'Voyageur') : null);
 
   return (
     <Modal onClose={onClose} wide>
@@ -117,11 +117,11 @@ export function TransactionModal({ demandeId, onClose }: { demandeId: string; on
             </div>
             <div className="modal-hero-party modal-hero-party--dest">
               <span className="modal-hero-role">Voyageur</span>
-              <button type="button" className="modal-hero-chip" onClick={() => ouvrir(f.porteur_id)} disabled={!moderateur}>
-                <Avatar src={f.porteur_photo} nom={f.porteur_nom ?? ''} size={28} /> {premierMot(prenomPorteur)}
+              <button type="button" className="modal-hero-chip" onClick={() => ouvrir(f.voyageur_id)} disabled={!moderateur}>
+                <Avatar src={f.voyageur_photo} nom={f.voyageur_nom ?? ''} size={28} /> {premierMot(prenomVoyageur)}
               </button>
               <span className="modal-hero-addr">RDV arrivée · {f.lieu_remise_livraison ?? 'non renseignée'}</span>
-              <span className="modal-hero-addr">{moderateur ? <NumeroTelephone userId={f.porteur_id} numero={f.porteur_telephone} /> : (f.porteur_telephone ?? '-')}</span>
+              <span className="modal-hero-addr">{moderateur ? <NumeroTelephone userId={f.voyageur_id} numero={f.voyageur_telephone} /> : (f.voyageur_telephone ?? '-')}</span>
             </div>
           </div>
         </div>
@@ -233,7 +233,7 @@ export function TransactionModal({ demandeId, onClose }: { demandeId: string; on
             <img src={photoOuverte.url} alt={libelles[photoOuverte.type] ?? photoOuverte.type} />
             <div className="photo-lightbox-meta">
               <strong>{libelles[photoOuverte.type] ?? photoOuverte.type}</strong>
-              <span>Soumise par {roleLabel(photoOuverte.confirmed_by === f.expediteur_id ? 'expediteur' : 'porteur') ?? 'un utilisateur'} · {dateHeure(photoOuverte.created_at)}</span>
+              <span>Soumise par {roleLabel(photoOuverte.confirmed_by === f.expediteur_id ? 'expediteur' : 'voyageur') ?? 'un utilisateur'} · {dateHeure(photoOuverte.created_at)}</span>
               {photoOuverte.notes && <span>« {photoOuverte.notes} »</span>}
             </div>
           </div>

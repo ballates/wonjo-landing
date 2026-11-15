@@ -31,12 +31,12 @@ import { decomposerNumero, numeroComplet } from '../../lib/telephone';
 
 export interface Trajet {
   annonce_id: string;
-  porteur_id: string;
-  porteur_nom: string | null;
-  porteur_photo: string | null;
-  porteur_verifie: boolean | null;
-  porteur_note: number | null;
-  porteur_livraisons: number | null;
+  voyageur_id: string;
+  voyageur_nom: string | null;
+  voyageur_photo: string | null;
+  voyageur_verifie: boolean | null;
+  voyageur_note: number | null;
+  voyageur_livraisons: number | null;
   ville_depart: string;
   pays_depart_code: string;
   ville_arrivee: string;
@@ -57,7 +57,7 @@ interface DossierGuichet {
   statut_paiement: string;
   trajet: string | null;
   depart: string | null;
-  porteur_nom: string | null;
+  voyageur_nom: string | null;
   client_nom: string;
   client_telephone: string;
   destinataire_nom: string;
@@ -73,7 +73,7 @@ interface DossierGuichet {
   paiement_valide_at: string | null;
   depot_at: string | null;
   created_at: string;
-  porteur_telephone: string | null;
+  voyageur_telephone: string | null;
   description: string | null;
   poids_kg: number | null;
   lieu_remise: string | null;
@@ -117,7 +117,7 @@ function statutDossier(d: DossierGuichet): { texte: string; tone: 'amber' | 'tea
   if (d.statut_colis === 'livre') return { texte: 'Livré', tone: 'green', icone: 'livre' };
   if (d.statut_colis === 'arrive') return { texte: 'Arrivé', tone: 'amber', icone: 'arrive' };
   if (d.statut_colis === 'en_transit') return { texte: 'En route', tone: 'teal', icone: 'route' };
-  return { texte: d.statut_colis === 'remis_porteur' ? 'Remis au voyageur' : d.statut_colis, tone: 'teal', icone: 'remis' };
+  return { texte: d.statut_colis === 'remis_voyageur' ? 'Remis au voyageur' : d.statut_colis, tone: 'teal', icone: 'remis' };
 }
 
 type TrajetP = Trajet & { point: PointRelais };
@@ -190,7 +190,7 @@ export function GuichetSection({ points, nomsPays }: { points: PointRelais[]; no
   }).sort((a, b) => {
     if (tri === 'prix') return Number(a.prix_par_kilo) - Number(b.prix_par_kilo);
     if (tri === 'kilos') return Number(b.kilos_disponibles) - Number(a.kilos_disponibles);
-    if (tri === 'note') return Number(b.porteur_note ?? 0) - Number(a.porteur_note ?? 0);
+    if (tri === 'note') return Number(b.voyageur_note ?? 0) - Number(a.voyageur_note ?? 0);
     return new Date(a.depart).getTime() - new Date(b.depart).getTime();
   }), [trajetsDuPoint, filtreVille, filtrePoids, filtreAvant, tri]);
   // Retour a la premiere page des qu'un filtre ou le tri change.
@@ -263,7 +263,7 @@ export function GuichetSection({ points, nomsPays }: { points: PointRelais[]; no
       render: (d) => <span className="pr-nowrap">{new Date(d.created_at).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span> },
     { key: 'client', label: 'Client → destinataire', width: 175, value: (d) => `${d.client_nom} ${d.destinataire_nom} ${d.destinataire_ville ?? ''}`,
       render: (d) => <span className="pr-nowrap"><strong>{premierMot(d.client_nom)}</strong><span className="pr-fleche"> → </span>{premierMot(d.destinataire_nom)}</span> },
-    { key: 'trajet', label: 'Trajet', width: 170, value: (d) => `${d.trajet ?? ''} ${d.porteur_nom ?? ''}`, // la recherche trouve encore le voyageur par son nom
+    { key: 'trajet', label: 'Trajet', width: 170, value: (d) => `${d.trajet ?? ''} ${d.voyageur_nom ?? ''}`, // la recherche trouve encore le voyageur par son nom
       render: (d) => <span className="pr-nowrap">{d.trajet ?? '-'}</span> },
     { key: 'montant', label: 'Montant', value: (d) => Number(d.montant_local), width: 118, render: (d) => <strong className="pr-nowrap">{montantLocal(d.montant_local, d.devise)}</strong> },
     { key: 'statut', label: 'État', value: (d) => statutDossier(d).texte, filter: 'options', width: 140, render: (d) => <Badge tone={statutDossier(d).tone}>{statutDossier(d).texte}</Badge> },
@@ -344,13 +344,13 @@ export function GuichetSection({ points, nomsPays }: { points: PointRelais[]; no
               {plusieurs && <div className="pr-ligne"><span className="pr-libelle">Point</span><span>{t.point.nom}</span></div>}
               <div className="pr-ligne"><span className="pr-libelle">Place</span><span><strong>{Number(t.kilos_disponibles).toLocaleString('fr-FR')} kg</strong> · {Number(t.prix_par_kilo).toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €/kg{equivalentLocal(t.prix_par_kilo, t.point.devise) && <small className="pr-equiv"> {equivalentLocal(t.prix_par_kilo, t.point.devise)}/kg</small>}</span></div>
               <div className="pr-voyageur">
-                <Avatar src={t.porteur_photo} nom={t.porteur_nom} size={32} />
+                <Avatar src={t.voyageur_photo} nom={t.voyageur_nom} size={32} />
                 <div>
-                  <strong>{t.porteur_nom ?? 'Voyageur'}</strong>
+                  <strong>{t.voyageur_nom ?? 'Voyageur'}</strong>
                   <span className="hint">
-                    {t.porteur_verifie ? 'Identité vérifiée' : 'Non vérifié'}
-                    {t.porteur_livraisons ? ` · ${t.porteur_livraisons} livraison${t.porteur_livraisons > 1 ? 's' : ''}` : ' · nouveau'}
-                    {t.porteur_note ? ` · ${Number(t.porteur_note).toFixed(1)}/5` : ''}
+                    {t.voyageur_verifie ? 'Identité vérifiée' : 'Non vérifié'}
+                    {t.voyageur_livraisons ? ` · ${t.voyageur_livraisons} livraison${t.voyageur_livraisons > 1 ? 's' : ''}` : ' · nouveau'}
+                    {t.voyageur_note ? ` · ${Number(t.voyageur_note).toFixed(1)}/5` : ''}
                   </span>
                 </div>
               </div>
@@ -399,7 +399,7 @@ export function GuichetSection({ points, nomsPays }: { points: PointRelais[]; no
         <ChatGuichetModal
           demandeId={chat.demande_id}
           reference={chat.reference}
-          porteurNom={chat.porteur_nom}
+          voyageurNom={chat.voyageur_nom}
           destinataire={{ nom: chat.destinataire_nom, telephone: chat.destinataire_telephone, ville: chat.destinataire_ville }}
           ouvert={!['en_attente', 'livre', 'annule'].includes(chat.statut_colis)}
           onClose={() => { setChat(null); chargerNonLus(); }}
@@ -488,11 +488,11 @@ function FicheDossierModal({ dossier: d, point, nonLus, onClose, onMessages, onE
           </div>
           <div className="pr-fiche-personne">
             <div className="pr-fiche-qui">
-              <Avatar nom={d.porteur_nom} size={30} />
-              <div><span className="pr-fiche-role">Voyageur</span><strong>{d.porteur_nom ?? '-'}</strong></div>
+              <Avatar nom={d.voyageur_nom} size={30} />
+              <div><span className="pr-fiche-role">Voyageur</span><strong>{d.voyageur_nom ?? '-'}</strong></div>
             </div>
             <div className="pr-fiche-contact">
-              {d.porteur_telephone ? <Copiable valeur={d.porteur_telephone} /> : <span className="hint">Téléphone visible une fois la demande acceptée</span>}
+              {d.voyageur_telephone ? <Copiable valeur={d.voyageur_telephone} /> : <span className="hint">Téléphone visible une fois la demande acceptée</span>}
             </div>
           </div>
         </div>
@@ -521,13 +521,13 @@ function lienWhatsApp(d: DossierGuichet, point: PointRelais): string {
     ? new Date(`${d.date_arrivee}T00:00:00`).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) + (d.heure_arrivee ? ` vers ${d.heure_arrivee.slice(0, 5).replace(':', 'h')}` : '')
     : null;
   const arrive = d.statut_colis === 'arrive';
-  const voyageur = premierMot(d.porteur_nom) === '-' ? 'un voyageur Wonjo' : premierMot(d.porteur_nom);
+  const voyageur = premierMot(d.voyageur_nom) === '-' ? 'un voyageur Wonjo' : premierMot(d.voyageur_nom);
   const lignes = [
     `Bonjour ${premierMot(d.destinataire_nom)}, c'est le point relais Wonjo de ${point.ville}.`,
     `${premierMot(d.client_nom)} nous a confié un colis pour vous${villeArrivee ? `, à récupérer à ${villeArrivee}` : ''}.`,
     `Le voyageur qui le transporte, ${voyageur}, ${arrive ? `est arrivé${villeArrivee ? ` à ${villeArrivee}` : ''}` : `arrive${villeArrivee ? ` à ${villeArrivee}` : ''}`}.`,
     d.lieu_remise || quand ? `Remise du colis : ${[d.lieu_remise, quand].filter(Boolean).join(', ')}.` : null,
-    d.porteur_telephone ? `Vous pouvez l'appeler au ${d.porteur_telephone}.` : null,
+    d.voyageur_telephone ? `Vous pouvez l'appeler au ${d.voyageur_telephone}.` : null,
     'Quand il vous remet le colis, demandez-lui le code à 4 chiffres et envoyez-le-nous ici pour confirmer la réception. Merci !',
   ].filter(Boolean);
   return `https://wa.me/${d.destinataire_telephone.replace(/\D/g, '')}?text=${encodeURIComponent(lignes.join('\n'))}`;
@@ -704,7 +704,7 @@ function ConfierModal({ point, trajet, nomsPays, onClose, onCree }: {
             <small>{cree.moyen === 'carte' ? `≈ ${montantLocal(cree.montant_local, cree.devise)} · ` : ''}Montant exact calculé par le serveur</small>
           </div>
           <p className="hint" style={{ marginTop: 12 }}>
-            {trajet.porteur_nom ?? 'Le voyageur'} sera prévenu dès que le paiement sera {cree.moyen === 'carte' ? 'fait' : 'validé'}, et pourra alors accepter. Gardez le colis : vous enregistrerez le dépôt dans « Dépôts et remises ».
+            {trajet.voyageur_nom ?? 'Le voyageur'} sera prévenu dès que le paiement sera {cree.moyen === 'carte' ? 'fait' : 'validé'}, et pourra alors accepter. Gardez le colis : vous enregistrerez le dépôt dans « Dépôts et remises ».
           </p>
           <div className="action-row" style={{ justifyContent: 'flex-end', marginTop: 16 }}>
             <button className="btn" onClick={() => onCree(cree, false)}>Plus tard</button>

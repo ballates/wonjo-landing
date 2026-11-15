@@ -52,7 +52,7 @@ export function PaiementsATraiter({ onOuvrir }: { onOuvrir: (demandeId: string) 
               <span className="info-row-label">{LIBELLES_CAS_PAIEMENT[p.cas] ?? p.cas}</span>
               <span className="info-row-value" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
                 <span>
-                  {p.expediteur_prenom || p.porteur_prenom ? `${premierMot(p.expediteur_prenom ?? '?')} → ${premierMot(p.porteur_prenom ?? '?')}` : 'Paiement sans demande'}
+                  {p.expediteur_prenom || p.voyageur_prenom ? `${premierMot(p.expediteur_prenom ?? '?')} → ${premierMot(p.voyageur_prenom ?? '?')}` : 'Paiement sans demande'}
                   {p.montant_total != null && ` · ${decimales(Number(p.montant_total), 2)} €`}
                   {p.depuis && ` · depuis le ${dateHeure(p.depuis)}`}
                   {extra && <span className="hint"> · {extra}</span>}

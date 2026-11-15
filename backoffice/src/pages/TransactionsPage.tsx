@@ -25,7 +25,7 @@ type FiltreRapide = 'tout' | 'livre' | 'en_cours' | 'en_attente' | 'annule';
 const FILTRES: { cle: FiltreRapide; label: string; statuts: string[] }[] = [
   { cle: 'tout', label: 'Tout', statuts: [] },
   { cle: 'livre', label: 'Livré', statuts: ['livre'] },
-  { cle: 'en_cours', label: 'En cours', statuts: ['accepte', 'en_transit', 'arrive', 'remis_porteur', 'restitution_en_cours', 'litige'] },
+  { cle: 'en_cours', label: 'En cours', statuts: ['accepte', 'en_transit', 'arrive', 'remis_voyageur', 'restitution_en_cours', 'litige'] },
   { cle: 'en_attente', label: 'En attente', statuts: ['en_attente'] },
   { cle: 'annule', label: 'Annulé', statuts: ['annule'] },
 ];
@@ -131,8 +131,8 @@ export function TransactionsPage() {
       ),
     },
     {
-      key: 'porteur', label: 'Voyageur', render: (t) => (
-        <span className="chip"><Avatar src={t.porteur_photo} nom={t.porteur_nom ?? ''} size={22} /> {casserPrenom(premierMot(t.porteur_prenom))}</span>
+      key: 'voyageur', label: 'Voyageur', render: (t) => (
+        <span className="chip"><Avatar src={t.voyageur_photo} nom={t.voyageur_nom ?? ''} size={22} /> {casserPrenom(premierMot(t.voyageur_prenom))}</span>
       ),
     },
     {

@@ -17,12 +17,12 @@ import { LogoOperateur } from './LogoOperateur';
 
 interface AAPayer {
   demande_id: string; reference: string; trajet: string; livre_at: string | null; pret_at: string | null;
-  porteur_nom: string | null; porteur_telephone: string | null; compte_stripe: boolean;
+  voyageur_nom: string | null; voyageur_telephone: string | null; compte_stripe: boolean;
   mm_operateur: Operateur | 'autre_mobile' | null; mm_operateur_autre: string | null; mm_numero: string | null; montant_local: number; devise: string; montant_eur: number;
   contestation: boolean; point_arrivee: string | null; origine: 'point' | 'app'; titulaire: string | null; retenu_jusqu_a: string | null;
 }
 interface Paye {
-  demande_id: string; reference: string; porteur_nom: string | null; moyen: string; numero: string | null; montant_local: number; devise: string;
+  demande_id: string; reference: string; voyageur_nom: string | null; moyen: string; numero: string | null; montant_local: number; devise: string;
   reference_paiement: string; paye_at: string; paye_par_nom: string | null;
 }
 
@@ -67,8 +67,8 @@ export function SiegeVoyageursSection() {
 
   const colonnes: Column<AAPayer>[] = [
     { key: 'ref', label: 'Dossier', value: (v) => v.reference, width: 100, render: (v) => <span className="pr-nowrap"><span className="pr-ref">#{v.reference}</span>{v.origine === 'app' && <span className="hint" title="Dossier venu de l'app"> · app</span>}</span> },
-    { key: 'voyageur', label: 'Voyageur', value: (v) => v.porteur_nom ?? '', render: (v) => <strong className="pr-nowrap">{v.porteur_nom ?? '-'}</strong> },
-    { key: 'tel', label: 'Téléphone', value: (v) => v.porteur_telephone ?? '', render: (v) => v.porteur_telephone ? <span className="pr-nowrap">{v.porteur_telephone}</span> : <span className="hint">-</span> },
+    { key: 'voyageur', label: 'Voyageur', value: (v) => v.voyageur_nom ?? '', render: (v) => <strong className="pr-nowrap">{v.voyageur_nom ?? '-'}</strong> },
+    { key: 'tel', label: 'Téléphone', value: (v) => v.voyageur_telephone ?? '', render: (v) => v.voyageur_telephone ? <span className="pr-nowrap">{v.voyageur_telephone}</span> : <span className="hint">-</span> },
     { key: 'trajet', label: 'Trajet', value: (v) => v.trajet, render: (v) => <span className="pr-nowrap">{v.trajet}</span> },
     { key: 'moyen', label: 'Où envoyer', value: (v) => v.mm_numero ?? '',
       render: (v) => v.mm_numero ? <span className="pr-nowrap"><span className="hint">{operateurDe(v.mm_operateur, v.mm_operateur_autre)} · </span><Copiable valeur={v.mm_numero} />{v.titulaire && <span className="hint" title="Titulaire du compte"> · {v.titulaire}</span>}</span>
@@ -102,7 +102,7 @@ export function SiegeVoyageursSection() {
   const colonnesPayes: Column<Paye>[] = [
     { key: 'date', label: 'Payé le', value: (p) => p.paye_at, filter: 'date', width: 150, render: (p) => dateCourte(p.paye_at) },
     { key: 'ref', label: 'Dossier', value: (p) => p.reference, width: 110, render: (p) => <span className="pr-ref">#{p.reference}</span> },
-    { key: 'voyageur', label: 'Voyageur', value: (p) => p.porteur_nom ?? '' },
+    { key: 'voyageur', label: 'Voyageur', value: (p) => p.voyageur_nom ?? '' },
     { key: 'moyen', label: 'Moyen', value: (p) => p.moyen, render: (p) => <span>{MOYENS_SIEGE.find((m) => m.cle === p.moyen)?.label ?? p.moyen}{p.numero ? <span className="hint"> · {p.numero}</span> : null}</span> },
     { key: 'montant', label: 'Montant', value: (p) => Number(p.montant_local), render: (p) => <strong>{montantLocal(p.montant_local, p.devise)}</strong> },
     { key: 'refpaie', label: 'Référence', value: (p) => p.reference_paiement, render: (p) => <span className="hint">{p.reference_paiement}</span> },
@@ -165,7 +165,7 @@ function PaiementModal({ item, onClose, onPaye }: { item: AAPayer; onClose: () =
     });
     setBusy(false);
     if (e) { setError(messageErreur(e.message)); return; }
-    onPaye(`${item.porteur_nom ?? 'Le voyageur'} payé : ${montantLocal(item.montant_local, item.devise)}. Il a reçu une confirmation dans l'app.`);
+    onPaye(`${item.voyageur_nom ?? 'Le voyageur'} payé : ${montantLocal(item.montant_local, item.devise)}. Il a reçu une confirmation dans l'app.`);
   }
 
   return (
@@ -173,7 +173,7 @@ function PaiementModal({ item, onClose, onPaye }: { item: AAPayer; onClose: () =
       <h2 className="modal-title">Payer le voyageur #{item.reference}</h2>
       <div className="modal-body">
         <div className="pr-a-recevoir">
-          <span>À envoyer à {item.porteur_nom ?? 'le voyageur'}</span>
+          <span>À envoyer à {item.voyageur_nom ?? 'le voyageur'}</span>
           <strong>{montantLocal(item.montant_local, item.devise)}</strong>
           <small>{montantEuros(item.montant_eur)} · {item.trajet}</small>
         </div>
@@ -265,10 +265,10 @@ function StripeModal({ item, onClose, onPaye }: { item: AAPayer; onClose: () => 
       return;
     }
     setBusy(false);
-    onPaye(`${item.porteur_nom ?? 'Le voyageur'} payé par Stripe : ${montantEuros((data as { montant_eur?: number })?.montant_eur ?? item.montant_eur)} (transfert ${(data as { transferId?: string })?.transferId ?? ''}). Il a reçu une confirmation dans l'app.`);
+    onPaye(`${item.voyageur_nom ?? 'Le voyageur'} payé par Stripe : ${montantEuros((data as { montant_eur?: number })?.montant_eur ?? item.montant_eur)} (transfert ${(data as { transferId?: string })?.transferId ?? ''}). Il a reçu une confirmation dans l'app.`);
   }
 
-  const nom = item.porteur_nom ?? 'le voyageur';
+  const nom = item.voyageur_nom ?? 'le voyageur';
   return (
     <Modal onClose={onClose} narrow>
       <div className="vs-tete">

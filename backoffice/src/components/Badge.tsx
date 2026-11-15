@@ -12,7 +12,7 @@ const STATUT_TONES: Record<string, BadgeTone> = {
   accepte: 'teal',
   en_transit: 'teal',
   arrive: 'teal',
-  remis_porteur: 'teal',
+  remis_voyageur: 'teal',
   livre: 'green',
   annule: 'muted',
   litige: 'danger',

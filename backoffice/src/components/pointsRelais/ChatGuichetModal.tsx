@@ -40,8 +40,8 @@ const REPONSES_RAPIDES = [
   'Le colis est prêt, vous pouvez passer le récupérer.',
 ];
 
-export function ChatGuichetModal({ demandeId, reference, porteurNom, ouvert, destinataire, onClose }: {
-  demandeId: string; reference: string; porteurNom: string | null; ouvert: boolean;
+export function ChatGuichetModal({ demandeId, reference, voyageurNom, ouvert, destinataire, onClose }: {
+  demandeId: string; reference: string; voyageurNom: string | null; ouvert: boolean;
   /** Coordonnees du destinataire a transmettre au voyageur en un clic (403). */
   destinataire?: { nom: string; telephone: string; ville: string | null };
   onClose: () => void;
@@ -126,9 +126,9 @@ export function ChatGuichetModal({ demandeId, reference, porteurNom, ouvert, des
   return (
     <Modal onClose={onClose}>
       <div className="cg-entete">
-        <Avatar src={null} nom={porteurNom ?? 'Voyageur'} size={42} />
+        <Avatar src={null} nom={voyageurNom ?? 'Voyageur'} size={42} />
         <div className="cg-entete-texte">
-          <strong>{porteurNom ?? 'Voyageur'}</strong>
+          <strong>{voyageurNom ?? 'Voyageur'}</strong>
           <span>Dossier #{reference}</span>
         </div>
         <span className={`cg-etat ${ouvert ? 'cg-etat--ouvert' : ''}`}>{ouvert ? 'Conversation ouverte' : 'En attente d\'acceptation'}</span>
@@ -152,7 +152,7 @@ export function ChatGuichetModal({ demandeId, reference, porteurNom, ouvert, des
               const image = estImage ? images[(m.contenu as string).slice(PREFIXE_IMAGE.length)] : null;
               return (
                 <div key={m.id} className={`cg-ligne ${m.de_point ? 'cg-ligne--moi' : ''} ${premier ? 'cg-ligne--premier' : ''}`}>
-                  {premier && <span className="cg-auteur">{m.de_point ? (m.agent_nom ?? 'Point relais') : (porteurNom ?? 'Voyageur')}</span>}
+                  {premier && <span className="cg-auteur">{m.de_point ? (m.agent_nom ?? 'Point relais') : (voyageurNom ?? 'Voyageur')}</span>}
                   <div className={`cg-bulle ${m.de_point ? 'cg-bulle--moi' : ''} ${dernier ? 'cg-bulle--dernier' : ''}`}>
                     {m.deleted_at ? <em className="cg-supprime">Message supprimé</em>
                       : estImage
