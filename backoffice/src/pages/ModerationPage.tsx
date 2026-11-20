@@ -631,6 +631,8 @@ const LABELS_MOTIF_BLOQUE: Record<TransactionBloquee['motif'], string> = {
   restitution: 'Restitution en cours',
   depart_non_declare: 'Départ non déclaré',
   arrivee_non_declaree: 'Arrivée non déclarée',
+  // [504] Acceptée et payée, départ passé depuis plus de 2 jours, colis jamais remis : aux parties d'annuler ou de maintenir.
+  remise_non_faite: 'Remise non faite après le départ',
 };
 
 function joursDepuis(iso: string | null): number {
@@ -795,9 +797,11 @@ function DossiersBloques({ onChange }: { onChange: () => void }) {
     },
     ...(peutVoirRevenus(roles) ? [{
       key: 'agir', label: '', width: 170, render: (d: TransactionBloquee) => (
-        <button className="btn btn-soft btn-sm" onClick={() => setAction({ dossier: d, type: d.motif === 'restitution' ? 'clore' : 'litige' })}>
-          {d.motif === 'restitution' ? 'Clore la restitution' : 'Ouvrir un litige'}
-        </button>
+        d.motif === 'remise_non_faite'
+          ? <span className="hint">Aux parties d'annuler</span>
+          : <button className="btn btn-soft btn-sm" onClick={() => setAction({ dossier: d, type: d.motif === 'restitution' ? 'clore' : 'litige' })}>
+            {d.motif === 'restitution' ? 'Clore la restitution' : 'Ouvrir un litige'}
+          </button>
       ),
     }] : []),
   ];

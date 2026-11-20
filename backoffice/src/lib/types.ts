@@ -96,7 +96,7 @@ export interface Litige {
 // (admin_lister_transactions_bloquees).
 export interface TransactionBloquee {
   id: string;
-  motif: 'restitution' | 'depart_non_declare' | 'arrivee_non_declaree';
+  motif: 'restitution' | 'depart_non_declare' | 'arrivee_non_declaree' | 'remise_non_faite';
   depuis: string | null;
   statut_colis: string;
   statut_paiement: string;
