@@ -106,3 +106,9 @@ export const DESCRIPTIONS_ROLES: Record<AdminRole, string> = {
 
 /** Ordre d'affichage des roles. */
 export const ROLES_ORDONNES: AdminRole[] = ['super_admin', 'moderation', 'finance', 'commercial', 'lecture', 'reseau', 'point_relais'];
+
+// Page Service (526-528) : état du service, maintenance, version minimale. Lecture pour tout le siège ; modification super admin
+// (peutGererAdmins), vérifiée par le serveur.
+export function peutVoirService(roles: AdminRole[]): boolean {
+  return a(roles, 'lecture');
+}

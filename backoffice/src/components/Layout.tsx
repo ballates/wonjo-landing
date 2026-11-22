@@ -3,14 +3,14 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { precharger } from '../lib/precharge';
 import { useAuth } from '../auth/AuthContext';
-import { LABELS_ROLES, estSeulementPointRelais, peutEnvoyerEmails, peutGererAdmins, peutGererCorridors, peutModerer, peutVoirKyc, peutVoirLitiges, peutVoirPointsRelais, peutVoirTransactions } from '../lib/permissions';
+import { LABELS_ROLES, estSeulementPointRelais, peutEnvoyerEmails, peutGererAdmins, peutGererCorridors, peutModerer, peutVoirKyc, peutVoirLitiges, peutVoirPointsRelais, peutVoirService, peutVoirTransactions } from '../lib/permissions';
 import { useTheme } from '../lib/theme';
 import { brandMark } from './Brand';
 import { Avatar } from './Avatar';
 import { ProfilModal } from './ProfilModal';
 import {
   IconDashboard, IconExchange, IconId, IconLock, IconLogout, IconMoon, IconPanelClose, IconPanelOpen,
-  IconWmail, IconTag, IconShield, IconStar, IconStore, IconSun, IconUsers, IconUser, IconChevronUp, IconMenu, IconClose,
+  IconWmail, IconTag, IconShield, IconStar, IconStore, IconSun, IconUsers, IconUser, IconChevronUp, IconMenu, IconClose, IconPulse,
 } from './Icons';
 
 const STORAGE_KEY = 'wonjo-backoffice-sidebar-collapsed';
@@ -86,6 +86,7 @@ export function Layout() {
     { to: '/emails', label: 'Emails', icon: <IconWmail />, visible: peutEnvoyerEmails(roles) },
     { to: '/points-relais', label: 'Points relais', icon: <IconStore />, visible: peutVoirPointsRelais(roles) },
     { to: '/audit', label: 'Audit', icon: <IconLock />, visible: peutGererAdmins(roles) },
+    { to: '/service', label: 'Service', icon: <IconPulse />, visible: peutVoirService(roles) },
   ];
   const accesAdmin = peutGererAdmins(roles) || !!profil?.peut_inviter;
 

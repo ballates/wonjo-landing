@@ -14,6 +14,7 @@ export const PAGES: Record<string, () => Promise<unknown>> = {
   '/tarification': () => import('../pages/TarificationPage'),
   '/audit': () => import('../pages/AuditPage'),
   '/points-relais': () => import('../pages/PointsRelaisPage'),
+  '/service': () => import('../pages/ServicePage'),
 };
 
 const dejaDemandees = new Set<string>();

@@ -2937,3 +2937,85 @@ div.pr-reseau-rang--ligne:hover { background: var(--hover); }
 .champ-email:focus-within .champ-email-icone { color: var(--teal); }
 .champ-email-ok { position: absolute; right: 14px; color: #1D9E75; pointer-events: none; }
 .champ-email--valide input[type=email] { border-color: rgba(29,158,117,0.55); }
+
+/* Page Service (526-528) */
+.field input[type=number], .field input[type=datetime-local] {
+  height: 42px; padding: 0 14px; font-size: 14px; font-weight: 500; font-family: inherit;
+  background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 10px; color-scheme: inherit;
+}
+.service-raisons { margin: 14px 0 0; padding-left: 20px; color: var(--badge-danger-fg); font-weight: 600; font-size: 13.5px; line-height: 1.6; }
+.service-hint { margin-top: 14px; }
+.service-form { margin-top: 16px; }
+.service-apercu { margin-top: 14px; font-size: 13.5px; line-height: 1.6; }
+.service-apercu p { margin: 0 0 4px; }
+.service-action { margin-top: 16px; }
+.service-historique { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+.service-historique th, .service-historique td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.service-historique th { color: var(--muted); font-weight: 700; font-size: 12px; }
+@media (max-width: 640px) { .service-historique th:nth-child(4), .service-historique td:nth-child(4) { display: none; } }
+.service-branche { margin: 18px 0 0; }
+.service-cellule-action { text-align: right; white-space: nowrap; }
+.service-erreur { margin-top: 4px; font-size: 12px; color: var(--badge-danger-fg); white-space: pre-wrap; word-break: break-word; }
+
+/* Page Service, version modernisee (530) */
+.service-bandeau {
+  display: flex; align-items: flex-start; gap: 14px; padding: 18px 20px; margin-bottom: 16px;
+  border-radius: 16px; border: 1px solid var(--border); background: var(--surface); box-shadow: var(--shadow-sm);
+}
+.service-bandeau.is-ok { background: var(--badge-green-bg); border-color: transparent; }
+.service-bandeau.is-maintenance { background: var(--badge-amber-bg); border-color: transparent; }
+.service-bandeau.is-panne { background: var(--badge-danger-bg); border-color: transparent; }
+.service-bandeau-point { flex: none; width: 12px; height: 12px; margin-top: 5px; border-radius: 50%; background: var(--badge-green-fg); }
+.service-bandeau.is-ok .service-bandeau-point { box-shadow: 0 0 0 5px rgba(29,158,117,0.18); }
+.service-bandeau.is-maintenance .service-bandeau-point { background: var(--badge-amber-fg); }
+.service-bandeau.is-panne .service-bandeau-point { background: var(--badge-danger-fg); animation: service-pulse 1.6s ease-in-out infinite; }
+@keyframes service-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(229,72,77,0.45); } 50% { box-shadow: 0 0 0 8px rgba(229,72,77,0); } }
+@media (prefers-reduced-motion: reduce) { .service-bandeau.is-panne .service-bandeau-point { animation: none; } }
+.service-bandeau-texte { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.service-bandeau-texte strong { font-size: 17px; color: var(--ink); }
+.service-bandeau-texte > span { font-size: 13.5px; color: var(--ink); opacity: 0.8; }
+.service-bandeau .service-raisons { margin-top: 8px; }
+.service-bandeau-heure { flex: none; font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+
+.service-tuiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 20px; }
+@media (max-width: 1000px) { .service-tuiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.service-tuile {
+  display: flex; flex-direction: column; gap: 4px; align-items: flex-start; text-align: left; min-width: 0;
+  padding: 14px 16px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface);
+  box-shadow: var(--shadow-sm); cursor: pointer; font: inherit; color: inherit; transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.service-tuile:hover { border-color: var(--accent, #4A8896); transform: translateY(-1px); }
+.service-tuile:focus-visible { outline: 2px solid var(--accent, #4A8896); outline-offset: 2px; }
+.service-tuile.is-alerte { border-color: var(--badge-amber-fg); background: var(--badge-amber-bg); }
+.service-tuile-libelle { font-size: 11.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.service-tuile-valeur { font-size: 18px; font-weight: 800; color: var(--ink); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.service-tuile-detail { font-size: 12.5px; color: var(--muted); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.service-onglets { max-width: 100%; overflow-x: auto; }
+.service-onglets button { white-space: nowrap; }
+
+.service-maintenance { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(220px, 1fr); gap: 28px; align-items: start; }
+@media (max-width: 900px) { .service-maintenance { grid-template-columns: 1fr; } }
+.service-telephone {
+  justify-self: center; width: 100%; max-width: 260px; padding: 10px; border-radius: 34px;
+  background: var(--ink); box-shadow: var(--shadow-sm);
+}
+.service-telephone-ecran {
+  display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px;
+  min-height: 420px; padding: 56px 20px 24px; border-radius: 26px; background: #F8F7FF; color: #1A1A2E;
+}
+.service-telephone-pastille {
+  display: inline-flex; align-items: center; justify-content: center; width: 58px; height: 58px; border-radius: 50%;
+  background: #4A8896; margin-bottom: 8px;
+}
+.service-telephone-ecran strong { font-size: 15px; }
+.service-telephone-ecran p { margin: 0; font-size: 12.5px; line-height: 1.5; color: #4B5563; overflow-wrap: anywhere; }
+.service-telephone-ecran .service-telephone-retour { font-weight: 700; color: #1A1A2E; }
+.service-telephone-bouton {
+  margin-top: auto; align-self: stretch; padding: 10px; border-radius: 10px; background: #4A8896; color: #fff; font-size: 13px; font-weight: 700;
+}
+.service-telephone-lien { font-size: 12.5px; font-weight: 700; color: #4A8896; }
+
+.service-interrupteurs { display: flex; flex-direction: column; margin-top: 8px; }
+.service-interrupteur { padding: 16px 0; border-top: 1px solid var(--border); }
+.service-interrupteur:first-child { border-top: none; }

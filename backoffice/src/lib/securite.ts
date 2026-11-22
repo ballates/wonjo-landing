@@ -297,6 +297,30 @@ const FICHES: Record<string, Fiche> = {
       'Validez ou refusez avec un motif ; le signal se referme dès la décision.',
     ],
   },
+  // [533] Silences : une étape attendue qui ne se produit plus (une fonctionnalité cassée côté app ne laisse aucune erreur).
+  silence_constats: {
+    sens: 'Des transports acceptés devaient être remis ces derniers jours, mais aucune photo de constat n\'est arrivée depuis 72 h. Le plus probable : l\'envoi des photos est cassé dans l\'app (déjà arrivé après une mise à jour du SDK).',
+    conduite: [
+      'Essayez vous-même d\'envoyer une photo de constat sur un transport de test, sur iPhone et sur Android.',
+      'Si l\'envoi échoue : revenez à la version précédente de l\'app (page Service > Versions de l\'app), puis cherchez la cause.',
+      'Si l\'envoi marche : les rencontres n\'ont simplement pas eu lieu ; le signal se referme à la prochaine photo.',
+    ],
+  },
+  silence_paiements: {
+    sens: 'Plusieurs expéditeurs ont créé une demande ces 48 dernières heures, mais aucun paiement n\'a abouti. Le paiement est peut-être cassé avant d\'atteindre Stripe.',
+    conduite: [
+      'Faites un paiement de test depuis l\'app.',
+      'Regardez le tableau de bord Stripe (paiements échoués, erreurs) et la page Service (état du service).',
+      'Si le paiement est cassé : revenez à la version précédente, ou allumez la maintenance le temps de corriger.',
+    ],
+  },
+  silence_kyc: {
+    sens: 'Des vérifications d\'identité ont été ouvertes ces 72 dernières heures, mais aucune n\'est arrivée à son terme.',
+    conduite: [
+      'Regardez la console Didit : les sessions sont-elles abandonnées, ou les résultats ne nous parviennent-ils pas ?',
+      'Vérifiez le webhook Didit (kyc-webhook) et faites une vérification de test.',
+    ],
+  },
 };
 
 export function ficheSignal(type: string): Fiche {
@@ -336,6 +360,12 @@ export function resumeSignal(s: SignalSecurite): string {
       return `${d.point} : ${d.dernier ? 'dernier comptage trop ancien' : 'jamais compté'}`;
     case 'pr_operation_en_attente':
       return `${d.type} de ${d.montant} en attente`;
+    case 'silence_constats':
+      return `${d.remises_attendues} remise(s) attendue(s), aucune photo depuis 72 h`;
+    case 'silence_paiements':
+      return `${d.demandes_sans_paiement} demande(s) sans paiement en 48 h, aucun paiement abouti`;
+    case 'silence_kyc':
+      return `${d.sessions_ouvertes} vérification(s) ouverte(s) en 72 h, aucune aboutie`;
     case 'argent_incoherent':
       return `Colis « ${d.statut_colis} », paiement « ${d.statut_paiement} »`;
     case 'escrow_sans_stripe':
@@ -451,6 +481,9 @@ const TITRES: Record<string, string> = {
   codes_qr_epuises: 'Codes QR épuisés',
   origine_admin_inhabituelle: 'Connexion administrateur depuis un pays inhabituel',
   appareil_admin_inconnu: 'Connexion administrateur depuis un appareil inconnu',
+  silence_constats: 'Plus aucune photo de constat',
+  silence_paiements: 'Plus aucun paiement abouti',
+  silence_kyc: 'Plus aucune vérification d’identité aboutie',
 };
 
 // Pour « configuration modifiee », le serveur precise ce qui a bouge dans son titre.
@@ -507,6 +540,9 @@ const CAUSES: Record<string, Cause> = {
   admin_sans_trace: { code: 'Règle', raison: 'Administrateur ajouté hors du back-office', ton: 'danger' },
   fonds_sous_contestation: { code: 'Règle', raison: 'Fonds libérés malgré une contestation', ton: 'danger' },
   compteurs_hors_norme: { code: 'Règle', raison: 'Compteur plus haut que les livraisons constatées', ton: 'amber' },
+  silence_constats: { code: 'Silence', raison: 'Une étape attendue ne se produit plus', ton: 'danger' },
+  silence_paiements: { code: 'Silence', raison: 'Une étape attendue ne se produit plus', ton: 'danger' },
+  silence_kyc: { code: 'Silence', raison: 'Une étape attendue ne se produit plus', ton: 'amber' },
 };
 
 export function causeSignal(s: SignalSecurite): Cause {

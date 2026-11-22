@@ -9,7 +9,7 @@ import { Layout } from './components/Layout';
 import { PAGES } from './lib/precharge';
 import {
   estSeulementPointRelais, peutEnvoyerEmails, peutGererAdmins, peutGererCorridors, peutModerer, peutVoirKyc, peutVoirLitiges,
-  peutVoirPointsRelais, peutVoirTransactions,
+  peutVoirPointsRelais, peutVoirService, peutVoirTransactions,
 } from './lib/permissions';
 
 // Pages chargees a la demande : les ecrans de connexion n'embarquent plus
@@ -28,6 +28,7 @@ const EmailsPage = page(PAGES['/emails'] as () => Promise<Record<'EmailsPage', C
 const TarificationPage = page(PAGES['/tarification'] as () => Promise<Record<'TarificationPage', ComponentType>>, 'TarificationPage');
 const AuditPage = page(PAGES['/audit'] as () => Promise<Record<'AuditPage', ComponentType>>, 'AuditPage');
 const PointsRelaisPage = page(PAGES['/points-relais'] as () => Promise<Record<'PointsRelaisPage', ComponentType>>, 'PointsRelaisPage');
+const ServicePage = page(PAGES['/service'] as () => Promise<Record<'ServicePage', ComponentType>>, 'ServicePage');
 
 // Meme regle que le menu (Layout) : une URL tapee a la main (/backoffice/admins...)
 // renvoie au tableau de bord au lieu d'afficher une page en erreur. Le
@@ -96,6 +97,7 @@ function Gate() {
               <Route path="emails" element={<Protege si={peutEnvoyerEmails}><EmailsPage /></Protege>} />
               <Route path="tarification" element={<Protege si={peutGererCorridors}><TarificationPage /></Protege>} />
               <Route path="points-relais" element={<Protege si={peutVoirPointsRelais}><PointsRelaisPage /></Protege>} />
+              <Route path="service" element={<Protege si={peutVoirService}><ServicePage /></Protege>} />
               <Route path="commissions" element={<Navigate to="/tarification" replace />} />
               <Route path="corridors" element={<Navigate to="/tarification" replace />} />
               <Route path="a-faire" element={<Navigate to="/" replace state={{ tab: 'afaire' }} />} />
