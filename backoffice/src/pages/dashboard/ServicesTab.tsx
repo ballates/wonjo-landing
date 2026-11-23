@@ -132,8 +132,8 @@ function Graphique({ mois, serie, quotaJour, couleur, nom }: {
   );
 }
 
-function Carte({ titre, plan, mois, valeur, precedent, quota, unite, children }: {
-  titre: string; plan: string; mois: string; valeur: number; precedent: number; quota: number | null; unite: string; children: ReactNode;
+function Carte({ titre, plan, mois, valeur, precedent, quota, unite, libelleSansQuota, children }: {
+  titre: string; plan: string; mois: string; valeur: number; precedent: number; quota: number | null; unite: string; libelleSansQuota?: string; children: ReactNode;
 }) {
   const n = niveau(valeur, quota);
   const reste = quota != null ? Math.max(0, quota - valeur) : null;
@@ -144,7 +144,7 @@ function Carte({ titre, plan, mois, valeur, precedent, quota, unite, children }:
           <h3>{titre}</h3>
           <p className="chart-sub">{plan}</p>
         </div>
-        <span className={`svc-pastille svc-pastille--${n}`}>{LIBELLE_NIVEAU[n]}</span>
+        <span className={`svc-pastille svc-pastille--${n}`}>{quota == null && libelleSansQuota ? libelleSansQuota : LIBELLE_NIVEAU[n]}</span>
       </header>
       <div className="svc-resume">
         <Anneau valeur={valeur} quota={quota} />
@@ -220,6 +220,11 @@ export function ServicesTab() {
   if (!c) return <p className="loading-state">Chargement…</p>;
 
   const tauxDidit = c.didit.sessions_mois > 0 ? Math.round((c.didit.mois / c.didit.sessions_mois) * 100) : null;
+  // Didit ne donne plus de quota gratuit en vérifications (1er nov. 2026) : chaque vérification terminée coûte 0,33 $ (identité 0,15 + vie 0,10
+  // + visage 0,05 + IP 0,03). Un quota > 0 dans app_config (quota_didit_mois) est le nombre de vérifications couvertes par un crédit mensuel.
+  const COUT_DIDIT = 0.33;
+  const quotaDidit = c.didit.quota_mois && c.didit.quota_mois > 0 ? c.didit.quota_mois : null;
+  const coutDidit = (c.didit.mois * COUT_DIDIT).toFixed(2).replace('.', ',');
   const pic = (serie: Point[]) => Math.max(0, ...serie.map((p) => Number(p.nb)));
 
   return (
@@ -249,8 +254,8 @@ export function ServicesTab() {
           <Sources sources={c.resend.par_source} />
         </Carte>
 
-        <Carte titre="Vérifications d'identité" plan="Didit · 500 par mois, seules les vérifications terminées comptent"
-          mois={c.mois} valeur={c.didit.mois} precedent={c.didit.mois_precedent} quota={c.didit.quota_mois} unite="vérifications">
+        <Carte titre="Vérifications d'identité" plan={quotaDidit ? `Didit · ${quotaDidit} couvertes par le crédit mensuel, ensuite 0,33 $ chacune` : 'Didit · 0,33 $ par vérification terminée, payée sur le solde'}
+          mois={c.mois} valeur={c.didit.mois} precedent={c.didit.mois_precedent} quota={quotaDidit} unite="vérifications" libelleSansQuota="Payant à l'usage">
           <div className="svc-stats">
             {c.mois_courant && (
               <>
@@ -258,6 +263,7 @@ export function ServicesTab() {
                 <Stat label="7 derniers jours" valeur={nombre(c.didit.semaine)} />
               </>
             )}
+            <Stat label="Coût estimé du mois" valeur={`${coutDidit} $`} />
             <Stat label="Sessions ouvertes" valeur={nombre(c.didit.sessions_mois)} />
             <Stat label="Menées au bout" valeur={tauxDidit != null ? `${tauxDidit} %` : '-'} />
           </div>
