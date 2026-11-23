@@ -15,17 +15,19 @@ interface Version {
   publie_at: string;
   republie_de: string | null;
   en_service: boolean;
+  rang: number;
 }
 
 interface Operation {
   id: string;
-  type: 'actualiser' | 'revenir';
+  type: 'actualiser' | 'revenir' | 'supprimer';
   groupe: string | null;
   branche: string | null;
   motif: string;
   statut: 'demande' | 'en_cours' | 'fait' | 'echec';
   erreur: string | null;
   run_url: string | null;
+  nb_versions: number | null;
   created_at: string;
   termine_at: string | null;
   par: string | null;
@@ -33,6 +35,7 @@ interface Operation {
 
 export interface EtatOta {
   versions: Version[];
+  protegees: number;
   operations: Operation[];
   en_cours: boolean;
   actualise_at: string | null;
@@ -46,7 +49,15 @@ const STATUTS: Record<Operation['statut'], { libelle: string; badge: string }> =
   echec: { libelle: 'Échec', badge: 'badge-danger' },
 };
 
+const PAR_PAGE = 5;
+
 const date = (iso: string) => new Date(iso).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' });
+// Pour les tableaux : « 23 nov. 18:27 » (l'année n'apparaît que si ce n'est pas l'année en cours), sur une seule ligne.
+export function dateCourte(iso: string): string {
+  const d = new Date(iso);
+  const memeAnnee = d.getFullYear() === new Date().getFullYear();
+  return d.toLocaleString('fr-FR', { day: 'numeric', month: 'short', ...(memeAnnee ? {} : { year: 'numeric' }), hour: '2-digit', minute: '2-digit' });
+}
 
 async function appeler(body: Record<string, unknown>): Promise<string | null> {
   const { data, error } = await supabase.functions.invoke('admin-ota', { body });
@@ -61,8 +72,10 @@ async function appeler(body: Record<string, unknown>): Promise<string | null> {
 export function VersionsAppSection({ etat, modifiable, onChange: charger }: { etat: EtatOta; modifiable: boolean; onChange: () => void }) {
   const [erreur, setErreur] = useState<string | null>(null);
   const [choisie, setChoisie] = useState<Version | null>(null);
+  const [aSupprimer, setASupprimer] = useState<Version | null>(null);
   const [motif, setMotif] = useState('');
   const [busy, setBusy] = useState(false);
+  const [pages, setPages] = useState<Record<string, number>>({});
 
   async function actualiser() {
     setBusy(true); setErreur(null);
@@ -82,6 +95,20 @@ export function VersionsAppSection({ etat, modifiable, onChange: charger }: { et
     charger();
   }
 
+  async function supprimer() {
+    if (!aSupprimer || !motif.trim()) return;
+    setBusy(true); setErreur(null);
+    const e = await appeler({ action: 'supprimer', groupe: aSupprimer.groupe, motif: motif.trim() });
+    setBusy(false);
+    if (e) { setErreur(e); charger(); return; }
+    setASupprimer(null); setMotif('');
+    charger();
+  }
+
+  const nbASupprimer = aSupprimer
+    ? etat.versions.filter((v) => v.branche === aSupprimer.branche && new Date(v.publie_at) <= new Date(aSupprimer.publie_at)).length
+    : 0;
+
   const branches = [...new Set(etat.versions.map((v) => v.branche))];
 
   return (
@@ -90,7 +117,7 @@ export function VersionsAppSection({ etat, modifiable, onChange: charger }: { et
         <div className="rg-tete-texte">
           <h3>Versions de l’app</h3>
           <p className="chart-sub">
-            Mises à jour publiées. « Revenir » republie une version précédente : les téléphones la reçoivent au lancement suivant de l’app.
+            Mises à jour publiées. « Revenir » republie une version précédente, reçue au lancement suivant.
             {etat.actualise_at && <> Liste relue le {date(etat.actualise_at)}.</>}
           </p>
         </div>
@@ -101,15 +128,15 @@ export function VersionsAppSection({ etat, modifiable, onChange: charger }: { et
         )}
       </div>
 
-      {etat.en_cours && <p className="rg-note">Opération en cours (une à deux minutes) : la page se met à jour seule.</p>}
+      {etat.en_cours && <p className="rg-note">Opération en cours (1 à 2 minutes) : mise à jour automatique.</p>}
       {erreur && <p className="page-error">{erreur}</p>}
 
       {choisie && (
         <div className="rg-confirmer is-off service-action">
           <strong>Revenir à « {choisie.message ?? choisie.groupe} » ({date(choisie.publie_at)}) ?</strong>
           <p className="hint">
-            Tous les utilisateurs de la branche {BRANCHES[choisie.branche] ?? choisie.branche} recevront cette version au prochain lancement de l’app.
-            Les changements publiés depuis disparaissent de l’app jusqu’à une nouvelle publication.
+            Tous les utilisateurs de la branche {BRANCHES[choisie.branche] ?? choisie.branche} la recevront au prochain lancement.
+            Les changements publiés depuis disparaissent jusqu’à une nouvelle publication.
           </p>
           <div className="rg-confirmer-ligne">
             <input type="text" value={motif} autoFocus placeholder="Motif (inscrit au journal)" onChange={(e) => setMotif(e.target.value)} />
@@ -121,17 +148,39 @@ export function VersionsAppSection({ etat, modifiable, onChange: charger }: { et
         </div>
       )}
 
+      {aSupprimer && (
+        <div className="rg-confirmer is-off service-action">
+          <strong>Supprimer {nbASupprimer} version{nbASupprimer > 1 ? 's' : ''} ({BRANCHES[aSupprimer.branche] ?? aSupprimer.branche}) ?</strong>
+          <p className="hint">
+            « {aSupprimer.message ?? aSupprimer.groupe} » ({dateCourte(aSupprimer.publie_at)}) et toutes les plus anciennes disparaissent chez Expo,
+            sans retour possible. Les {etat.protegees} plus récentes sont gardées. Les téléphones ne changent pas.
+          </p>
+          <div className="rg-confirmer-ligne">
+            <input type="text" value={motif} autoFocus placeholder="Motif (inscrit au journal)" onChange={(e) => setMotif(e.target.value)} />
+            <button type="button" className="btn btn-sm" disabled={busy} onClick={() => { setASupprimer(null); setMotif(''); }}>Annuler</button>
+            <button type="button" className="btn btn-sm btn-danger" disabled={busy || !motif.trim()} onClick={supprimer}>
+              {busy ? '…' : `Supprimer ${nbASupprimer} version${nbASupprimer > 1 ? 's' : ''}`}
+            </button>
+          </div>
+        </div>
+      )}
+
       {etat.versions.length === 0 ? (
-        <p className="hint service-hint">Aucune version connue : « Actualiser la liste » la relit chez Expo.</p>
-      ) : branches.map((b) => (
+        <p className="hint service-hint">Aucune version connue : « Actualiser la liste ».</p>
+      ) : branches.map((b) => {
+        const deLaBranche = etat.versions.filter((v) => v.branche === b);
+        const nbPages = Math.max(1, Math.ceil(deLaBranche.length / PAR_PAGE));
+        const page = Math.min(pages[b] ?? 0, nbPages - 1);
+        const visibles = deLaBranche.slice(page * PAR_PAGE, (page + 1) * PAR_PAGE);
+        return (
         <div key={b}>
           <p className="section-title service-branche">{BRANCHES[b] ?? b}</p>
-          <table className="service-historique">
+          <table className="service-historique service-versions">
             <thead><tr><th>Publiée</th><th>Message</th><th>Commit</th><th></th></tr></thead>
             <tbody>
-              {etat.versions.filter((v) => v.branche === b).map((v) => (
-                <tr key={v.groupe}>
-                  <td>{date(v.publie_at)}</td>
+              {visibles.map((v) => (
+                <tr key={v.groupe} className={v.en_service ? 'service-ligne-service' : undefined}>
+                  <td className="service-date">{dateCourte(v.publie_at)}</td>
                   <td>
                     {v.message ?? '—'}
                     {v.republie_de && <> <span className="badge badge-teal">Retour arrière</span></>}
@@ -141,18 +190,37 @@ export function VersionsAppSection({ etat, modifiable, onChange: charger }: { et
                   <td className="service-cellule-action">
                     {v.en_service ? <span className="badge badge-green">En service</span>
                       : modifiable && (
-                        <button type="button" className="btn btn-sm" disabled={busy || etat.en_cours}
-                                onClick={() => { setChoisie(v); setMotif(''); setErreur(null); }}>
-                          Revenir
-                        </button>
+                        <>
+                          <button type="button" className="btn btn-sm" disabled={busy || etat.en_cours}
+                                  onClick={() => { setChoisie(v); setASupprimer(null); setMotif(''); setErreur(null); }}>
+                            Revenir
+                          </button>
+                          {v.rang > etat.protegees && (
+                            <button type="button" className="btn btn-sm btn-danger-ghost" disabled={busy || etat.en_cours}
+                                    title="Supprime cette version et toutes les plus anciennes"
+                                    onClick={() => { setASupprimer(v); setChoisie(null); setMotif(''); setErreur(null); }}>
+                              Supprimer
+                            </button>
+                          )}
+                        </>
                       )}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          {nbPages > 1 && (
+            <div className="rg-confirmer-ligne service-pagination">
+              <button type="button" className="btn btn-sm" disabled={page === 0}
+                      onClick={() => setPages((p) => ({ ...p, [b]: page - 1 }))}>Plus récentes</button>
+              <span className="hint">Page {page + 1} sur {nbPages} ({deLaBranche.length} versions)</span>
+              <button type="button" className="btn btn-sm" disabled={page >= nbPages - 1}
+                      onClick={() => setPages((p) => ({ ...p, [b]: page + 1 }))}>Plus anciennes</button>
+            </div>
+          )}
         </div>
-      ))}
+        );
+      })}
 
       {etat.operations.length > 0 && (
         <>
@@ -162,9 +230,9 @@ export function VersionsAppSection({ etat, modifiable, onChange: charger }: { et
             <tbody>
               {etat.operations.map((o) => (
                 <tr key={o.id}>
-                  <td>{date(o.created_at)}</td>
+                  <td className="service-date">{dateCourte(o.created_at)}</td>
                   <td>
-                    {o.type === 'revenir' ? `Retour arrière : ${o.motif}` : 'Relecture de la liste'}
+                    {o.type === 'revenir' ? `Retour arrière : ${o.motif}` : o.type === 'supprimer' ? `Suppression de ${o.nb_versions ?? '?'} version(s) : ${o.motif}` : 'Relecture de la liste'}
                     {o.erreur && <div className="service-erreur">{o.erreur}</div>}
                   </td>
                   <td>

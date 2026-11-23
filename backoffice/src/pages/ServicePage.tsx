@@ -5,7 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import { peutGererAdmins } from '../lib/permissions';
 import { messageServeur } from '../lib/labels';
 import { ReglageTete } from '../components/ReglageTete';
-import { VersionsAppSection, type EtatOta } from './VersionsAppSection';
+import { VersionsAppSection, dateCourte, type EtatOta } from './VersionsAppSection';
 
 // [526-530] Page Service : l'état de Wonjo d'un coup d'œil (bandeau et tuiles), puis un onglet par outil : maintenance (l'app
 // affiche un écran de maintenance à la place de tout), versions de l'app (retour à une version précédente), interrupteurs (couper une
@@ -65,24 +65,24 @@ const MESSAGE_DEFAUT = 'Nous avons détecté un problème et notre équipe y tra
 const INTERRUPTEURS: Record<string, { titre: string; effet: string; page?: { chemin: string; nom: string } }> = {
   remise_qr_active: {
     titre: 'Remise par QR code',
-    effet: 'La remise et la restitution du colis se confirment en scannant un QR code. Éteint : la photo seule suffit (comme les anciennes versions).',
+    effet: 'Remise et restitution confirmées par QR code. Éteint : la photo seule suffit.',
   },
   flux2_plusieurs_voyageurs: {
     titre: 'Plusieurs voyageurs sur un colis',
-    effet: 'Un colis publié peut être réparti entre plusieurs voyageurs. Éteint : un seul voyageur par colis.',
+    effet: 'Un colis réparti entre plusieurs voyageurs. Éteint : un seul.',
   },
   cgv_acceptation_exigee: {
     titre: 'Case des CGV avant paiement',
-    effet: 'L’expéditeur doit cocher les conditions générales de vente pour payer. Éteint : paiement sans case (anciennes versions).',
+    effet: 'Case CGV à cocher pour payer. Éteint : paiement sans case.',
   },
-  commission_minimums_actifs: { titre: 'Commission fixe par zone', effet: 'Ajoute la commission fixe de la zone aux 10 %.', page: { chemin: '/tarification', nom: 'Tarification' } },
-  commission_personnalisee_active: { titre: 'Commissions personnalisées', effet: 'Règles et taux de commission du back-office appliqués aux nouvelles demandes.', page: { chemin: '/tarification', nom: 'Tarification' } },
-  annulation_frais_retenus_actif: { titre: 'Frais retenus à l’annulation', effet: 'Frais Stripe retenus quand l’expéditeur annule après avoir payé.', page: { chemin: '/tarification', nom: 'Tarification' } },
-  protection_valeur_active: { titre: 'Frais liés à la valeur déclarée', effet: 'Frais calculés sur la valeur déclarée du colis.', page: { chemin: '/tarification', nom: 'Tarification' } },
-  protection_renforcee_active: { titre: 'Protection renforcée', effet: 'Option pour un colis fragile. Wonjo ne couvre pas la casse : à laisser éteinte.', page: { chemin: '/tarification', nom: 'Tarification' } },
-  stripe_frais_confirmes: { titre: 'Frais Stripe confirmés', effet: 'Les frais Stripe estimés sont ceux du contrat (affichage seulement).', page: { chemin: '/tarification', nom: 'Tarification' } },
-  points_relais_actif: { titre: 'Points relais', effet: 'Parcours des points relais dans l’app et le back-office.', page: { chemin: '/points-relais', nom: 'Points relais' } },
-  points_relais_virement_avance: { titre: 'Virement avancé (points relais)', effet: 'Wonjo avance par Stripe le paiement d’un voyageur payé en caisse.', page: { chemin: '/points-relais', nom: 'Points relais' } },
+  commission_minimums_actifs: { titre: 'Commission fixe par zone', effet: 'Ajoute le montant fixe de zone aux 10 %.', page: { chemin: '/tarification', nom: 'Tarification' } },
+  commission_personnalisee_active: { titre: 'Commissions personnalisées', effet: 'Taux du back-office appliqués aux nouvelles demandes.', page: { chemin: '/tarification', nom: 'Tarification' } },
+  annulation_frais_retenus_actif: { titre: 'Frais retenus à l’annulation', effet: 'Frais Stripe retenus si l’expéditeur annule après paiement.', page: { chemin: '/tarification', nom: 'Tarification' } },
+  protection_valeur_active: { titre: 'Frais liés à la valeur déclarée', effet: 'Frais calculés sur la valeur déclarée.', page: { chemin: '/tarification', nom: 'Tarification' } },
+  protection_renforcee_active: { titre: 'Protection renforcée', effet: 'Option colis fragile. Wonjo ne couvre pas la casse : laisser éteinte.', page: { chemin: '/tarification', nom: 'Tarification' } },
+  stripe_frais_confirmes: { titre: 'Frais Stripe confirmés', effet: 'Frais Stripe estimés = ceux du contrat (affichage).', page: { chemin: '/tarification', nom: 'Tarification' } },
+  points_relais_actif: { titre: 'Points relais', effet: 'Parcours des points relais, app et back-office.', page: { chemin: '/points-relais', nom: 'Points relais' } },
+  points_relais_virement_avance: { titre: 'Virement avancé (points relais)', effet: 'Wonjo avance par Stripe un voyageur payé en caisse.', page: { chemin: '/points-relais', nom: 'Points relais' } },
 };
 
 const date = (iso: string) => new Date(iso).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' });
@@ -257,15 +257,14 @@ function Maintenance({ reglages, modifiable, onChange }: { reglages: Reglages; m
           <div className="rg-tete-texte">
             <h3>Mode maintenance</h3>
             <p className="chart-sub">
-              Remplace toute l’app, connexion comprise, par un écran de maintenance avec un bouton pour contacter le support. À réserver
-              aux vraies pannes : une remise de colis en cours est bloquée aussi.
+              Remplace toute l’app par un écran de maintenance. Pour les vraies pannes : bloque aussi les remises en cours.
             </p>
           </div>
 
           {actif ? (
             <div className="service-apercu">
               <p><strong>Allumée depuis :</strong> {reglages.maintenance_depuis ? date(reglages.maintenance_depuis) : '—'}</p>
-              <p className="hint">Les utilisateurs déjà dans l’app voient l’écran au plus tard 5 minutes après, ou dès qu’ils y reviennent.</p>
+              <p className="hint">Visible dans l’app au plus tard 5 minutes après.</p>
             </div>
           ) : (
             <div className="form-grid service-form">
@@ -329,7 +328,7 @@ function Interrupteurs({ liste, modifiable, onChange }: { liste: Interrupteur[];
     <>
       <div className="chart-card rg-carte">
         <h3>Couper ou rallumer une fonctionnalité</h3>
-        <p className="chart-sub">Le retour arrière le plus rapide : quelques secondes, sans publier de version.</p>
+        <p className="chart-sub">Retour arrière immédiat, sans publier de version.</p>
         {message && <p className="success-text service-hint">{message}</p>}
         <div className="service-interrupteurs">
           {reglables.map((i) => (
@@ -352,7 +351,7 @@ function Interrupteurs({ liste, modifiable, onChange }: { liste: Interrupteur[];
 
       <div className="chart-card rg-carte">
         <h3>Réglés sur leur propre page</h3>
-        <p className="chart-sub">Ces interrupteurs ont leurs propres règles (par exemple une baisse validée par un second super admin) : ils se règlent là-bas.</p>
+        <p className="chart-sub">Règles propres (ex. baisse validée par un second super admin) : réglage sur leur page.</p>
         <table className="service-historique">
           <tbody>
             {ailleurs.map((i) => {
@@ -411,7 +410,7 @@ function VersionMinimale({ reglages, modifiable, onChange }: { reglages: Reglage
     <div className="chart-card rg-carte">
       <h3>Version minimale</h3>
       <p className="chart-sub">
-        Un téléphone dont le numéro de build est plus petit voit « Une mise à jour est nécessaire », avec le lien. 0 : aucune exigence.
+        Un build plus ancien voit « Mise à jour nécessaire », avec le lien. 0 : aucune exigence.
       </p>
       <div className="form-grid service-form">
         <div className="field-row">
@@ -443,7 +442,7 @@ function VersionMinimale({ reglages, modifiable, onChange }: { reglages: Reglage
           </button>
         </div>
       ) : <p className="hint service-hint">Modifiable par un super admin.</p>}
-      {ok && <p className="success-text service-hint">Enregistré : pris en compte au prochain lancement de l’app.</p>}
+      {ok && <p className="success-text service-hint">Enregistré : pris en compte au prochain lancement.</p>}
       {erreur && <p className="page-error">{erreur}</p>}
     </div>
   );
@@ -463,14 +462,14 @@ function Historique({ lignes }: { lignes: Ligne[] }) {
   return (
     <div className="chart-card rg-carte">
       <h3>Historique</h3>
-      <p className="chart-sub">Maintenance, version minimale, interrupteurs et retours de version : qui, quand, pourquoi.</p>
+      <p className="chart-sub">Qui, quand, pourquoi : maintenance, version minimale, interrupteurs, retours.</p>
       {lignes.length === 0 ? <p className="hint service-hint">Aucun changement pour l’instant.</p> : (
         <table className="service-historique">
           <thead><tr><th>Date</th><th>Changement</th><th>Motif</th><th>Par</th></tr></thead>
           <tbody>
             {lignes.map((l, i) => (
               <tr key={`${l.created_at}-${i}`}>
-                <td>{date(l.created_at)}</td>
+                <td className="service-date">{dateCourte(l.created_at)}</td>
                 <td>{resume(l)}</td>
                 <td>{l.motif}</td>
                 <td>{l.par ?? '—'}</td>
