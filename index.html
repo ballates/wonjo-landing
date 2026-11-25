@@ -48,7 +48,7 @@
 <style>
   /* Tokens de design : voir assets/css/base.css */
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  html { scroll-behavior: smooth; scroll-padding-top: 76px; }
+  html { scroll-behavior: smooth; scroll-padding-top: 92px; }
   body {
     font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     color: var(--ink);
@@ -130,9 +130,9 @@
     background: var(--brand-gradient); transform: scaleX(0); transform-origin: 0 50%;
     transition: transform 0.1s linear; will-change: transform;
   }
-  .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 66px; }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 82px; }
   .nav-logo { display: flex; align-items: center; gap: 1px; font-family: 'M PLUS Rounded 1c', 'Plus Jakarta Sans', sans-serif; font-size: 1.55rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; text-decoration: none; background: var(--brand-gradient); -webkit-background-clip: text; background-clip: text; color: transparent; transition: opacity 0.25s ease; }
-  .nav-logo img { height: 46px; width: auto; display: block; }
+  .nav-logo img { height: 60px; width: auto; display: block; }
   .nav-logo span { color: var(--teal); transition: color 0.25s ease; }
   .nav-links { display: none; gap: 30px; align-items: center; }
   .nav-links a { position: relative; text-decoration: none; color: var(--muted); font-weight: 600; font-size: 0.95rem; transition: color 0.15s ease; }
@@ -194,7 +194,7 @@
   /* HERO */
   .hero {
     position: relative; overflow: hidden; color: #fff;
-    margin-top: -66px; padding: 100px 0 48px;
+    margin-top: -68px; padding: 100px 0 48px;
     background: linear-gradient(120deg, #4A8896 0%, #7D4E2E 100%);
   }
   .hero::before {
@@ -827,7 +827,7 @@
   @media (max-width: 559.98px) {
     /* L'image du logo a du vide sur ses cotes : on le rogne pour rapprocher le mot et laisser de l'air avant les boutons. */
     .nav-logo { font-size: 1.3rem; letter-spacing: 0.04em; }
-    .nav-logo img { height: 40px; margin: 0 -8px 0 -12px; }
+    .nav-logo img { height: 56px; margin: 0 -12px 0 -18px; }
     .nav-right { gap: 6px; }
     .nav-reglages { gap: 6px; }
     .bascule { width: 34px; padding: 0; justify-content: center; }
@@ -841,7 +841,7 @@
   }
   @media (max-width: 379.98px) {
     .nav-logo { font-size: 1.25rem; }
-    .nav-logo img { height: 38px; }
+    .nav-logo img { height: 46px; }
   }
   @media (prefers-reduced-motion: reduce) { .bascule-curseur { transition: none; } }
 
@@ -950,7 +950,7 @@
       <div class="nav-right">
       <div class="nav-reglages">
         <button type="button" class="bascule" data-bascule-langue data-actif="1" aria-pressed="false" aria-label="Passer en anglais" title="Passer en anglais"><span class="bascule-curseur" aria-hidden="true"></span><span class="bascule-opt o1">FR</span><span class="bascule-opt o2">EN</span></button>
-        <button type="button" class="bascule" data-bascule-theme data-actif="1" aria-pressed="false" aria-label="Passer en mode sombre" title="Passer en mode sombre"><span class="bascule-curseur" aria-hidden="true"></span><span class="bascule-opt o1"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></span><span class="bascule-opt o2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span></button>
+        <button type="button" class="bascule" data-bascule-theme data-actif="1" aria-pressed="false" aria-label="Passer en mode sombre" title="Passer en mode sombre"><span class="bascule-curseur" aria-hidden="true"></span><span class="bascule-opt o1"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></span><span class="bascule-opt o2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none"/></svg></span></button>
       </div>
       <a href="#beta" class="nav-cta">Rejoindre la bêta</a>
       <button class="nav-toggle" id="navToggle" aria-label="Ouvrir le menu" aria-expanded="false">
