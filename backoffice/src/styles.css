@@ -2954,11 +2954,13 @@ div.pr-reseau-rang--ligne:hover { background: var(--hover); }
 .service-historique th { color: var(--muted); font-weight: 700; font-size: 12px; }
 @media (max-width: 640px) { .service-historique:not(.service-versions) th:nth-child(4), .service-historique:not(.service-versions) td:nth-child(4) { display: none; } }
 .service-date { white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--muted); }
-.service-versions td:nth-child(2) { width: 100%; }
+.service-versions td:nth-child(4) { width: 100%; }
+.service-appareils { white-space: nowrap; }
+.service-appareils .badge { margin-right: 4px; }
 .service-versions tbody tr:hover { background: color-mix(in srgb, var(--teal) 6%, transparent); }
 .service-versions .service-ligne-service { background: color-mix(in srgb, var(--teal) 10%, transparent); }
 .service-versions code { font-size: 12px; color: var(--muted); }
-@media (max-width: 640px) { .service-versions th:nth-child(3), .service-versions td:nth-child(3) { display: none; } }
+@media (max-width: 640px) { .service-versions th:nth-child(5), .service-versions td:nth-child(5) { display: none; } }
 .service-pagination { justify-content: space-between; align-items: center; margin-top: 10px; }
 .btn-danger-ghost { margin-left: 6px; color: var(--danger); background: transparent; border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent); }
 .btn-danger-ghost:hover:not(:disabled) { background: color-mix(in srgb, var(--danger) 10%, transparent); }
@@ -2980,10 +2982,10 @@ div.pr-reseau-rang--ligne:hover { background: var(--hover); }
 .service-bandeau.is-panne .service-bandeau-point { background: var(--badge-danger-fg); animation: service-pulse 1.6s ease-in-out infinite; }
 @keyframes service-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(229,72,77,0.45); } 50% { box-shadow: 0 0 0 8px rgba(229,72,77,0); } }
 @media (prefers-reduced-motion: reduce) { .service-bandeau.is-panne .service-bandeau-point { animation: none; } }
-.service-bandeau-texte { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.service-bandeau-texte { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; }
 .service-bandeau-texte strong { font-size: 17px; color: var(--ink); }
 .service-bandeau-texte > span { font-size: 13.5px; color: var(--ink); opacity: 0.8; }
-.service-bandeau .service-raisons { margin-top: 8px; }
+.service-bandeau .service-raisons { margin-top: 8px; flex-basis: 100%; }
 .service-bandeau-heure { flex: none; font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
 
 .service-tuiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 20px; }
@@ -3028,3 +3030,5 @@ div.pr-reseau-rang--ligne:hover { background: var(--hover); }
 .service-interrupteurs { display: flex; flex-direction: column; margin-top: 8px; }
 .service-interrupteur { padding: 16px 0; border-top: 1px solid var(--border); }
 .service-interrupteur:first-child { border-top: none; }
+.service-case { width: 28px; padding-right: 0 !important; }
+.service-case input { cursor: pointer; }

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { useTauxCommission } from '../../lib/useTauxCommission';
 import { Modal } from '../Modal';
 import { InfoBulle } from '../InfoBulle';
 import { Badge } from '../Badge';
@@ -588,6 +589,7 @@ function ConfierModal({ point, trajet, nomsPays, onClose, onCree }: {
   point: PointRelais; trajet: Trajet; nomsPays: Record<string, string>;
   onClose: () => void; onCree: (r: Cree, encaisser: boolean) => void;
 }) {
+  const tauxCommission = useTauxCommission();
   const [etape, setEtape] = useState(1);
   const [clientNom, setClientNom] = useState('');
   const [clientPrenom, setClientPrenom] = useState('');
@@ -665,11 +667,11 @@ function ConfierModal({ point, trajet, nomsPays, onClose, onCree }: {
     setTimeout(() => corps.current?.querySelector<HTMLElement>('.champ-invalide, .champ-tel--invalide input, .pr-confirme-invalide')
       ?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 30);
   }
-  // Estimation seulement (prix du voyageur + 10 %) : le montant exact, frais de protection compris, vient du serveur.
+  // Estimation seulement (prix du voyageur + commission en vigueur) : le montant exact, frais de protection compris, vient du serveur.
   // Frais de la valeur declaree : meme bareme que l'app, lu sur le serveur (apercu ; le montant exact est fige a l'envoi).
   const fraisValeur = valeurOk ? fraisProtection(valeurNum, bareme) : 0;
   const baseEur = poidsOk ? Math.round(trajet.prix_par_kilo * poidsNum * 100) / 100 : null;
-  const serviceEur = baseEur != null ? Math.round(baseEur * 0.1 * 100) / 100 : 0;
+  const serviceEur = baseEur != null ? Math.round(baseEur * tauxCommission * 100) / 100 : 0;
   const estimationEur = baseEur != null ? Math.round((baseEur + serviceEur + fraisValeur) * 100) / 100 : null;
   const poidsTrop = !!poids && Number.isFinite(poidsNum) && poidsNum > trajet.kilos_disponibles;
 
@@ -825,7 +827,7 @@ function ConfierModal({ point, trajet, nomsPays, onClose, onCree }: {
                 <div>
                   <strong>Estimation : ≈ {fmt(estimationEur)}{moyen === 'carte' && enLocal ? ` (débité en euros : ${montantEuros(estimationEur)})` : ''}</strong>
                   <span>
-                    Prix du voyageur {fmt(baseEur)} + frais de service 10 % {fmt(serviceEur)}
+                    Prix du voyageur {fmt(baseEur)} + frais de service {`${Math.round(tauxCommission * 1000) / 10}`.replace('.', ',')} % {fmt(serviceEur)}
                     {fraisValeur > 0 ? ` + valeur déclarée ${fmt(fraisValeur)}` : ''}. Le montant exact s'affiche à l'envoi.
                   </span>
                 </div>

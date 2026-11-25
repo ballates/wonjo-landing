@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { Select } from './Select';
 import { euros } from './Kpi';
 import { useDebounce } from '../lib/useDebounce';
+import { useTauxCommission } from '../lib/useTauxCommission';
 
 // [347] Simulateur d'envoi : le détail d'un envoi (ce que reçoit le voyageur, la commission,
 // les protections, le débit, les frais Stripe, ce que Wonjo garde) calculé par le SERVEUR
@@ -33,7 +34,10 @@ export function SimulateurCard() {
   const [valeur, setValeur] = useState('100');
   const [fragile, setFragile] = useState(false);
   const [renforcee, setRenforcee] = useState(false);
+  const tauxEnVigueur = useTauxCommission();
   const [taux, setTaux] = useState('10');
+  const [tauxTouche, setTauxTouche] = useState(false);
+  useEffect(() => { if (!tauxTouche) setTaux(String(Math.round(tauxEnVigueur * 1000) / 10)); }, [tauxEnVigueur, tauxTouche]);
   const [minimums, setMinimums] = useState<Minimums>('actuel');
   const [res, setRes] = useState<Resultat | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -61,14 +65,14 @@ export function SimulateurCard() {
       p_valeur: v,
       p_fragile: s.fragile,
       p_renforcee: s.renforcee,
-      p_taux: Number.isFinite(num(String(s.taux))) ? num(String(s.taux)) / 100 : 0.10,
+      p_taux: Number.isFinite(num(String(s.taux))) ? num(String(s.taux)) / 100 : tauxEnVigueur,
       p_avec_minimums: s.minimums === 'actuel' ? null : s.minimums === 'oui',
     }).then(({ data, error }) => {
       if (error) { setErreur(error.message); setRes(null); return; }
       setErreur(null);
       setRes(data as Resultat);
     });
-  }, [saisie]);
+  }, [saisie, tauxEnVigueur]);
 
   const optionsPays = pays.map((p) => ({ value: p.code, label: p.nom }));
   const perte = !!res && res.marge_commission_seule < 0;
@@ -125,7 +129,7 @@ export function SimulateurCard() {
             <label className="champ-frais"><span>Valeur déclarée</span>
               <div className="suffix-input"><input type="text" inputMode="decimal" value={valeur} onChange={(e) => setValeur(e.target.value)} /><span>€</span></div></label>
             <label className="champ-frais"><span>Commission</span>
-              <div className="suffix-input"><input type="text" inputMode="decimal" value={taux} onChange={(e) => setTaux(e.target.value)} /><span>%</span></div></label>
+              <div className="suffix-input"><input type="text" inputMode="decimal" value={taux} onChange={(e) => { setTaux(e.target.value); setTauxTouche(true); }} /><span>%</span></div></label>
           </div>
 
           <div className="champ-frais">

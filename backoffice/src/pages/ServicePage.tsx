@@ -24,9 +24,9 @@ interface Reglages {
   lien_android: string | null;
 }
 
-interface Ligne {
+export interface Ligne {
   created_at: string;
-  action: 'maintenance' | 'version_minimale' | 'interrupteur' | 'ota_retour';
+  action: 'maintenance' | 'version_minimale' | 'interrupteur' | 'ota_retour' | 'ota_suppression';
   motif: string;
   detail: Record<string, unknown>;
   par: string | null;
@@ -40,13 +40,12 @@ interface EtatService {
 
 interface Interrupteur { cle: string; actif: boolean; maj_at: string }
 
-type Onglet = 'maintenance' | 'versions' | 'interrupteurs' | 'version-minimale' | 'historique';
+type Onglet = 'maintenance' | 'versions' | 'interrupteurs' | 'version-minimale';
 const ONGLETS: { cle: Onglet; libelle: string }[] = [
   { cle: 'maintenance', libelle: 'Maintenance' },
   { cle: 'versions', libelle: 'Versions de l’app' },
   { cle: 'interrupteurs', libelle: 'Interrupteurs' },
   { cle: 'version-minimale', libelle: 'Version minimale' },
-  { cle: 'historique', libelle: 'Historique' },
 ];
 
 const RAISONS: Record<string, string> = {
@@ -62,7 +61,7 @@ const RAISONS: Record<string, string> = {
 const MESSAGE_DEFAUT = 'Nous avons détecté un problème et notre équipe y travaille. Vos transports, vos messages et vos paiements restent enregistrés.';
 
 // Ce que fait chaque interrupteur. `page` : il se règle sur sa propre page (règles propres, revue à deux), sinon ici (530).
-const INTERRUPTEURS: Record<string, { titre: string; effet: string; page?: { chemin: string; nom: string } }> = {
+export const INTERRUPTEURS: Record<string, { titre: string; effet: string; page?: { chemin: string; nom: string } }> = {
   remise_qr_active: {
     titre: 'Remise par QR code',
     effet: 'Remise et restitution confirmées par QR code. Éteint : la photo seule suffit.',
@@ -75,7 +74,7 @@ const INTERRUPTEURS: Record<string, { titre: string; effet: string; page?: { che
     titre: 'Case des CGV avant paiement',
     effet: 'Case CGV à cocher pour payer. Éteint : paiement sans case.',
   },
-  commission_minimums_actifs: { titre: 'Commission fixe par zone', effet: 'Ajoute le montant fixe de zone aux 10 %.', page: { chemin: '/tarification', nom: 'Tarification' } },
+  commission_minimums_actifs: { titre: 'Commission fixe par zone', effet: 'Ajoute le montant fixe de zone à la commission en pourcentage.', page: { chemin: '/tarification', nom: 'Tarification' } },
   commission_personnalisee_active: { titre: 'Commissions personnalisées', effet: 'Taux du back-office appliqués aux nouvelles demandes.', page: { chemin: '/tarification', nom: 'Tarification' } },
   annulation_frais_retenus_actif: { titre: 'Frais retenus à l’annulation', effet: 'Frais Stripe retenus si l’expéditeur annule après paiement.', page: { chemin: '/tarification', nom: 'Tarification' } },
   protection_valeur_active: { titre: 'Frais liés à la valeur déclarée', effet: 'Frais calculés sur la valeur déclarée.', page: { chemin: '/tarification', nom: 'Tarification' } },
@@ -153,7 +152,6 @@ export function ServicePage() {
           {onglet === 'versions' && <VersionsAppSection etat={ota} modifiable={modifiable} onChange={charger} />}
           {onglet === 'interrupteurs' && <Interrupteurs liste={interrupteurs} modifiable={modifiable} onChange={charger} />}
           {onglet === 'version-minimale' && <VersionMinimale reglages={etat.reglages} modifiable={modifiable} onChange={charger} />}
-          {onglet === 'historique' && <Historique lignes={etat.historique} />}
         </>
       )}
     </div>
@@ -194,7 +192,7 @@ function Tuiles({ etat, ota, interrupteurs, ouvrir }: {
   const enService = ota.versions.find((v) => v.en_service && v.branche === 'preview') ?? ota.versions.find((v) => v.en_service);
   const allumes = interrupteurs.filter((i) => i.actif).length;
   const minimale = r.version_min_ios > 0 || r.version_min_android > 0
-    ? `iOS ${r.version_min_ios || '—'} · Android ${r.version_min_android || '—'}` : 'Aucune';
+    ? `iOS ${r.version_min_ios || '—'} · Android ${r.version_min_android || '—'}` : 'Aucune exigence';
   const tuiles: { onglet: Onglet; libelle: string; valeur: string; detail: string; alerte?: boolean }[] = [
     {
       onglet: 'maintenance', libelle: 'Maintenance', alerte: r.maintenance_active,
@@ -204,10 +202,10 @@ function Tuiles({ etat, ota, interrupteurs, ouvrir }: {
     {
       onglet: 'versions', libelle: 'Version en service',
       valeur: enService ? date(enService.publie_at) : '—',
-      detail: enService?.message ?? 'Liste à actualiser',
+      detail: enService ? (enService.branche === 'production' ? 'Production' : 'Bêta') : 'Liste à actualiser',
     },
     { onglet: 'interrupteurs', libelle: 'Interrupteurs', valeur: `${allumes} sur ${interrupteurs.length}`, detail: 'allumés' },
-    { onglet: 'version-minimale', libelle: 'Version minimale', valeur: minimale, detail: 'Numéro de build exigé' },
+    { onglet: 'version-minimale', libelle: 'Version minimale', valeur: minimale, detail: 'Build minimal par plateforme' },
   ];
   return (
     <div className="service-tuiles">
@@ -448,7 +446,7 @@ function VersionMinimale({ reglages, modifiable, onChange }: { reglages: Reglage
   );
 }
 
-function Historique({ lignes }: { lignes: Ligne[] }) {
+export function Historique({ lignes }: { lignes: Ligne[] }) {
   const resume = (l: Ligne) => {
     const d = l.detail;
     switch (l.action) {
@@ -456,6 +454,7 @@ function Historique({ lignes }: { lignes: Ligne[] }) {
       case 'version_minimale': return `Version minimale : iOS ${d.ios ?? 0}, Android ${d.android ?? 0}`;
       case 'interrupteur': return `${INTERRUPTEURS[String(d.cle)]?.titre ?? d.cle} : ${d.actif ? 'allumé' : 'éteint'}`;
       case 'ota_retour': return `Retour à la version « ${d.message ?? d.groupe} »`;
+      case 'ota_suppression': return `Suppression de ${d.nb_versions ?? '?'} version(s) de l’app`;
       default: return l.action;
     }
   };

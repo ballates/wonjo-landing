@@ -4,8 +4,9 @@ import { useAuth } from '../auth/AuthContext';
 import { signalerReglagesChange } from './ReglagesEnAttente';
 import { peutGererAdmins } from '../lib/permissions';
 import { ReglageTete } from './ReglageTete';
+import { useTauxCommission } from '../lib/useTauxCommission';
 
-// [353] Commission fixe de Wonjo par zone, ajoutee aux 10 % du prix du voyageur (colis
+// [353] Commission fixe de Wonjo par zone, ajoutee au pourcentage du prix du voyageur (colis
 // et enveloppes, une fois par demande). Le plancher du prix d'un colis a ete retire par
 // la 351 : le voyageur touche toujours prix au kilo x poids. Derriere un
 // interrupteur ETEINT par defaut : les anciennes versions de l'app ne connaissent
@@ -37,6 +38,8 @@ const PAS = 0.05;
 export function MinimumsZonesCard() {
   const { roles } = useAuth();
   const modifiable = peutGererAdmins(roles);
+  const taux = useTauxCommission();
+  const tauxTexte = `${Math.round(taux * 1000) / 10} %`.replace('.', ',');
   const [actif, setActif] = useState<boolean | null>(null);
   const [zones, setZones] = useState<Zone[]>([]);
   const [saisie, setSaisie] = useState<Record<string, { commission: string }>>({});
@@ -98,7 +101,7 @@ export function MinimumsZonesCard() {
   async function basculer(allumer: boolean, m: string): Promise<string | null> {
     const { error } = await supabase.rpc('admin_definir_minimums_actifs', { p_actif: allumer, p_motif: m });
     if (error) return error.message;
-    setMessage(allumer ? 'Commission fixe allumée : elle s\'applique aux nouvelles demandes.' : 'Commission fixe éteinte : 10 % seulement.');
+    setMessage(allumer ? 'Commission fixe allumée : elle s\'applique aux nouvelles demandes.' : `Commission fixe éteinte : ${tauxTexte} seulement.`);
     charger();
     return null;
   }
@@ -117,20 +120,22 @@ export function MinimumsZonesCard() {
     const cmin = num(s.commission);
     if (!Number.isFinite(cmin)) return null;
     const base = 0.5 * 3;
-    const commission = Math.round((Math.round(base * 0.1 * 100) / 100 + cmin) * 100) / 100;
+    // Meme regle que le serveur : la part fixe suit un taux reduit, jamais un taux au-dessus de 10 %.
+    const fixe = Math.round(cmin * Math.min(taux, 0.10) / 0.10 * 100) / 100;
+    const commission = Math.round((Math.round(base * taux * 100) / 100 + fixe) * 100) / 100;
     return { base, commission, total: base + commission };
-  }, [zones, saisie]);
+  }, [zones, saisie, taux]);
 
   return (
     <div className="chart-card rg-carte">
       <ReglageTete
         titre="Commission fixe par zone"
-        sousTitre="10 % du prix du voyageur, plus ce montant une fois par envoi. Nouvelles demandes uniquement."
+        sousTitre={`${tauxTexte} du prix du voyageur, plus ce montant une fois par envoi. Nouvelles demandes uniquement.`}
         actif={actif}
         etatOn="Allumée"
-        etatOff="Éteinte · 10 % seulement"
+        etatOff={`Éteinte · ${tauxTexte} seulement`}
         questionAllumer="Allumer la commission fixe pour toutes les nouvelles demandes ?"
-        questionEteindre="Éteindre la commission fixe (retour à 10 % seulement) ?"
+        questionEteindre={`Éteindre la commission fixe (retour à ${tauxTexte} seulement) ?`}
         modifiable={modifiable}
         onConfirmer={basculer}
       />
@@ -162,7 +167,7 @@ export function MinimumsZonesCard() {
                 <button type="button" className="poids-borne-btn" aria-label="Augmenter" disabled={!modifiable || busy || v >= max} onClick={() => regler(z, v + PAS)}>+</button>
               </div>
               <div className="rg-jauge" aria-hidden="true"><span style={{ width: `${pct}%` }} /></div>
-              <div className="rg-jauge-bornes"><span>{eur(Number(z.borne_min))}</span>{change ? <span className="rg-zone-avant">avant {eur(Number(z.commission_fixe))}</span> : <span>{v === 0 ? '10 % seulement' : ''}</span>}<span>{eur(max)}</span></div>
+              <div className="rg-jauge-bornes"><span>{eur(Number(z.borne_min))}</span>{change ? <span className="rg-zone-avant">avant {eur(Number(z.commission_fixe))}</span> : <span>{v === 0 ? `${tauxTexte} seulement` : ''}</span>}<span>{eur(max)}</span></div>
               <span className="rg-zone-pied">
                 {!z.zone_active ? 'Zone fermée'
                   : z.enveloppe_min != null && z.enveloppe_max != null ? `Pli : ${eur(Number(z.enveloppe_min))} à ${eur(Number(z.enveloppe_max))}` : 'Ouverte'}

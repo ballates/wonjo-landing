@@ -18,7 +18,7 @@ interface Version {
   rang: number;
 }
 
-interface Operation {
+export interface Operation {
   id: string;
   type: 'actualiser' | 'revenir' | 'supprimer';
   groupe: string | null;
@@ -41,8 +41,8 @@ export interface EtatOta {
   actualise_at: string | null;
 }
 
-const BRANCHES: Record<string, string> = { preview: 'Bêta (preview)', production: 'Production' };
-const STATUTS: Record<Operation['statut'], { libelle: string; badge: string }> = {
+export const BRANCHES: Record<string, string> = { preview: 'Bêta (preview)', production: 'Production' };
+export const STATUTS: Record<Operation['statut'], { libelle: string; badge: string }> = {
   demande: { libelle: 'Demandée', badge: 'badge-amber' },
   en_cours: { libelle: 'En cours', badge: 'badge-amber' },
   fait: { libelle: 'Faite', badge: 'badge-green' },
@@ -72,7 +72,8 @@ async function appeler(body: Record<string, unknown>): Promise<string | null> {
 export function VersionsAppSection({ etat, modifiable, onChange: charger }: { etat: EtatOta; modifiable: boolean; onChange: () => void }) {
   const [erreur, setErreur] = useState<string | null>(null);
   const [choisie, setChoisie] = useState<Version | null>(null);
-  const [aSupprimer, setASupprimer] = useState<Version | null>(null);
+  const [selection, setSelection] = useState<Set<string>>(new Set());
+  const [suppression, setSuppression] = useState(false);
   const [motif, setMotif] = useState('');
   const [busy, setBusy] = useState(false);
   const [pages, setPages] = useState<Record<string, number>>({});
@@ -96,18 +97,24 @@ export function VersionsAppSection({ etat, modifiable, onChange: charger }: { et
   }
 
   async function supprimer() {
-    if (!aSupprimer || !motif.trim()) return;
+    if (selection.size === 0 || !motif.trim()) return;
     setBusy(true); setErreur(null);
-    const e = await appeler({ action: 'supprimer', groupe: aSupprimer.groupe, motif: motif.trim() });
+    const e = await appeler({ action: 'supprimer_plusieurs', groupes: [...selection], motif: motif.trim() });
     setBusy(false);
     if (e) { setErreur(e); charger(); return; }
-    setASupprimer(null); setMotif('');
+    setSelection(new Set()); setSuppression(false); setMotif('');
     charger();
   }
 
-  const nbASupprimer = aSupprimer
-    ? etat.versions.filter((v) => v.branche === aSupprimer.branche && new Date(v.publie_at) <= new Date(aSupprimer.publie_at)).length
-    : 0;
+  const basculer = (groupe: string) => setSelection((cur) => {
+    const n = new Set(cur); if (n.has(groupe)) n.delete(groupe); else n.add(groupe); return n;
+  });
+  const supprimables = (liste: Version[]) => liste.filter((v) => v.rang > etat.protegees).map((v) => v.groupe);
+  const toutBasculer = (liste: Version[]) => setSelection((cur) => {
+    const ids = supprimables(liste); const n = new Set(cur);
+    if (ids.length > 0 && ids.every((g) => n.has(g))) ids.forEach((g) => n.delete(g)); else ids.forEach((g) => n.add(g));
+    return n;
+  });
 
   const branches = [...new Set(etat.versions.map((v) => v.branche))];
 
@@ -148,20 +155,28 @@ export function VersionsAppSection({ etat, modifiable, onChange: charger }: { et
         </div>
       )}
 
-      {aSupprimer && (
+      {selection.size > 0 && (
         <div className="rg-confirmer is-off service-action">
-          <strong>Supprimer {nbASupprimer} version{nbASupprimer > 1 ? 's' : ''} ({BRANCHES[aSupprimer.branche] ?? aSupprimer.branche}) ?</strong>
-          <p className="hint">
-            « {aSupprimer.message ?? aSupprimer.groupe} » ({dateCourte(aSupprimer.publie_at)}) et toutes les plus anciennes disparaissent chez Expo,
-            sans retour possible. Les {etat.protegees} plus récentes sont gardées. Les téléphones ne changent pas.
-          </p>
-          <div className="rg-confirmer-ligne">
-            <input type="text" value={motif} autoFocus placeholder="Motif (inscrit au journal)" onChange={(e) => setMotif(e.target.value)} />
-            <button type="button" className="btn btn-sm" disabled={busy} onClick={() => { setASupprimer(null); setMotif(''); }}>Annuler</button>
-            <button type="button" className="btn btn-sm btn-danger" disabled={busy || !motif.trim()} onClick={supprimer}>
-              {busy ? '…' : `Supprimer ${nbASupprimer} version${nbASupprimer > 1 ? 's' : ''}`}
-            </button>
-          </div>
+          <strong>{selection.size} version{selection.size > 1 ? 's' : ''} sélectionnée{selection.size > 1 ? 's' : ''}</strong>
+          {!suppression ? (
+            <div className="rg-confirmer-ligne">
+              <button type="button" className="btn btn-sm" disabled={busy} onClick={() => setSelection(new Set())}>Tout désélectionner</button>
+              <button type="button" className="btn btn-sm btn-danger" disabled={busy || etat.en_cours} onClick={() => { setSuppression(true); setChoisie(null); setMotif(''); setErreur(null); }}>
+                Supprimer la sélection
+              </button>
+            </div>
+          ) : (
+            <>
+              <p className="hint">Ces versions disparaissent chez Expo, sans retour possible. Les {etat.protegees} plus récentes de chaque branche sont gardées. Les téléphones ne changent pas.</p>
+              <div className="rg-confirmer-ligne">
+                <input type="text" value={motif} autoFocus placeholder="Motif (inscrit au journal)" onChange={(e) => setMotif(e.target.value)} />
+                <button type="button" className="btn btn-sm" disabled={busy} onClick={() => { setSuppression(false); setMotif(''); }}>Annuler</button>
+                <button type="button" className="btn btn-sm btn-danger" disabled={busy || !motif.trim()} onClick={supprimer}>
+                  {busy ? '…' : `Supprimer ${selection.size} version${selection.size > 1 ? 's' : ''}`}
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -176,15 +191,23 @@ export function VersionsAppSection({ etat, modifiable, onChange: charger }: { et
         <div key={b}>
           <p className="section-title service-branche">{BRANCHES[b] ?? b}</p>
           <table className="service-historique service-versions">
-            <thead><tr><th>Publiée</th><th>Message</th><th>Commit</th><th></th></tr></thead>
+            <thead><tr><th className="service-case">{modifiable && supprimables(deLaBranche).length > 0 && <input type="checkbox" aria-label="Tout sélectionner" title="Tout sélectionner (versions supprimables)" checked={supprimables(deLaBranche).every((g) => selection.has(g))} onChange={() => toutBasculer(deLaBranche)} />}</th><th>Publiée</th><th>Appareils</th><th>Message</th><th>Commit</th><th></th></tr></thead>
             <tbody>
               {visibles.map((v) => (
                 <tr key={v.groupe} className={v.en_service ? 'service-ligne-service' : undefined}>
+                  <td className="service-case">{modifiable && v.rang > etat.protegees && <input type="checkbox" aria-label="Sélectionner" checked={selection.has(v.groupe)} onChange={() => basculer(v.groupe)} />}</td>
                   <td className="service-date">{dateCourte(v.publie_at)}</td>
+                  <td className="service-appareils">
+                    {['ios', 'android'].map((pf) => (
+                      <span key={pf} className={`badge ${v.plateformes.includes(pf) ? (pf === 'ios' ? 'badge-teal' : 'badge-green') : 'badge-muted'}`}
+                            title={v.plateformes.includes(pf) ? undefined : 'Non publiée sur cette plateforme'}>
+                        {pf === 'ios' ? 'iOS' : 'Android'}
+                      </span>
+                    ))}
+                  </td>
                   <td>
                     {v.message ?? '—'}
                     {v.republie_de && <> <span className="badge badge-teal">Retour arrière</span></>}
-                    {v.plateformes.length === 1 && <> <span className="badge badge-muted">{v.plateformes[0]} seul</span></>}
                   </td>
                   <td><code>{v.commit_git?.slice(0, 8) ?? '—'}</code></td>
                   <td className="service-cellule-action">
@@ -192,16 +215,9 @@ export function VersionsAppSection({ etat, modifiable, onChange: charger }: { et
                       : modifiable && (
                         <>
                           <button type="button" className="btn btn-sm" disabled={busy || etat.en_cours}
-                                  onClick={() => { setChoisie(v); setASupprimer(null); setMotif(''); setErreur(null); }}>
+                                  onClick={() => { setChoisie(v); setSuppression(false); setMotif(''); setErreur(null); }}>
                             Revenir
                           </button>
-                          {v.rang > etat.protegees && (
-                            <button type="button" className="btn btn-sm btn-danger-ghost" disabled={busy || etat.en_cours}
-                                    title="Supprime cette version et toutes les plus anciennes"
-                                    onClick={() => { setASupprimer(v); setChoisie(null); setMotif(''); setErreur(null); }}>
-                              Supprimer
-                            </button>
-                          )}
                         </>
                       )}
                   </td>
@@ -222,30 +238,7 @@ export function VersionsAppSection({ etat, modifiable, onChange: charger }: { et
         );
       })}
 
-      {etat.operations.length > 0 && (
-        <>
-          <p className="section-title service-branche">Dernières opérations</p>
-          <table className="service-historique">
-            <thead><tr><th>Date</th><th>Opération</th><th>État</th><th>Par</th></tr></thead>
-            <tbody>
-              {etat.operations.map((o) => (
-                <tr key={o.id}>
-                  <td className="service-date">{dateCourte(o.created_at)}</td>
-                  <td>
-                    {o.type === 'revenir' ? `Retour arrière : ${o.motif}` : o.type === 'supprimer' ? `Suppression de ${o.nb_versions ?? '?'} version(s) : ${o.motif}` : 'Relecture de la liste'}
-                    {o.erreur && <div className="service-erreur">{o.erreur}</div>}
-                  </td>
-                  <td>
-                    <span className={`badge ${STATUTS[o.statut].badge}`}>{STATUTS[o.statut].libelle}</span>
-                    {o.run_url && <> <a href={o.run_url} target="_blank" rel="noreferrer">détail</a></>}
-                  </td>
-                  <td>{o.par ?? '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </>
-      )}
+      <p className="hint service-hint">L’historique des opérations (retours, suppressions, relectures) est dans Audit, onglet « Service ».</p>
     </div>
   );
 }

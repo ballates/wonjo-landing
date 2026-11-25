@@ -190,10 +190,16 @@ export function CommissionsSection() {
     );
   }
 
-  function enregistrerDefaut() {
+  async function enregistrerDefaut() {
     const v = Number(defautSaisi.replace(',', '.'));
     const min = Number(params?.plancher ?? 0) * 100;
-    if (!Number.isFinite(v) || v < min || v > 10) { setError(`Le taux par défaut doit être compris entre ${min} et 10 %.`); return; }
+    const max = Number(params?.plafond ?? 0.15) * 100;
+    if (!Number.isFinite(v) || v < min || v > max) { setError(`Le taux par défaut doit être compris entre ${min} et ${max} %.`); return; }
+    if (v > 10 && !(await confirmer({
+      titre: `Passer le taux par défaut à ${v} % ?`,
+      texte: 'Au-delà de 10 %, faites-le seulement une fois publiées les conditions qui prévoient un taux jusqu\'à 15 %, et une fois la mise à jour de l\'application adoptée. Les demandes déjà créées gardent leur taux.',
+      libelleOui: `Passer à ${v} %`,
+    }))) return;
     executer(
       () => supabase.rpc('admin_commission_definir_defaut', { p_taux: v / 100 }),
       `Taux par défaut : ${v} %.`,
@@ -204,8 +210,10 @@ export function CommissionsSection() {
   async function creerRegle() {
     const v = Number(taux.replace(',', '.'));
     if (!nom.trim()) { setError('Donnez un nom à la règle.'); return; }
+    // Une règle ne fait que réduire : au-dessus du taux par défaut elle ne s'appliquerait jamais (538).
     const min = Number(params?.plancher ?? 0) * 100;
-    if (!Number.isFinite(v) || v < min || v > 10) { setError(`Le taux doit être compris entre ${min} et 10 % (plancher et plafond).`); return; }
+    const max = Math.round(Number(params?.defaut ?? 0.10) * 10000) / 100;
+    if (!Number.isFinite(v) || v < min || v > max) { setError(`Une règle réduit la commission : taux entre ${min} et ${max} % (taux par défaut).`); return; }
     if (cible === 'selection' && membres.size === 0) { setError('Choisissez au moins un membre.'); return; }
     const ok = await executer(() => supabase.rpc('admin_commission_creer_regle', {
       p_nom: nom.trim(),
@@ -325,7 +333,7 @@ export function CommissionsSection() {
 
       <div className="cards">
         <Kpi index={0} label="Taux personnalisés" value={params.actif ? 1 : 0} format={() => (params.actif ? 'Actives' : 'Inactives')} />
-        <Kpi index={1} label={`Taux par défaut (${pct(params.plancher)}, 10 % max)`} value={params.defaut * 100} format={(n) => `${n.toLocaleString('fr-FR')} %`} />
+        <Kpi index={1} label={`Taux par défaut (${pct(params.plancher)}, ${pct(params.plafond)} max)`} value={params.defaut * 100} format={(n) => `${n.toLocaleString('fr-FR')} %`} />
         <Kpi index={2} label="Règles en vigueur" value={nbEnVigueur} />
         <Kpi index={3} label="À valider" value={nbEnAttente} hint={nbEnAttente > 0 ? 'Aucun effet tant que non approuvé' : undefined} />
       </div>
